@@ -1,0 +1,50 @@
+cache/
+out/
+dist/
+node_modules/
+abi/
+
+# coverage
+coverage/
+lcov.info
+
+# Ignore Environment Variables!
+.env
+.env.prod
+
+# foundry docs are built in CI
+docs/
+
+# types are generated and published from CI
+types/
+
+# Ignore all vscode settings
+.vscode/*.log
+
+# Ignore flattened files
+flattened.txt
+
+# Ignore vim swap files
+.swp
+
+# Ignore Hardhat plugin files
+typechain-types/
+
+# Ignore Hardhat files
+cache_hardhat/
+artifacts/
+
+# Ignore Apple
+**/.DS_Store
+
+# Ignore Tenderly
+tenderly.yaml
+
+# Logs
+*.log
+
+# Local anvil deployment
+./broadcast/Deploy.s.sol/*
+
+# Ir
+out-via-ir/

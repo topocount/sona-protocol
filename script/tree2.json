@@ -1,0 +1,45 @@
+{
+  "format": "standard-v1",
+  "tree": [
+    "0x24592ad25cf43069048365e7b15d4e82dfd50b2d00fa1efc860068a7b186ec39",
+    "0x5cf095043a988837ac9bb07020ab3ead4c47fcebba11b89e94e57dd8b6af4ce4",
+    "0x887859d01ae4c32c3c28d458a2ce48a137746bb1cde16ffc8de01c31defa34ea",
+    "0x67fc88e4e5d7e97f4a5424e4fb6ae219ff3561d81f35baf522b29cc8ac326b3a",
+    "0x663b878be3a823b71558597c1deacbdef8c0ffcef2a64d6b78ca59c1db8d1c32"
+  ],
+  "values": [
+    {
+      "value": [
+        "1",
+        "5000000000000000000",
+        1,
+        2
+      ],
+      "treeIndex": 3
+    },
+    {
+      "value": [
+        "2",
+        "2500000000000000000",
+        1,
+        2
+      ],
+      "treeIndex": 2
+    },
+    {
+      "value": [
+        "3",
+        "1250000000000000000",
+        1,
+        2
+      ],
+      "treeIndex": 4
+    }
+  ],
+  "leafEncoding": [
+    "uint256",
+    "uint256",
+    "uint256",
+    "uint256"
+  ]
+}

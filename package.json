@@ -1,0 +1,40 @@
+{
+  "name": "@sonastream/core",
+  "author": "@sonastream/engineering",
+  "version": "0.0.7",
+  "description": "A set of contracts for the sona protocol",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sonastream/core.git"
+  },
+  "homepage": "https://github.com/sonastream/core#readme",
+  "scripts": {
+    "fmt": "prettier --write '{contracts,script}/**/*.sol'",
+    "fmt:list": "prettier --list-different 'contracts/**/*.sol'",
+    "fmt:check": "prettier --check 'contracts/**/*.sol'",
+    "lint": "solhint --config ./.solhint.json 'contracts/**/*.sol' --fix",
+    "lint:check": "solhint --config ./.solhint.json 'contracts/**/*.sol'",
+    "prepublishOnly": "./script/prepublish.sh"
+  },
+  "devDependencies": {
+    "@openzeppelin/merkle-tree": "^1.0.4",
+    "@wagmi/cli": "^0.1.14",
+    "nodemon": "^2.0.21",
+    "prettier": "^2.8.1",
+    "prettier-plugin-solidity": "^1.1.0",
+    "solhint": "^3.3.7",
+    "solhint-plugin-prettier": "^0.0.5",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.4",
+    "viem": "^0.3.12"
+  },
+  "files": [
+    "abi/"
+  ],
+  "main": "abi/generated.ts",
+  "browser": "abi/generated.ts",
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "packageManager": "pnpm@7.13.1"
+}

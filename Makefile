@@ -1,0 +1,106 @@
+# include .env file and export its env vars
+# (-include to ignore error if it does not exist)
+-include .env
+
+all: clean install update build analyze
+
+# Clean the repo
+clean  :; forge clean && rm -rf node_modules
+
+# Install the Modules
+install :; forge install; pnpm install; pip3 install pipx; pipx install slither-analyzer --pip-args '-r requirements.txt'
+
+# Update Dependencies
+update :; forge update
+
+# Builds
+build :; forge build --extra-output-files abi
+
+# Optimized build
+build_optimized :; FOUNDRY_PROFILE=optimized forge build --extra-output-files abi
+
+# Test Coverage
+coverage :; forge coverage --report summary
+
+# Gas report
+gas :; forge clean && forge test --gas-report
+
+# Gas Snapshot to .gas-snapshot
+gas_snapshot :; forge clean && forge snapshot
+
+# chmod scripts
+scripts :; chmod +x ./scripts/*
+
+# deploy local
+deploy_local :; forge script ./scripts/solidity/Deploy.s.sol:Deployer \
+	--fork-url "http://localhost:8545" \
+	--private-key ${PRIVATE_KEY} \
+	-vvv \
+	--broadcast
+
+deploy_testnet :; forge script ./script/solidity/Deploy.s.sol \
+	--optimizer-runs 10000 \
+	--rpc-url ${RPC_URL} \
+	--private-key ${PRIVATE_KEY} \
+	-vvv \
+	--broadcast \
+	--chain-id 888 \
+	--verify
+
+deploy_goerli :; forge script ./script/solidity/Deploy.s.sol \
+	--optimizer-runs 10000 \
+	--rpc-url ${RPC_URL} \
+	--private-key ${PRIVATE_KEY} \
+	-vvv \
+	--broadcast \
+	--chain-id 5 \
+	--etherscan-api-key ${ETHERSCAN_API_KEY} \
+    --verify
+
+deploy_mainnet :; forge script ./script/solidity/Deploy.s.sol \
+	--optimizer-runs 10000 \
+	--rpc-url ${RPC_URL} \
+	--private-key ${PRIVATE_KEY} \
+	-vvv \
+	--broadcast \
+	--chain-id 1 \
+	--etherscan-api-key ${ETHERSCAN_API_KEY} \
+    --verify
+
+# Tests
+test :; forge clean && forge test --optimize --optimizer-runs 1000000 -vvv # --ffi # enable if you need the `ffi` cheat code on HEVM
+
+# Docs buld
+docs_build :; rm -rf docs && forge doc --build
+
+# Docs serve
+docs_serve :; forge doc --serve
+
+# Lint
+lint :; pnpm lint
+
+# Lint check
+lint_check :; pnpm lint:check
+
+# Fmt
+fmt :; pnpm fmt
+
+# Fmt check
+fmt_check :; pnpm fmt:check
+
+# Local node -- produces a block every 15 seconds
+node :; anvil --block-time 15 > /dev/null 2>&1 &
+
+# Local node eth fork
+node_fork :; anvil --fork-url ${RPC_URL} > /dev/null 2>&1 &
+
+node_kill :; killall anvil
+
+# Security
+sec :; slither . --config slitherConfig.json
+
+# Publish
+publish : build_optimized; pnpm publish --no-git-checks
+
+# Analyze
+analyze :; solstat --path ./contracts --toml ./solstat.toml && mv solstat_report.md ./reports/solstat_report.md

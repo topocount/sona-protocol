@@ -1,0 +1,31 @@
+{
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/bower_components": true,
+        "**/*.code-search": true,
+        "cache": true,
+        "out": true,
+        "dist": true,
+        ".git": true
+    },
+    "editor.formatOnSave": true,
+    "solidity.formatter": "prettier",
+    "[solidity]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "solidity.compileUsingRemoteVersion": "v0.8.17+commit.8df45f5f",
+    "solidity.enabledAsYouTypeCompilationErrorCheck": true,
+    "solidity.packageDefaultDependenciesContractsDirectory": "contracts",
+    "solidity.defaultCompiler": "remote",
+    "solidity.linter": "solhint",
+    "solidity.compileUsingLocalVersion" : "solc",
+    "solidity.remappings": [
+        "forge-std/=lib/forge-std/src/",
+        "ds-test/=lib/forge-std/lib/ds-test/src/",
+        "openzeppelin/=lib/openzeppelin-contracts/contracts/",
+        "openzeppelin-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+        "erc721a-upgradeable/=lib/ERC721A-Upgradeable/contracts/",
+        "solady/=lib/solady/src/",
+        "closedsea/=lib/closedsea/src/"
+    ],
+}

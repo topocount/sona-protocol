@@ -1,0 +1,13 @@
+{
+  "name": "closedsea",
+  "license": "MIT",
+  "version": "1.0.0",
+  "description": "Optimized and flexible version of OpenSea's operator filterer",
+  "files": [
+    "src/**/*.sol"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vectorized/closedsea.git"
+  }
+}

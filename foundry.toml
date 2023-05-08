@@ -1,0 +1,37 @@
+[profile.default]
+    src = 'contracts'
+    out = 'dist/artifacts'
+    libs = ['lib']
+    solc-version = "0.8.16"
+    optimizer = true
+    optimizer_runs = 1000000
+    bytecode_hash = "none"
+    verbosity = 2
+    gas_reports = ["*"]
+
+[profile.optimized]
+    via_ir = true
+    out = 'out-via-ir'
+    fuzz_runs = 5000
+    optimizer = true
+    optimizer_runs = 1000000
+
+[profile.test]
+    via_ir = true
+    out = 'out-via-ir'
+    fuzz_runs = 5000
+    src = 'contracts/test'
+
+[fmt]
+    indent = 4
+    line_length = 180
+    tab_width = 4
+    bracket_spacing = true
+    func_attrs_with_params_multiline = false
+    quote_style = "double"
+
+[doc]
+    out = 'docs'
+    title = 'Sona Protocol'
+
+# See more config options https://github.com/foundry-rs/foundry/tree/master/config

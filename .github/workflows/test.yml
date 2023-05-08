@@ -1,0 +1,46 @@
+name: test
+
+on: push
+
+env:
+  FOUNDRY_PROFILE: optimized
+
+jobs:
+  check:
+    strategy:
+      fail-fast: true
+
+    name: Build, Lint and Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 7.30.5
+
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+      - name: Clean and build dependencies
+        run: make install
+
+      - name: Run Lint checks
+        run: |
+          make lint_check
+        id: lint
+
+      - name: Run Forge build
+        run: |
+          forge --version
+          forge build --sizes
+        id: build
+
+      - name: Run Forge tests
+        run: |
+          forge test -vvv
+        id: test

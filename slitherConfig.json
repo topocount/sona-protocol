@@ -1,0 +1,16 @@
+{
+  "solc_remaps": [
+    "forge-std/=lib/forge-std/src/",
+    "ds-test/=lib/forge-std/lib/ds-test/src/",
+    "openzeppelin/=lib/openzeppelin-contracts/contracts/",
+    "openzeppelin-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+    "erc721a-upgradeable/=lib/ERC721A-Upgradeable/contracts/",
+    "solady/=lib/solady/src/",
+    "closedsea/=lib/closedsea/src/"
+  ],
+  "filter_paths": "(lib/|test/|script/|docs/|examples/)",
+  "compile_force_framework": "foundry",
+  "foundry_out_directory": "dist/artifacts",
+  "exclude_low": true,
+  "exclude_informational": true
+}
