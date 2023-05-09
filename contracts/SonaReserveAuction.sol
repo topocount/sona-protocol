@@ -17,9 +17,8 @@ import { AddressableTokenId } from "./utils/AddressableTokenId.sol";
 import { ERC1967Proxy } from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 import { IWETH } from "./interfaces/IWETH.sol";
 import { ZeroCheck } from "./utils/ZeroCheck.sol";
-import { ReentrancyGuard } from "solmate/utils/ReentrancyGuard.sol";
 
-contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin, ReentrancyGuard {
+contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	using AddressableTokenId for uint256;
 	using ZeroCheck for address;
 
@@ -293,19 +292,19 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin, Re
 			} else {
 				// if the bid is higher than the current bid, refund the current bidder
 				if (attemptedBid > auction.currentBidAmount) {
-					if (auction.currency.isZero()) {
-						// refund the current bidder in ETH, if fails send WETH
-						_outgoingEthTransfer(auction.currentBidder, auction.currentBidAmount);
-					} else {
-						// refund the current bidder in the currency
-						if (!IERC20(auction.currency).transfer(auction.currentBidder, auction.currentBidAmount)) revert SonaReserveAuction_TransferFailed();
-
-						// transfer bid amount to this contract
-						if (!IERC20(auction.currency).transferFrom(msg.sender, address(this), attemptedBid)) revert SonaReserveAuction_TransferFailed();
-					}
+					address previousBidder = auction.currentBidder;
+					uint256 previousBidAmount = auction.currentBidAmount;
 
 					auction.currentBidder = payable(msg.sender);
 					auction.currentBidAmount = attemptedBid;
+
+					// Refund previous bidder
+					_outgoingCurrencyTransfer(previousBidder, previousBidAmount, auction.currency);
+
+					// transfer bid amount to this contract
+					if (auction.currency.isNotZero()) {
+						if (!IERC20(auction.currency).transferFrom(msg.sender, address(this), auction.currentBidAmount)) revert SonaReserveAuction_TransferFailed();
+					}
 
 					// if the bid is lower than the current bid, revert
 				} else {
@@ -387,28 +386,14 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin, Re
 			}
 		}
 
-		if (currency.isZero()) {
-			// Wrap to weth
-			_weth.deposit{ value: totalFeesAmount }();
+		// Send the currency to the treasury fee recipient
+		_outgoingCurrencyTransfer(_treasuryFeeRecipient, treasuryFeeAmount, currency);
 
-			// Transfer to treasury
-			if (!IERC20(address(_weth)).transfer(_treasuryFeeRecipient, treasuryFeeAmount)) revert SonaReserveAuction_TransferFailed();
+		// Send the currency to the redistribution fee recipient
+		_outgoingCurrencyTransfer(_redistributionFeeRecipient, redistributionFeeAmount, currency);
 
-			// Transfer to redistribution
-			if (!IERC20(address(_weth)).transfer(_redistributionFeeRecipient, redistributionFeeAmount)) revert SonaReserveAuction_TransferFailed();
-
-			// Send ETH to the seller
-			payable(auction.trackSeller).transfer(sellerProceedsAmount);
-		} else {
-			// Send the currency to the treasury fee recipient
-			if (!IERC20(currency).transfer(_treasuryFeeRecipient, treasuryFeeAmount)) revert SonaReserveAuction_TransferFailed();
-
-			// Send the currency to the redistribution fee recipient
-			if (!IERC20(currency).transfer(_redistributionFeeRecipient, redistributionFeeAmount)) revert SonaReserveAuction_TransferFailed();
-
-			// Send the currency to the seller
-			if (!IERC20(currency).transfer(auction.trackSeller, sellerProceedsAmount)) revert SonaReserveAuction_TransferFailed();
-		}
+		// Send the currency to the seller
+		_outgoingCurrencyTransfer(auction.trackSeller, sellerProceedsAmount, currency);
 
 		// Remove from map
 		delete auctions[_tokenId];
@@ -421,13 +406,16 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin, Re
 		_uriExists[keccak256(bytes(_bundle.arweaveTxId))] = true;
 	}
 
-	function _outgoingEthTransfer(address to, uint256 amount) internal nonReentrant {
-		(bool success, ) = to.call{ value: amount }("");
-		if (!success) {
+	function _outgoingCurrencyTransfer(address to, uint256 amount, address currency) internal {
+		if (currency.isZero()) {
 			// Wrap refund in weth
 			_weth.deposit{ value: amount }();
 			// Send weth
 			if (!IERC20(address(_weth)).transfer(to, amount)) revert SonaReserveAuction_TransferFailed();
+		} else {
+			// Send currency
+			if (!IERC20(currency).transfer(to, amount)) revert SonaReserveAuction_TransferFailed();
 		}
+
 	}
 }
