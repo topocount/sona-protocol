@@ -17,8 +17,9 @@ import { AddressableTokenId } from "./utils/AddressableTokenId.sol";
 import { ERC1967Proxy } from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 import { IWETH } from "./interfaces/IWETH.sol";
 import { ZeroCheck } from "./utils/ZeroCheck.sol";
+import { ReentrancyGuard } from "solmate/utils/ReentrancyGuard.sol";
 
-contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
+contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin, ReentrancyGuard {
 	using AddressableTokenId for uint256;
 	using ZeroCheck for address;
 
@@ -420,7 +421,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		_uriExists[keccak256(bytes(_bundle.arweaveTxId))] = true;
 	}
 
-	function _outgoingEthTransfer(address to, uint256 amount) internal {
+	function _outgoingEthTransfer(address to, uint256 amount) internal nonReentrant {
 		(bool success, ) = to.call{ value: amount }("");
 		if (!success) {
 			// Wrap refund in weth
