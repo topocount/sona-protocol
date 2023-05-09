@@ -79,7 +79,7 @@
 │   │   └── SonaAdmin.t.sol
 │   └── mock/
 │       ├── ERC20Mock.sol
-│       └── MockWeth9.sol
+│       └── Weth9Mock.sol
 └── utils/
     ├── AddressableTokenId.sol
     └── ZeroCheck.sol

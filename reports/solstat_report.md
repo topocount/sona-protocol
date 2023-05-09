@@ -122,7 +122,7 @@ contract Contract3 {
 
 
 ### Lines
-- MockWeth9.sol:28
+- Weth9Mock.sol:28
 
 
 
@@ -482,9 +482,9 @@ contract Contract2 {
 
 
 ### Lines
-- MockWeth9.sol:7
-- MockWeth9.sol:8
-- MockWeth9.sol:9
+- Weth9Mock.sol:7
+- Weth9Mock.sol:8
+- Weth9Mock.sol:9
 
 
 
@@ -943,7 +943,7 @@ contract Contract1 {
 ```
 
 ### Lines
-- MockWeth9.sol:42
+- Weth9Mock.sol:42
 
 
 

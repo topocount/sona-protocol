@@ -293,8 +293,9 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 				// if the bid is higher than the current bid, refund the current bidder
 				if (attemptedBid > auction.currentBidAmount) {
 					if (auction.currency.isZero()) {
-						// refund the current bidder in ETH
-						payable(auction.currentBidder).transfer(auction.currentBidAmount);
+						// refund the current bidder in ETH, if fails send WETH
+						_outgoingEthTransfer(auction.currentBidder, auction.currentBidAmount);
+
 					} else {
 						// refund the current bidder in the currency
 						if (!IERC20(auction.currency).transfer(auction.currentBidder, auction.currentBidAmount)) revert SonaReserveAuction_TransferFailed();
@@ -418,5 +419,15 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	function _ensureBundleIsUnique(MetadataBundle calldata _bundle) internal {
 		if (_uriExists[keccak256(bytes(_bundle.arweaveTxId))] || rewardToken.tokenIdExists(_bundle.tokenId)) revert SonaReserveAuction_Duplicate();
 		_uriExists[keccak256(bytes(_bundle.arweaveTxId))] = true;
+	}
+
+	function _outgoingEthTransfer(address to, uint256 amount) internal {
+		(bool success, ) = to.call{value: amount}("");
+		if (!success) {
+			// Wrap refund in weth
+			_weth.deposit{ value: amount }();
+			// Send weth
+			if (!IERC20(address(_weth)).transfer(to, amount)) revert SonaReserveAuction_TransferFailed();
+		}
 	}
 }

@@ -8,10 +8,11 @@ import { IERC721AUpgradeable } from "erc721a-upgradeable/interfaces/IERC721AUpgr
 import { Util } from "./Util.sol";
 import "forge-std/console.sol";
 import { ERC1967Proxy } from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
-import { MockWeth9, IWETH } from "./mock/MockWeth9.sol";
+import { Weth9Mock, IWETH } from "./mock/Weth9Mock.sol";
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { ERC20ReturnTrueMock, ERC20NoReturnMock, ERC20ReturnFalseMock } from "./mock/ERC20Mock.sol";
-import { MockWeth9, IWETH } from "./mock/MockWeth9.sol";
+import { ContractBidderMock } from "./mock/ContractBidderMock.sol";
+import { Weth9Mock, IWETH } from "./mock/Weth9Mock.sol";
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 
 contract SonaReserveAuctionTest is Util, SonaReserveAuction {
@@ -38,7 +39,11 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 	uint256 public tokenId = (uint256(uint160(trackMinter)) << 96) | 69;
 
 	// Weth
-	MockWeth9 public mockWeth = new MockWeth9();
+	Weth9Mock public mockWeth = new Weth9Mock();
+
+	// Contract bidder
+	ContractBidderMock public contractBidder;
+
 
 	function setUp() public {
 		vm.startPrank(rootOwner);
@@ -50,6 +55,7 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 			abi.encodeWithSelector(SonaReserveAuction.initialize.selector, treasuryRecipient, redistributionRecipient, authorizer, rewardTokenBase, address(0), mockWeth)
 		);
 		auction = SonaReserveAuction(address(proxy));
+		contractBidder = new ContractBidderMock(auction);
 		vm.stopPrank();
 	}
 
@@ -612,5 +618,28 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 		assertEq(IERC20(address(mockERC20)).balanceOf(treasuryRecipient), treasuryFee);
 		assertEq(IERC20(address(mockERC20)).balanceOf(redistributionRecipient), redistributionFee);
 		assertEq(IERC20(address(mockERC20)).balanceOf(trackMinter), sellerProceeds);
+	}
+
+	function test_ContractBidderRejectsEthRefunds() public {
+		(MetadataBundle[2] memory bundles, Signature[2] memory signatures) = _createSignedBundles();
+		vm.prank(trackMinter);
+		auction.createReserveAuction(bundles, signatures, address(0), .1 ether);
+
+		// Contract is original bidder
+		hoax(address(contractBidder));
+		contractBidder.createETHBid(tokenId, .1 ether);
+		contractBidder.disableReceiving();
+
+		// Bidder outbids contract
+		hoax(bidder);
+		auction.createBid{ value: .3 ether }(tokenId, 0);
+
+		vm.warp(2 days);
+
+		vm.prank(trackMinter);
+		auction.settleReserveAuction(tokenId);
+
+		// Contract bidder should have 1.1 weth refunded
+		assertEq(IERC20(address(mockWeth)).balanceOf(address(contractBidder)), .1 ether);
 	}
 }
