@@ -295,7 +295,6 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 					if (auction.currency.isZero()) {
 						// refund the current bidder in ETH, if fails send WETH
 						_outgoingEthTransfer(auction.currentBidder, auction.currentBidAmount);
-
 					} else {
 						// refund the current bidder in the currency
 						if (!IERC20(auction.currency).transfer(auction.currentBidder, auction.currentBidAmount)) revert SonaReserveAuction_TransferFailed();
@@ -422,7 +421,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	}
 
 	function _outgoingEthTransfer(address to, uint256 amount) internal {
-		(bool success, ) = to.call{value: amount}("");
+		(bool success, ) = to.call{ value: amount }("");
 		if (!success) {
 			// Wrap refund in weth
 			_weth.deposit{ value: amount }();

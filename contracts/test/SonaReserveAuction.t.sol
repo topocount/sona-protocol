@@ -44,7 +44,6 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 	// Contract bidder
 	ContractBidderMock public contractBidder;
 
-
 	function setUp() public {
 		vm.startPrank(rootOwner);
 		// WARNING: deployment order matters for the signatures below
