@@ -416,6 +416,5 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 			// Send currency
 			if (!IERC20(currency).transfer(to, amount)) revert SonaReserveAuction_TransferFailed();
 		}
-
 	}
 }
