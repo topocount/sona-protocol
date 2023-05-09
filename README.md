@@ -58,11 +58,11 @@
 ## Contracts
 
 ```bash
-./contracts
+contracts
 ├── SonaReserveAuction.sol
 ├── SonaRewardToken.sol
 ├── SonaRewards.sol
-├── access/
+├── access
 │   ├── SonaAdmin.sol
 │   └── SonaMinter.sol
 ├── interfaces
@@ -70,19 +70,21 @@
 │   ├── ISonaReserveAuction.sol
 │   ├── ISonaRewardToken.sol
 │   └── IWETH.sol
-├── test/
+├── test
 │   ├── SonaReserveAuction.t.sol
 │   ├── SonaRewardToken.t.sol
 │   ├── SonaRewards.t.sol
 │   ├── Util.sol
-│   ├── access/
+│   ├── access
 │   │   └── SonaAdmin.t.sol
-│   └── mock/
+│   └── mock
+│       ├── ContractBidderMock.sol
 │       ├── ERC20Mock.sol
 │       └── Weth9Mock.sol
-└── utils/
+└── utils
     ├── AddressableTokenId.sol
     └── ZeroCheck.sol
+
 ```
 
 ## Getting Started
