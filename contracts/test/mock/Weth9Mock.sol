@@ -3,7 +3,7 @@ pragma solidity ^0.8.16;
 
 import "../../interfaces/IWETH.sol";
 
-contract MockWeth9 is IWETH {
+contract Weth9Mock is IWETH {
 	string public name = "Mock Wrapped Ether";
 	string public symbol = "mWETH";
 	uint8 public decimals = 18;

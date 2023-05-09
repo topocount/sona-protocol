@@ -8,7 +8,7 @@ import { IERC721Upgradeable as IERC721 } from "openzeppelin-upgradeable/token/ER
 import { IERC20Upgradeable as IERC20 } from "openzeppelin-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import { ERC1967Proxy } from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 import { ERC721ConsecutiveEnumerableMock } from "openzeppelin/mocks/token/ERC721ConsecutiveEnumerableMock.sol";
-import { MockWeth9, IWETH } from "./mock/MockWeth9.sol";
+import { Weth9Mock, IWETH } from "./mock/Weth9Mock.sol";
 import { ERC20ReturnTrueMock, ERC20NoReturnMock, ERC20ReturnFalseMock } from "./mock/ERC20Mock.sol";
 import { Merkle } from "murky/Merkle.sol";
 
@@ -26,7 +26,7 @@ contract SonaTestRewards is Util, SonaRewards {
 
 	Merkle public m = new Merkle();
 	ERC20ReturnTrueMock public mockRewardToken = new ERC20ReturnTrueMock();
-	MockWeth9 public mockWeth = new MockWeth9();
+	Weth9Mock public mockWeth = new Weth9Mock();
 	address[] private _holders = [rewardHolder, rewardHolder, rewardHolder, rewardHolder];
 	uint96[] private _nftQtys = [1, 1, 1, 1];
 	string private _mockUrl = "https://mockurl.com/{address}/{data}.json";
