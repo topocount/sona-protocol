@@ -641,4 +641,15 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 		// Contract bidder should have 1.1 weth refunded
 		assertEq(IERC20(address(mockWeth)).balanceOf(address(contractBidder)), .1 ether);
 	}
+
+	function test_CancelAuctionThatsEndedReverts() public {
+		(MetadataBundle[2] memory bundles, Signature[2] memory signatures) = _createSignedBundles();
+		vm.prank(trackMinter);
+		auction.createReserveAuction(bundles, signatures, address(0), .1 ether);
+
+		vm.warp(2 days);
+
+		vm.expectRevert(ISonaReserveAuction.SonaReserveAuction_AuctionEnded.selector);
+		auction.cancelReserveAuction(tokenId);
+	}
 }

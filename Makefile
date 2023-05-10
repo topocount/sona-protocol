@@ -100,7 +100,7 @@ node_kill :; killall anvil
 sec :; slither . --config slitherConfig.json
 
 # Publish
-publish : build_optimized; pnpm publish --no-git-checks
+publish : build_optimized; ./script/prepublish.sh | sh; pnpm publish --no-git-checks
 
 # Analyze
 analyze :; solstat --path ./contracts --toml ./solstat.toml && mv solstat_report.md ./reports/solstat_report.md

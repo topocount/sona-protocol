@@ -181,6 +181,11 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 			revert SonaReserveAuction_AuctionIsLive();
 		}
 
+		// Can't cancel an auction that is finished but hasn't been settled
+		if (auction.endingTime != 0 && auction.endingTime <= block.timestamp) {
+			revert SonaReserveAuction_AuctionEnded();
+		}
+
 		delete auctions[_tokenId];
 
 		emit ReserveAuctionCanceled({ tokenId: _tokenId });
