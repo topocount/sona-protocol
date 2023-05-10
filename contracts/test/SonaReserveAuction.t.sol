@@ -6,7 +6,6 @@ import { SonaRewardToken } from "../SonaRewardToken.sol";
 import { ISonaReserveAuction } from "../interfaces/ISonaReserveAuction.sol";
 import { IERC721AUpgradeable } from "erc721a-upgradeable/interfaces/IERC721AUpgradeable.sol";
 import { Util } from "./Util.sol";
-import "forge-std/console.sol";
 import { ERC1967Proxy } from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 import { Weth9Mock, IWETH } from "./mock/Weth9Mock.sol";
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
@@ -640,5 +639,21 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 
 		// Contract bidder should have 1.1 weth refunded
 		assertEq(IERC20(address(mockWeth)).balanceOf(address(contractBidder)), .1 ether);
+	}
+
+	function test_CancelAuctionThatsEndedReverts() public {
+		(MetadataBundle[2] memory bundles, Signature[2] memory signatures) = _createSignedBundles();
+		vm.prank(trackMinter);
+		auction.createReserveAuction(bundles, signatures, address(0), .1 ether);
+
+		// Bidder bids
+		hoax(bidder);
+		auction.createBid{ value: .3 ether }(tokenId, 0);
+
+		vm.warp(2 days);
+
+		vm.expectRevert(ISonaReserveAuction.SonaReserveAuction_AuctionEnded.selector);
+		vm.prank(trackMinter);
+		auction.cancelReserveAuction(tokenId);
 	}
 }
