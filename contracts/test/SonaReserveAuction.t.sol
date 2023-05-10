@@ -6,7 +6,6 @@ import { SonaRewardToken } from "../SonaRewardToken.sol";
 import { ISonaReserveAuction } from "../interfaces/ISonaReserveAuction.sol";
 import { IERC721AUpgradeable } from "erc721a-upgradeable/interfaces/IERC721AUpgradeable.sol";
 import { Util } from "./Util.sol";
-import "forge-std/console.sol";
 import { ERC1967Proxy } from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 import { Weth9Mock, IWETH } from "./mock/Weth9Mock.sol";
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.16;
 
-import "../../interfaces/IWETH.sol";
+import { IWETH } from "../../interfaces/IWETH.sol";
 
 contract Weth9Mock is IWETH {
 	string public name = "Mock Wrapped Ether";
