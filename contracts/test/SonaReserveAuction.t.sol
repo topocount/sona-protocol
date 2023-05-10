@@ -647,9 +647,14 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 		vm.prank(trackMinter);
 		auction.createReserveAuction(bundles, signatures, address(0), .1 ether);
 
+		// Bidder bids
+		hoax(bidder);
+		auction.createBid{ value: .3 ether }(tokenId, 0);
+
 		vm.warp(2 days);
 
 		vm.expectRevert(ISonaReserveAuction.SonaReserveAuction_AuctionEnded.selector);
+		vm.prank(trackMinter);
 		auction.cancelReserveAuction(tokenId);
 	}
 }
