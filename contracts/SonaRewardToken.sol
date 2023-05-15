@@ -84,7 +84,7 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 		_safeMint(_artist, artistTokenId);
 		_updateArweaveTxId(artistTokenId, _artistTxId);
 
-		_safeMint(_collector, _tokenId);
+		_mint(_collector, _tokenId);
 		_updateArweaveTxId(_tokenId, _collectorTxId);
 	}
 
