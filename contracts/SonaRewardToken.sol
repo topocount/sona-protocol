@@ -16,6 +16,7 @@ import { ZeroCheck } from "./utils/ZeroCheck.sol";
 contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 	using AddressableTokenId for uint256;
 	using ZeroCheck for address;
+
 	/*//////////////////////////////////////////////////////////////
 	/                         MAPPINGS
 	//////////////////////////////////////////////////////////////*/
@@ -29,6 +30,11 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 	/// @dev Modifier that ensures the calling contract has the admin role
 	modifier onlySonaAdminOrCreator(uint256 _tokenId) {
 		if (_tokenId.getAddress() != msg.sender && !isSonaAdmin(msg.sender)) revert SonaRewardToken_Unauthorized();
+		_;
+	}
+
+	modifier onlyTokenHolder(uint256 _tokenId) {
+		if (_ownerOf[_tokenId] != msg.sender) revert SonaRewardToken_Unauthorized();
 		_;
 	}
 
@@ -91,7 +97,7 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 
 	/// @dev Removes a RewardToken from the protocol, burning the NFT and striking the data from on-chain memory
 	/// @param _tokenId The ID of the token that will be deleted
-	function burnRewardToken(uint256 _tokenId) external checkExists(_tokenId) onlySonaAdminOrCreator(_tokenId) {
+	function burnRewardToken(uint256 _tokenId) external onlyTokenHolder(_tokenId) {
 		delete rewardTokens[_tokenId];
 
 		_burn(_tokenId);
