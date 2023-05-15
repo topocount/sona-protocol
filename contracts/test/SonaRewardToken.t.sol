@@ -68,16 +68,57 @@ contract SonaRewardTokenTest is Util, ERC721Holder {
 		assertEq(rewardToken.tokenURI(_tokenId), "ar://Qmabcdefghijklmnopqrstud");
 	}
 
-	function test_BurnRewardToken() public {
+	function test_BurnCreatorRewardToken() public {
 		string memory cid = "Qmabcdefghijklmnopqrstuv";
 		string memory cid2 = "Qmabcdefghijklmnopqrstuvx";
 
 		rewardToken.mintFromAuction(_tokenId, address(this), rewardTokenRecipient, cid, cid2);
 
+		rewardToken.burnRewardToken(_artistTokenId);
+
+		vm.expectRevert("NOT_MINTED");
+		rewardToken.ownerOf(_artistTokenId);
+	}
+
+	function test_BurnCollectorRewardToken() public {
+		string memory cid = "Qmabcdefghijklmnopqrstuv";
+		string memory cid2 = "Qmabcdefghijklmnopqrstuvx";
+
+		rewardToken.mintFromAuction(_tokenId, address(this), rewardTokenRecipient, cid, cid2);
+
+		vm.prank(rewardTokenRecipient);
 		rewardToken.burnRewardToken(_tokenId);
 
 		vm.expectRevert("NOT_MINTED");
 		rewardToken.ownerOf(_tokenId);
+	}
+
+	function test_CreatorBurnCollectorTokenFails() public {
+		string memory cid = "Qmabcdefghijklmnopqrstuv";
+		string memory cid2 = "Qmabcdefghijklmnopqrstuvx";
+
+		rewardToken.mintFromAuction(_tokenId, address(this), rewardTokenRecipient, cid, cid2);
+
+		vm.expectRevert(ISonaRewardToken.SonaRewardToken_Unauthorized.selector);
+		rewardToken.burnRewardToken(_tokenId);
+	}
+
+	function testFuzz_randomBurnerFails(address _artistBurner, address _collectorBurner) public {
+		vm.assume(_artistBurner != address(this));
+		vm.assume(_collectorBurner != rewardTokenRecipient);
+
+		string memory cid = "Qmabcdefghijklmnopqrstuv";
+		string memory cid2 = "Qmabcdefghijklmnopqrstuvx";
+
+		rewardToken.mintFromAuction(_tokenId, address(this), rewardTokenRecipient, cid, cid2);
+
+		vm.prank(_artistBurner);
+		vm.expectRevert(ISonaRewardToken.SonaRewardToken_Unauthorized.selector);
+		rewardToken.burnRewardToken(_artistTokenId);
+
+		vm.prank(_collectorBurner);
+		vm.expectRevert(ISonaRewardToken.SonaRewardToken_Unauthorized.selector);
+		rewardToken.burnRewardToken(_tokenId);
 	}
 
 	function test_MintSucceeds() public {
