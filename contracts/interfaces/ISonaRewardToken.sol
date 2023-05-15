@@ -2,13 +2,10 @@
 
 pragma solidity ^0.8.16;
 
-/*
-	 ___  _____  _  _    __      ___  ____  ____  ____    __    __  __
-	/ __)(  _  )( \( )  /__\    / __)(_  _)(  _ \( ___)  /__\  (  \/  )
-	\__ \ )(_)(  )  (  /(__)\   \__ \  )(   )   / )__)  /(__)\  )    (
-	(___/(_____)(_)\_)(__)(__)  (___/ (__) (_)\_)(____)(__)(__)(_/\/\_)
-
-*/
+//  ___  _____  _  _    __      ___  ____  ____  ____    __    __  __
+// / __)(  _  )( \( )  /__\    / __)(_  _)(  _ \( ___)  /__\  (  \/  )
+// \__ \ )(_)(  )  (  /(__)\   \__ \  )(   )   / )__)  /(__)\  )    (
+// (___/(_____)(_)\_)(__)(__)  (___/ (__) (_)\_)(____)(__)(__)(_/\/\_)
 
 interface ISonaRewardToken {
 	error SonaRewardToken_DoesNotExist();
@@ -22,8 +19,8 @@ interface ISonaRewardToken {
 	error SonaRewardToken_NoArtistInTokenId();
 
 	/*//////////////////////////////////////////////////////////////
-                                 EVENTS
-    //////////////////////////////////////////////////////////////*/
+	/                              EVENTS
+	//////////////////////////////////////////////////////////////*/
 
 	/// @dev Emitted when a new RewardToken is minted.
 	/// @param tokenId The id of the token
@@ -46,8 +43,8 @@ interface ISonaRewardToken {
 	event Initialized(address owner, string name, string symbol);
 
 	/*//////////////////////////////////////////////////////////////
-                                STRUCTS
-    //////////////////////////////////////////////////////////////*/
+	/                             STRUCTS
+	//////////////////////////////////////////////////////////////*/
 
 	struct RewardToken {
 		/// @dev The hash of the Arweave transaction where the metadata is stored.
@@ -55,8 +52,8 @@ interface ISonaRewardToken {
 	}
 
 	/*//////////////////////////////////////////////////////////////
-                               FUNCTIONS
-    //////////////////////////////////////////////////////////////*/
+	/                            FUNCTIONS
+	//////////////////////////////////////////////////////////////*/
 
 	function mintFromAuction(uint256 _tokenId, address _artist, address _collector, string memory _artistCid, string memory _collectorCid) external;
 
