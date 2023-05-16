@@ -411,26 +411,26 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		_uriExists[keccak256(bytes(_bundle.arweaveTxId))] = true;
 	}
 
-	function _handleTokenTransfer(address to, uint256 amount, address currency) internal {
-		if (currency.isZero()) {
+	function _handleTokenTransfer(address _to, uint256 _amount, address _currency) internal {
+		if (_currency.isZero()) {
 			// Wrap refund in weth
-			_weth.deposit{ value: amount }();
+			_weth.deposit{ value: _amount }();
 			// Send weth
-			_transferTokenOut(to, amount, address(_weth));
+			_transferTokenOut(_to, _amount, address(_weth));
 		} else {
 			// Send currency
-			_transferTokenOut(to, amount, currency);
+			_transferTokenOut(_to, _amount, _currency);
 		}
 	}
 
-	function _sendCurrencyToParticipant(address payable to, uint256 amount, address currency) internal {
-		if (currency.isZero()) {
-			if (!to.send(amount)) {
-				_handleTokenTransfer(to, amount, currency);
+	function _sendCurrencyToParticipant(address payable _to, uint256 _amount, address _currency) internal {
+		if (_currency.isZero()) {
+			if (!_to.send(_amount)) {
+				_handleTokenTransfer(_to, _amount, _currency);
 			}
 		} else {
 			// Send currency
-			_transferTokenOut(to, amount, currency);
+			_transferTokenOut(_to, _amount, _currency);
 		}
 	}
 

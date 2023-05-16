@@ -627,7 +627,6 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 		hoax(address(contractBidder));
 		uint256 originalBalance = address(contractBidder).balance;
 		contractBidder.createETHBid(tokenId, .1 ether);
-		//contractBidder.disableReceiving();
 
 		// Bidder outbids contract
 		hoax(bidder);
