@@ -413,10 +413,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 
 	function _handleTokenTransfer(address _to, uint256 _amount, address _currency) internal {
 		if (_currency.isZero()) {
-			// Wrap refund in weth
-			_weth.deposit{ value: _amount }();
-			// Send weth
-			_transferTokenOut(_to, _amount, address(_weth));
+			_wrapAndSendEth(_to, _amount);
 		} else {
 			// Send currency
 			_transferTokenOut(_to, _amount, _currency);
@@ -426,12 +423,19 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	function _sendCurrencyToParticipant(address payable _to, uint256 _amount, address _currency) internal {
 		if (_currency.isZero()) {
 			if (!_to.send(_amount)) {
-				_handleTokenTransfer(_to, _amount, _currency);
+				_wrapAndSendEth(_to, _amount);
 			}
 		} else {
 			// Send currency
 			_transferTokenOut(_to, _amount, _currency);
 		}
+	}
+
+	function _wrapAndSendEth(address _to, uint256 _amount) internal {
+		// Wrap refund in weth
+		_weth.deposit{ value: _amount }();
+		// Send weth
+		_transferTokenOut(_to, _amount, address(_weth));
 	}
 
 	function _transferTokenOut(address _to, uint256 _amount, address _currency) internal {
