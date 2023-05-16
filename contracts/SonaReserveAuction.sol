@@ -297,14 +297,14 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 			} else {
 				// if the bid is higher than the current bid, refund the current bidder
 				if (attemptedBid > auction.currentBidAmount) {
-					address previousBidder = auction.currentBidder;
+					address payable previousBidder = auction.currentBidder;
 					uint256 previousBidAmount = auction.currentBidAmount;
 
 					auction.currentBidder = payable(msg.sender);
 					auction.currentBidAmount = attemptedBid;
 
 					// Refund previous bidder
-					_outgoingCurrencyTransfer(previousBidder, previousBidAmount, auction.currency);
+					_sendCurrencyToParticipant(previousBidder, previousBidAmount, auction.currency);
 
 					// transfer bid amount to this contract
 					if (auction.currency.isNotZero()) {
@@ -392,13 +392,13 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		}
 
 		// Send the currency to the treasury fee recipient
-		_outgoingCurrencyTransfer(_treasuryFeeRecipient, treasuryFeeAmount, currency);
+		_handleTokenTransfer(_treasuryFeeRecipient, treasuryFeeAmount, currency);
 
 		// Send the currency to the redistribution fee recipient
-		_outgoingCurrencyTransfer(_redistributionFeeRecipient, redistributionFeeAmount, currency);
+		_handleTokenTransfer(_redistributionFeeRecipient, redistributionFeeAmount, currency);
 
 		// Send the currency to the seller
-		_outgoingCurrencyTransfer(auction.trackSeller, sellerProceedsAmount, currency);
+		_sendCurrencyToParticipant(auction.trackSeller, sellerProceedsAmount, currency);
 
 		// Remove from map
 		delete auctions[_tokenId];
@@ -411,15 +411,30 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		_uriExists[keccak256(bytes(_bundle.arweaveTxId))] = true;
 	}
 
-	function _outgoingCurrencyTransfer(address to, uint256 amount, address currency) internal {
+	function _handleTokenTransfer(address to, uint256 amount, address currency) internal {
 		if (currency.isZero()) {
 			// Wrap refund in weth
 			_weth.deposit{ value: amount }();
 			// Send weth
-			if (!IERC20(address(_weth)).transfer(to, amount)) revert SonaReserveAuction_TransferFailed();
+			_transferTokenOut(to, amount, address(_weth));
 		} else {
 			// Send currency
-			if (!IERC20(currency).transfer(to, amount)) revert SonaReserveAuction_TransferFailed();
+			_transferTokenOut(to, amount, currency);
 		}
+	}
+
+	function _sendCurrencyToParticipant(address payable to, uint256 amount, address currency) internal {
+		if (currency.isZero()) {
+			if (!to.send(amount)) {
+				_handleTokenTransfer(to, amount, currency);
+			}
+		} else {
+			// Send currency
+			_transferTokenOut(to, amount, currency);
+		}
+	}
+
+	function _transferTokenOut(address _to, uint256 _amount, address _currency) internal {
+		if (!IERC20(_currency).transfer(_to, _amount)) revert SonaReserveAuction_TransferFailed();
 	}
 }
