@@ -77,15 +77,15 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 	/// @param _collector The address that won the auction
 	/// @param _artistTxId the arweave txId of the artist edition bundle contained on arweave
 	/// @param _collectorTxId the arweave txId of the collector edition bundle contained on arweave
-	function mintFromAuction(uint256 _tokenId, address _artist, address _collector, string calldata _artistTxId, string calldata _collectorTxId) external onlySonaMinter {
+	function mintFromAuction(uint256 _tokenId, address _artist, address _collector, string calldata _artistTxId, string calldata _collectorTxId, address payable _splits) external onlySonaMinter {
 		if (_tokenId % 2 == 0) revert SonaRewardToken_ArtistEditionEven();
 		if (AddressableTokenId.getAddress(_tokenId) != _artist) revert SonaRewardToken_NoArtistInTokenId();
 		uint256 artistTokenId = _tokenId.getArtistEdition();
-		_safeMint(_artist, artistTokenId);
-		_updateArweaveTxId(artistTokenId, _artistTxId);
+		_mint(_artist, artistTokenId);
+		_setTokenMetadata(artistTokenId, _artistTxId, _splits);
 
 		_mint(_collector, _tokenId);
-		_updateArweaveTxId(_tokenId, _collectorTxId);
+		_setTokenMetadata(_tokenId, _collectorTxId, payable(address(0)));
 	}
 
 	/// @dev Updates the IPFS CID for the metadata for a given RewardToken
@@ -111,10 +111,16 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 		return string(abi.encodePacked("ar://", rewardTokens[_tokenId].arTxId));
 	}
 
-	/// @dev Returns the arTxId of the RewardToken
+	/// @dev Returns the metadata of the RewardToken
 	/// @param _tokenId The ID of the token to fetch
-	function getRewardTokenArweaveId(uint256 _tokenId) external view checkExists(_tokenId) returns (string memory) {
-		return rewardTokens[_tokenId].arTxId;
+	function getRewardTokenMetadata(uint256 _tokenId) external view checkExists(_tokenId) returns (RewardToken memory metadata) {
+		return rewardTokens[_tokenId];
+	}
+
+	/// @dev Returns the splits address of the RewardToken
+	/// @param _tokenId The ID of the token to fetch
+	function getRewardTokenSplitsAddr(uint256 _tokenId) external view checkExists(_tokenId) returns (address payable splits) {
+		return rewardTokens[_tokenId].splits;
 	}
 
 	/// @notice Check if token `_tokenId` exists
@@ -131,5 +137,11 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 		rewardTokens[_tokenId].arTxId = _txId;
 
 		emit RewardTokenArweaveTxIdUpdated({ tokenId: _tokenId, txId: _txId });
+	}
+
+	function _setTokenMetadata(uint256 _tokenId, string calldata _txId, address payable _splits) internal {
+		rewardTokens[_tokenId] = RewardToken({ arTxId: _txId, splits: _splits });
+
+		emit RewardTokenMetadataUpdated({ tokenId: _tokenId, txId: _txId, splits: _splits });
 	}
 }

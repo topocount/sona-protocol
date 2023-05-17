@@ -77,10 +77,10 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 	}
 
 	function _createSignedBundles() private pure returns (MetadataBundle[2] memory bundles, Signature[2] memory signatures) {
-		MetadataBundle memory artistBundle = MetadataBundle("Hello World!", 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000044);
-		MetadataBundle memory collectorBundle = MetadataBundle("Hello World", 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000045);
-		Signature memory artistSignature = Signature(28, 0x17a63f8e164ff300abc7e6f46fcecbd6f86ceb999446c6c9f3d7f2fda15603cf, 0x7effc1119b1cb2b1f8974979da63ac29089e2f484718789462263de38a6e7cd4);
-		Signature memory collectorSignature = Signature(27, 0x0d43e4410a8d0c45dc98354210e58c9af0c00baa738a41ffac5daef8d6388e95, 0x2d409dd510323b6066ef2fbf8a766734884295c907c6c6fbb7b1871b61ff1120);
+		MetadataBundle memory artistBundle = MetadataBundle({ arweaveTxId: "Hello World!", tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000044, splits: payable(address(25)) });
+		MetadataBundle memory collectorBundle = MetadataBundle({ arweaveTxId: "Hello World", tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000045, splits: payable(address(0)) });
+		Signature memory artistSignature = Signature(27, 0x5cca1003a453dd7f2291db9b3bba02170de8e7b03c28b23e7e0d1ad599c6ef42, 0x378a5dccd72e4c9728a5f9a36b0ec14945e40246ff6d5c71ab7dfd22a0742a8e);
+		Signature memory collectorSignature = Signature(27, 0x37517faa62bc85cf1759550bc93a8940880277c5b7465ccd633ee0ff44135354, 0x196d6ce9ccd73edfc61135a32c3d75f828a8fd2eb645bdeb8266b62d7a9bcd69);
 
 		bundles = [artistBundle, collectorBundle];
 		signatures = [artistSignature, collectorSignature];

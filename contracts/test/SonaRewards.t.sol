@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.16;
 
+import { ERC1967Proxy } from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
+import { IERC721Upgradeable as IERC721 } from "openzeppelin-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import { IERC20Upgradeable as IERC20 } from "openzeppelin-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import { Merkle } from "murky/Merkle.sol";
+
 import { SonaRewards } from "../SonaRewards.sol";
 import { IRewardGateway } from "../interfaces/IRewardGateway.sol";
 import { Util } from "./Util.sol";
-import { IERC721Upgradeable as IERC721 } from "openzeppelin-upgradeable/token/ERC721/IERC721Upgradeable.sol";
-import { IERC20Upgradeable as IERC20 } from "openzeppelin-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import { ERC1967Proxy } from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
-import { ERC721ConsecutiveEnumerableMock } from "openzeppelin/mocks/token/ERC721ConsecutiveEnumerableMock.sol";
+import { SonaRewardToken } from "../SonaRewardToken.sol";
+import { RewardTokenMock as MockRewardToken } from "./mock/RewardTokenMock.sol";
 import { Weth9Mock, IWETH } from "./mock/Weth9Mock.sol";
 import { ERC20ReturnTrueMock, ERC20NoReturnMock, ERC20ReturnFalseMock } from "./mock/ERC20Mock.sol";
-import { Merkle } from "murky/Merkle.sol";
 
 contract SonaTestRewards is Util, SonaRewards {
 	event Transfer(address indexed from, address indexed to, uint256 value);
@@ -30,7 +32,7 @@ contract SonaTestRewards is Util, SonaRewards {
 	address[] private _holders = [rewardHolder, rewardHolder, rewardHolder, rewardHolder];
 	uint96[] private _nftQtys = [1, 1, 1, 1];
 	string private _mockUrl = "https://mockurl.com/{address}/{data}.json";
-	ERC721ConsecutiveEnumerableMock public mockRewardsToken = new ERC721ConsecutiveEnumerableMock("Mock Tracks", "MOCK", _holders, _nftQtys);
+	MockRewardToken public mockRewardsToken = new MockRewardToken("Mock Tracks", "MOCK", _holders, _nftQtys, payable(address(0)));
 
 	function setUp() public {
 		// NOTE: if you get a generic delegatecall error during `setUp` it's probably
@@ -144,6 +146,43 @@ contract SonaTestRewards is Util, SonaRewards {
 		assertEq(rewardHolder.balance, amounts[0] + amounts[1]);
 	}
 
+	function test_ClaimRewardsToSplit() public {
+		// set split address on mock NFT
+		address payable splitsAddress = payable(makeAddr("splitsAddress"));
+		mockRewardsToken.setSplitAddr(splitsAddress);
+		// can claim ERC20 funds
+		(uint256 tokenId, uint256[] memory rootIds, bytes32[][] memory proofs, uint256[] memory amounts) = _setUpClaims(rewards);
+		vm.prank(rewardHolder);
+		vm.expectEmit(true, true, true, true, address(rewards));
+		emit RewardsClaimed(tokenId, rewardHolder, rootIds[0], amounts[0]);
+		vm.expectEmit(true, true, true, true, address(rewards));
+		emit RewardsClaimed(tokenId, rewardHolder, rootIds[1], amounts[1]);
+		vm.expectEmit(true, true, false, true, address(mockRewardToken));
+		emit Transfer(address(0), splitsAddress, amounts[0] + amounts[1]);
+		rewards.claimRewards(tokenId, rootIds, proofs, amounts);
+
+		//revert on multiple claim attempts on the same roots
+		vm.prank(rewardHolder);
+		vm.expectRevert(InvalidClaimAttempt.selector);
+		rewards.claimRewards(tokenId, rootIds, proofs, amounts);
+
+		// can claim WETH funds
+		assertEq(rewardHolder.balance, 0);
+		assertEq(address(mockWeth).balance, 0);
+		(tokenId, rootIds, proofs, amounts) = _setUpClaims(wEthRewards);
+		payable(address(mockWeth)).transfer(amounts[0] + amounts[1]);
+		assertEq(address(mockWeth).balance, amounts[0] + amounts[1]);
+		vm.expectEmit(true, true, true, true, address(wEthRewards));
+		emit RewardsClaimed(tokenId, rewardHolder, rootIds[0], amounts[0]);
+		vm.expectEmit(true, true, true, true, address(wEthRewards));
+		emit RewardsClaimed(tokenId, rewardHolder, rootIds[1], amounts[1]);
+		vm.expectEmit(true, true, false, true, address(mockWeth));
+		emit Transfer(address(0), address(wEthRewards), amounts[0] + amounts[1]);
+		vm.prank(rewardHolder);
+		wEthRewards.claimRewards(tokenId, rootIds, proofs, amounts);
+		assertEq(splitsAddress.balance, amounts[0] + amounts[1]);
+	}
+
 	function testFuzz_nonHolderReverts(address nonHolder) public {
 		vm.assume(nonHolder != rewardHolder);
 		vm.assume(nonHolder != address(0));
@@ -158,7 +197,7 @@ contract SonaTestRewards is Util, SonaRewards {
 		ERC20ReturnFalseMock mockFalseRewardToken = new ERC20ReturnFalseMock();
 		(uint256 tokenId, uint256[] memory rootIds, bytes32[][] memory proofs, uint256[] memory amounts) = _setUpClaims(rewards);
 		vm.prank(rewardAdmin);
-		rewards.updateIntegrations(IERC721(address(mockRewardsToken)), IERC20(address(mockFalseRewardToken)), IWETH(address(0)), address(0), "");
+		rewards.updateIntegrations(SonaRewardToken(address(mockRewardsToken)), IERC20(address(mockFalseRewardToken)), IWETH(address(0)), address(0), "");
 
 		// expect to revert with our error when a transfer returns `false`
 		vm.prank(rewardHolder);
@@ -166,7 +205,7 @@ contract SonaTestRewards is Util, SonaRewards {
 		rewards.claimRewards(tokenId, rootIds, proofs, amounts);
 
 		vm.prank(rewardAdmin);
-		rewards.updateIntegrations(IERC721(address(mockRewardsToken)), IERC20(address(mockBadRewardToken)), IWETH(address(0)), address(0), "");
+		rewards.updateIntegrations(SonaRewardToken(address(mockRewardsToken)), IERC20(address(mockBadRewardToken)), IWETH(address(0)), address(0), "");
 
 		// expect to revert without a message when a transfer returns empty
 		vm.prank(rewardHolder);

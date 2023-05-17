@@ -64,8 +64,9 @@ interface ISonaReserveAuction {
 	//////////////////////////////////////////////////////////////*/
 
 	struct MetadataBundle {
-		string arweaveTxId;
 		uint256 tokenId;
+		address payable splits;
+		string arweaveTxId;
 	}
 
 	struct Signature {

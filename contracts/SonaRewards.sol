@@ -10,7 +10,7 @@ pragma solidity ^0.8.16;
 import { SonaAdmin } from "./access/SonaAdmin.sol";
 import { UUPSUpgradeable } from "openzeppelin-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { MerkleProofLib } from "solady/utils/MerkleProofLib.sol";
-import { IERC721Upgradeable as IERC721 } from "openzeppelin-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import { SonaRewardToken } from "./SonaRewardToken.sol";
 import { IERC20Upgradeable as IERC20 } from "openzeppelin-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import { IRewardGateway } from "./interfaces/IRewardGateway.sol";
 import { IWETH } from "./interfaces/IWETH.sol";
@@ -21,6 +21,7 @@ import { ZeroCheck } from "./utils/ZeroCheck.sol";
 contract SonaRewards is Initializable, SonaAdmin {
 	using MerkleProofLib for bytes32[];
 	using ZeroCheck for address;
+	using ZeroCheck for address payable;
 	/*//////////////////////////////////////////////////////////////
 		STRUCTS
 	//////////////////////////////////////////////////////////////*/
@@ -51,7 +52,7 @@ contract SonaRewards is Initializable, SonaAdmin {
 	uint256 public lastRootId;
 
 	address private _rewardVault;
-	IERC721 private _sonaRewardToken;
+	SonaRewardToken private _sonaRewardToken;
 	IERC20 private _paymentToken;
 	IWETH private _wETHToken;
 	string private _claimLookupUrl;
@@ -96,7 +97,7 @@ contract SonaRewards is Initializable, SonaAdmin {
 	/// @param wETHToken_ The address of the wETH token if Collectors and Artists earn ETH
 	/// @param rewardVault_ The holder of the reward token that has granted this contract enough of an allowance to operate
 	/// @param claimLookupUrl_ The templated url returned via `OffchainLookup`. Must be EIP-3668 compliant
-	function initialize(address _eoaAdmin, IERC721 sonaRewardToken_, IERC20 paymentToken_, IWETH wETHToken_, address rewardVault_, string calldata claimLookupUrl_) public initializer {
+	function initialize(address _eoaAdmin, SonaRewardToken sonaRewardToken_, IERC20 paymentToken_, IWETH wETHToken_, address rewardVault_, string calldata claimLookupUrl_) public initializer {
 		_setupRole(_ADMIN_ROLE, _eoaAdmin);
 		_setRoleAdmin(_ADMIN_ROLE, _ADMIN_ROLE);
 
@@ -168,12 +169,13 @@ contract SonaRewards is Initializable, SonaAdmin {
 			_claimRewardsOne(_tokenId, _rootIds[i], _proofs[i], _amounts[i]);
 			transferAmount += _amounts[i];
 		}
+		address payoutAddress = _getPayoutAddress(_tokenId, msg.sender);
 		if (address(_paymentToken).isNotZero()) {
-			if (!_paymentToken.transferFrom(_rewardVault, msg.sender, transferAmount)) revert RewardTransferFailed();
+			if (!_paymentToken.transferFrom(_rewardVault, payoutAddress, transferAmount)) revert RewardTransferFailed();
 		} else {
 			if (!_wETHToken.transferFrom(_rewardVault, address(this), transferAmount)) revert RewardTransferFailed();
 			_wETHToken.withdraw(transferAmount);
-			payable(msg.sender).transfer(transferAmount);
+			payable(payoutAddress).transfer(transferAmount);
 		}
 	}
 
@@ -183,7 +185,7 @@ contract SonaRewards is Initializable, SonaAdmin {
 	/// @param wETHToken_ The address of the wETH token if Collectors and Artists earn ETH
 	/// @param rewardVault_ The holder of the reward token that has granted this contract enough of an allowance to operate
 	/// @param claimLookupUrl_ The templated url returned via `OffchainLookup`. Must be EIP-3668 compliant
-	function updateIntegrations(IERC721 sonaRewardToken_, IERC20 paymentToken_, IWETH wETHToken_, address rewardVault_, string calldata claimLookupUrl_) public onlySonaAdmin {
+	function updateIntegrations(SonaRewardToken sonaRewardToken_, IERC20 paymentToken_, IWETH wETHToken_, address rewardVault_, string calldata claimLookupUrl_) public onlySonaAdmin {
 		_updateIntegrations(sonaRewardToken_, paymentToken_, wETHToken_, rewardVault_, claimLookupUrl_);
 	}
 
@@ -202,7 +204,7 @@ contract SonaRewards is Initializable, SonaAdmin {
 		revert InvalidProof();
 	}
 
-	function _updateIntegrations(IERC721 sonaRewardToken_, IERC20 paymentToken_, IWETH wETHToken_, address rewardVault_, string calldata claimLookupUrl_) internal {
+	function _updateIntegrations(SonaRewardToken sonaRewardToken_, IERC20 paymentToken_, IWETH wETHToken_, address rewardVault_, string calldata claimLookupUrl_) internal {
 		if ((address(paymentToken_).isNotZero() && address(wETHToken_).isNotZero()) || address(paymentToken_) == address(wETHToken_)) {
 			revert InvalidTokenInputs(address(paymentToken_), address(wETHToken_));
 		}
@@ -212,5 +214,10 @@ contract SonaRewards is Initializable, SonaAdmin {
 		_rewardVault = rewardVault_;
 		_claimLookupUrl = claimLookupUrl_;
 		emit IntegrationsUpdated(address(sonaRewardToken_), address(paymentToken_), address(wETHToken_), rewardVault_, claimLookupUrl_);
+	}
+
+	function _getPayoutAddress(uint256 _tokenId, address _holder) internal view returns (address payable payoutAddress) {
+		address payable splits = _sonaRewardToken.getRewardTokenSplitsAddr(_tokenId);
+		return splits.isNotZero() ? splits : payable(_holder);
 	}
 }

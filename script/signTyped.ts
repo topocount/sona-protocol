@@ -10,8 +10,11 @@ const testClient = createTestClient({
 	transport: http(),
 })
 
+const account = mnemonicToAccount("test test test test test test test test test test test junk", { accountIndex: 0 })
+
+console.log({ account })
 const walletClient = createWalletClient({
-	account: mnemonicToAccount("test test test test test test test test test test test junk"),
+	account,
 	chain: foundry,
 	transport: http(),
 })
@@ -30,19 +33,22 @@ const domain = {
 
 const types = {
 	MetadataBundle: [
-		{ name: "arweaveTxId", type: "string" },
 		{ name: "tokenId", type: "uint256" },
+		{ name: "splits", type: "address" },
+		{ name: "arweaveTxId", type: "string" },
 	],
 }
 
 const artistBundle = {
-	arweaveTxId: "Hello World!",
 	tokenId: concat(["0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f", numberToHex(68, { size: 12 })]),
+	splits: numberToHex(25, { size: 20 }),
+	arweaveTxId: "Hello World!",
 } as const
 
 const collectorBundle = {
-	arweaveTxId: "Hello World",
 	tokenId: concat(["0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f", numberToHex(69, { size: 12 })]),
+	splits: numberToHex(0, { size: 20 }),
+	arweaveTxId: "Hello World",
 } as const
 
 async function main() {
