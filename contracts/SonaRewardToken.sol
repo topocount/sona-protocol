@@ -77,6 +77,7 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 	/// @param _collector The address that won the auction
 	/// @param _artistTxId the arweave txId of the artist edition bundle contained on arweave
 	/// @param _collectorTxId the arweave txId of the collector edition bundle contained on arweave
+	/// @param _splits the address to distribute funds to, potentially to split them with collaborators
 	function mintFromAuction(uint256 _tokenId, address _artist, address _collector, string calldata _artistTxId, string calldata _collectorTxId, address payable _splits) external onlySonaMinter {
 		if (_tokenId % 2 == 0) revert SonaRewardToken_ArtistEditionEven();
 		if (AddressableTokenId.getAddress(_tokenId) != _artist) revert SonaRewardToken_NoArtistInTokenId();

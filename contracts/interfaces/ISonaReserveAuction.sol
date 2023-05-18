@@ -63,12 +63,14 @@ interface ISonaReserveAuction {
 	/                        STRUCTS
 	//////////////////////////////////////////////////////////////*/
 
+	// @dev the information composing the NFT for use onchain and offchain
 	struct MetadataBundle {
 		uint256 tokenId;
 		address payable splits;
 		string arweaveTxId;
 	}
 
+	// @dev the an elliptic curve signature, provided by the authorizer
 	struct Signature {
 		uint8 v;
 		bytes32 r;
