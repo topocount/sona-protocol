@@ -4,7 +4,7 @@ pragma solidity ^0.8.16;
 import { SonaReserveAuction } from "../SonaReserveAuction.sol";
 import { SonaRewardToken } from "../SonaRewardToken.sol";
 import { ISonaReserveAuction } from "../interfaces/ISonaReserveAuction.sol";
-import { IERC721AUpgradeable } from "erc721a-upgradeable/interfaces/IERC721AUpgradeable.sol";
+import { ERC721 } from "solmate/tokens/ERC721.sol";
 import { Util } from "./Util.sol";
 import { ERC1967Proxy } from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 import { Weth9Mock, IWETH } from "./mock/Weth9Mock.sol";
@@ -12,7 +12,6 @@ import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { ERC20ReturnTrueMock, ERC20NoReturnMock, ERC20ReturnFalseMock } from "./mock/ERC20Mock.sol";
 import { ContractBidderMock } from "./mock/ContractBidderMock.sol";
 import { Weth9Mock, IWETH } from "./mock/Weth9Mock.sol";
-import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 
 contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 	SonaReserveAuction public auction;
@@ -33,6 +32,8 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 	// address for non-eth token
 	address public nonEthToken = makeAddr("nonEthToken");
 	// derived from ../../scripts/signTyped.ts
+	string mnemonic = "test test test test test test test test test test test junk";
+	uint256 authorizerKey = vm.deriveKey(mnemonic, 0);
 	address public authorizer = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
 	address payable public artistPayout = payable(address(25));
 
@@ -78,13 +79,30 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 	}
 
 	function _createSignedBundles() private view returns (MetadataBundle[2] memory bundles, Signature[2] memory signatures) {
-		MetadataBundle memory artistBundle = MetadataBundle({ arweaveTxId: "Hello World!", tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000044, payout: artistPayout });
-		MetadataBundle memory collectorBundle = MetadataBundle({ arweaveTxId: "Hello World", tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000045, payout: payable(address(0)) });
 		Signature memory artistSignature = Signature(28, 0xffc0fb30061f17a53c5c2467f59a3eb97e8ec4b5b0c06fa52142daf608d12d8b, 0x66f4b7b6d74b4c84f92f2bae1661bb6000a0d8b5806bb1862368e39b35bb8183);
 		Signature memory collectorSignature = Signature(27, 0x54826a459211de0cc74e8ee384b1c7d051b8ba6eb89d2e8b337ce6e8e3d0fe26, 0x5217cb99f9f960c6bfb2ada761d0a7da7473468e4a4ff75c0effac2897d21cf2);
 
-		bundles = [artistBundle, collectorBundle];
+		bundles = _createBundles();
 		signatures = [artistSignature, collectorSignature];
+	}
+
+	function _createBundles() private view returns (MetadataBundle[2] memory bundles) {
+		MetadataBundle memory artistBundle = MetadataBundle({ arweaveTxId: "Hello World!", tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000044, payout: artistPayout });
+		MetadataBundle memory collectorBundle = MetadataBundle({ arweaveTxId: "Hello World", tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000045, payout: payable(address(0)) });
+
+		bundles = [artistBundle, collectorBundle];
+	}
+
+	function _signBundle(MetadataBundle memory _bundle) private view returns (Signature memory signature) {
+		bytes32 bundleHash = _getBundleHash(_bundle);
+		(uint8 v, bytes32 r, bytes32 s) = vm.sign(authorizerKey, bundleHash);
+
+		return Signature({ v: v, r: r, s: s });
+	}
+
+	function _getBundleSignatures(MetadataBundle[2] memory _bundles) private view returns (Signature[2] memory signatures) {
+		signatures[0] = _signBundle(_bundles[0]);
+		signatures[1] = _signBundle(_bundles[1]);
 	}
 
 	function test_CreateReserveAuction() public {
@@ -364,8 +382,8 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 
 		assertEq(auctionData.trackSeller, address(0));
 		assertEq(auctionData.reservePrice, 0);
-		assertEq(IERC721AUpgradeable(address(auction.rewardToken())).balanceOf(bidder), 1);
-		assertEq(IERC721AUpgradeable(address(auction.rewardToken())).balanceOf(trackMinter), 1);
+		assertEq(ERC721(address(auction.rewardToken())).balanceOf(bidder), 1);
+		assertEq(ERC721(address(auction.rewardToken())).balanceOf(trackMinter), 1);
 	}
 
 	function test_SettleReserveAuctionWhileLiveReverts() public {
@@ -633,7 +651,7 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 		auction.updateReserveAuctionPriceAndCurrency(nonEthToken, tokenId, 100000);
 	}
 
-	function testFuzz_SettleReserveAuctionSendsWethFundsToRecipients(uint256 _reservePrice, uint256 _bidAmount) public {
+	function testFuzz_SettleReserveAuctionSendsEthFundsToSplits(uint256 _reservePrice, uint256 _bidAmount) public {
 		vm.deal(bidder, _bidAmount);
 		vm.assume(_bidAmount < 2_000_000_000_000 ether);
 		vm.assume(_reservePrice > 0);
@@ -657,10 +675,14 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 
 		assertEq(IERC20(address(mockWeth)).balanceOf(treasuryRecipient), treasuryFee);
 		assertEq(IERC20(address(mockWeth)).balanceOf(redistributionRecipient), redistributionFee);
-		assertEq(trackMinter.balance, sellerProceeds);
+		assertEq(artistPayout.balance, sellerProceeds);
+		assertEq(ERC721(address(auction.rewardToken())).balanceOf(bidder), 1);
+		assertEq(ERC721(address(auction.rewardToken())).balanceOf(trackMinter), 1);
+		assertEq(ERC721(address(auction.rewardToken())).ownerOf(bundles[0].tokenId), trackMinter);
+		assertEq(ERC721(address(auction.rewardToken())).ownerOf(bundles[1].tokenId), bidder);
 	}
 
-	function testFuzz_SettleReserveAuctionSendsERC20FundsToRecipients(uint256 _reservePrice, uint256 _bidAmount) public {
+	function testFuzz_SettleReserveAuctionSendsERC20FundsToSplits(uint256 _reservePrice, uint256 _bidAmount) public {
 		vm.assume(_reservePrice > 0);
 		vm.assume(_bidAmount >= _reservePrice);
 		vm.assume(_bidAmount < type(uint256).max / 5000);
@@ -682,7 +704,80 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 
 		assertEq(IERC20(address(mockERC20)).balanceOf(treasuryRecipient), treasuryFee);
 		assertEq(IERC20(address(mockERC20)).balanceOf(redistributionRecipient), redistributionFee);
+		assertEq(IERC20(address(mockERC20)).balanceOf(artistPayout), sellerProceeds);
+		assertEq(ERC721(address(auction.rewardToken())).balanceOf(bidder), 1);
+		assertEq(ERC721(address(auction.rewardToken())).balanceOf(trackMinter), 1);
+		assertEq(ERC721(address(auction.rewardToken())).ownerOf(bundles[0].tokenId), trackMinter);
+		assertEq(ERC721(address(auction.rewardToken())).ownerOf(bundles[1].tokenId), bidder);
+	}
+
+	function testFuzz_SendEthProceedsToArtistAddress(uint256 _reservePrice, uint256 _bidAmount) public {
+		vm.deal(bidder, _bidAmount);
+		vm.assume(_bidAmount < 2_000_000_000_000 ether);
+		vm.assume(_reservePrice > 0);
+		vm.assume(_bidAmount >= _reservePrice);
+		vm.assume(_bidAmount < type(uint256).max / 5000);
+
+		MetadataBundle[2] memory bundles = _createBundles();
+		bundles[0].payout = payable(address(0));
+		Signature[2] memory sigs = _getBundleSignatures(bundles);
+
+		vm.prank(trackMinter);
+		auction.createReserveAuction(bundles, sigs, address(0), _reservePrice);
+
+		hoax(bidder);
+		auction.createBid{ value: _bidAmount }(tokenId, 0);
+
+		vm.warp(2 days);
+
+		vm.prank(trackMinter);
+		auction.settleReserveAuction(tokenId);
+
+		uint256 treasuryFee = (_bidAmount * 200) / 10000;
+		uint256 redistributionFee = (_bidAmount * 500) / 10000;
+		uint256 sellerProceeds = _bidAmount - treasuryFee - redistributionFee;
+
+		assertEq(IERC20(address(mockWeth)).balanceOf(treasuryRecipient), treasuryFee);
+		assertEq(IERC20(address(mockWeth)).balanceOf(redistributionRecipient), redistributionFee);
+		assertEq(trackMinter.balance, sellerProceeds);
+		assertEq(ERC721(address(auction.rewardToken())).balanceOf(bidder), 1);
+		assertEq(ERC721(address(auction.rewardToken())).balanceOf(trackMinter), 1);
+		assertEq(ERC721(address(auction.rewardToken())).ownerOf(bundles[0].tokenId), trackMinter);
+		assertEq(ERC721(address(auction.rewardToken())).ownerOf(bundles[1].tokenId), bidder);
+	}
+
+	function testFuzz_SettleReserveAuctionSendsERC20FundsToArtistAddress(uint256 _reservePrice, uint256 _bidAmount) public {
+		vm.assume(_reservePrice > 0);
+		vm.assume(_bidAmount >= _reservePrice);
+		vm.assume(_bidAmount < type(uint256).max / 5000);
+
+		ERC20ReturnTrueMock mockERC20 = new ERC20ReturnTrueMock();
+
+		MetadataBundle[2] memory bundles = _createBundles();
+		bundles[0].payout = payable(address(0));
+		Signature[2] memory sigs = _getBundleSignatures(bundles);
+
+		vm.prank(trackMinter);
+		auction.createReserveAuction(bundles, sigs, address(mockERC20), _reservePrice);
+
+		hoax(bidder);
+		auction.createBid(tokenId, _bidAmount);
+		vm.warp(2 days);
+
+		vm.prank(trackMinter);
+		auction.settleReserveAuction(tokenId);
+
+		uint256 treasuryFee = (_bidAmount * 200) / 10000;
+		uint256 redistributionFee = (_bidAmount * 500) / 10000;
+		uint256 sellerProceeds = _bidAmount - treasuryFee - redistributionFee;
+
+		assertEq(IERC20(address(mockERC20)).balanceOf(treasuryRecipient), treasuryFee);
+		assertEq(IERC20(address(mockERC20)).balanceOf(redistributionRecipient), redistributionFee);
 		assertEq(IERC20(address(mockERC20)).balanceOf(trackMinter), sellerProceeds);
+		assertEq(ERC721(address(auction.rewardToken())).balanceOf(bidder), 1);
+		assertEq(ERC721(address(auction.rewardToken())).balanceOf(trackMinter), 1);
+		assertEq(ERC721(address(auction.rewardToken())).ownerOf(bundles[0].tokenId), trackMinter);
+		assertEq(ERC721(address(auction.rewardToken())).ownerOf(bundles[1].tokenId), bidder);
 	}
 
 	function test_ContractBidderAcceptsEthRefunds() public {
@@ -745,5 +840,29 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 		vm.expectRevert(ISonaReserveAuction.SonaReserveAuction_AuctionEnded.selector);
 		vm.prank(trackMinter);
 		auction.cancelReserveAuction(tokenId);
+	}
+
+	function _makeDomainHash() private view returns (bytes32) {
+		bytes32 _EIP712DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+		return
+			keccak256(
+				abi.encode(
+					_EIP712DOMAIN_TYPEHASH,
+					keccak256("SonaReserveAuction"), // name
+					keccak256("1"), // version
+					block.chainid, // chain ID
+					address(auction) // verifying contract
+				)
+			);
+	}
+
+	function _hashFromMemory(MetadataBundle memory bundle) internal pure returns (bytes32) {
+		bytes32 _METADATABUNDLE_TYPEHASH = keccak256("MetadataBundle(uint256 tokenId,address payout,string arweaveTxId)");
+		return keccak256(abi.encode(_METADATABUNDLE_TYPEHASH, bundle.tokenId, bundle.payout, keccak256(bytes(bundle.arweaveTxId))));
+	}
+
+	function _getBundleHash(MetadataBundle memory _bundle) private view returns (bytes32) {
+		bytes32 domainSeparator = _makeDomainHash();
+		return keccak256(abi.encodePacked("\x19\x01", domainSeparator, _hashFromMemory(_bundle)));
 	}
 }

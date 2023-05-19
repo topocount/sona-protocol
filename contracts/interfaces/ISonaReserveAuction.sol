@@ -97,6 +97,8 @@ interface ISonaReserveAuction {
 		address currency;
 		// @dev Arweave Bundle info
 		MetadataBundle[2] bundles;
+		// 0: artist bundle
+		// 1: collector bundle
 	}
 
 	/*//////////////////////////////////////////////////////////////

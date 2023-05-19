@@ -21,6 +21,7 @@ import { ZeroCheck } from "./utils/ZeroCheck.sol";
 contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	using AddressableTokenId for uint256;
 	using ZeroCheck for address;
+	using ZeroCheck for address payable;
 
 	/*//////////////////////////////////////////////////////////////
 	/                         CONSTANTS
@@ -413,8 +414,9 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		// Send the currency to the redistribution fee recipient
 		_handleTokenTransfer(_redistributionFeeRecipient, redistributionFeeAmount, currency);
 
-		// Send the currency to the seller
-		_sendCurrencyToParticipant(auction.trackSeller, sellerProceedsAmount, currency);
+		// Send the currency to the seller or the seller's delegated address
+		address payable payoutAddress = _getPayoutAddress(auction.bundles[0]);
+		_sendCurrencyToParticipant(payoutAddress, sellerProceedsAmount, currency);
 
 		// Remove from map
 		delete auctions[_tokenId];
@@ -456,5 +458,10 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 
 	function _transferTokenOut(address _to, uint256 _amount, address _currency) internal {
 		if (!IERC20(_currency).transfer(_to, _amount)) revert SonaReserveAuction_TransferFailed();
+	}
+
+	function _getPayoutAddress(MetadataBundle storage _bundle) internal view returns (address payable payoutAddress) {
+		address payable payout = _bundle.payout;
+		return payout.isNotZero() ? payout : payable(_bundle.tokenId.getAddress());
 	}
 }
