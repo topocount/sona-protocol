@@ -160,20 +160,22 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
 	}
 
-	// TODO generate valid signature
-	function xtest_CreateReserveAuctionWithInvalidArtistTokenIdReverts() public {
+	function test_CreateReserveAuctionWithInvalidArtistTokenIdReverts() public {
 		(MetadataBundle[2] memory bundles, Signature[2] memory signatures) = _createSignedBundles();
 		bundles[0].tokenId = (uint256(uint160(trackMinter)) << 96) | 69;
+
+		signatures[0] = _signBundle(bundles[0]);
 
 		vm.startPrank(trackMinter);
 		vm.expectRevert(ISonaReserveAuction.SonaReserveAuction_InvalidTokenIds.selector);
 		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
 	}
 
-	// TODO generate valid signature
-	function xtest_CreateReserveAuctionWithInvalidCollectorTokenIdReverts() public {
+	function test_CreateReserveAuctionWithInvalidCollectorTokenIdReverts() public {
 		(MetadataBundle[2] memory bundles, Signature[2] memory signatures) = _createSignedBundles();
 		bundles[1].tokenId = (uint256(uint160(trackMinter)) << 96) | 70;
+
+		signatures[1] = _signBundle(bundles[1]);
 
 		vm.startPrank(trackMinter);
 		vm.expectRevert(ISonaReserveAuction.SonaReserveAuction_InvalidTokenIds.selector);
