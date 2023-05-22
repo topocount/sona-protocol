@@ -13,6 +13,7 @@ import { ERC20ReturnTrueMock, ERC20NoReturnMock, ERC20ReturnFalseMock } from "./
 import { ContractBidderMock } from "./mock/ContractBidderMock.sol";
 import { Weth9Mock, IWETH } from "./mock/Weth9Mock.sol";
 
+/* solhint-disable max-states-count */
 contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 	SonaReserveAuction public auction;
 	address public trackAddress;
@@ -32,8 +33,8 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 	// address for non-eth token
 	address public nonEthToken = makeAddr("nonEthToken");
 	// derived from ../../scripts/signTyped.ts
-	string mnemonic = "test test test test test test test test test test test junk";
-	uint256 authorizerKey = vm.deriveKey(mnemonic, 0);
+	string public mnemonic = "test test test test test test test test test test test junk";
+	uint256 public authorizerKey = vm.deriveKey(mnemonic, 0);
 	address public authorizer = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
 	address payable public artistPayout = payable(address(25));
 
