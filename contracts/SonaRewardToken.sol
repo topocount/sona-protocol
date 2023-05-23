@@ -29,7 +29,8 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 
 	/// @dev Modifier that ensures the calling contract has the admin role
 	modifier onlySonaAdminOrCreator(uint256 _tokenId) {
-		if (_tokenId.getAddress() != msg.sender && !isSonaAdmin(msg.sender)) revert SonaRewardToken_Unauthorized();
+		if (_tokenId.getAddress() != msg.sender && !isSonaAdmin(msg.sender))
+			revert SonaRewardToken_Unauthorized();
 		_;
 	}
 
@@ -59,7 +60,12 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 	//////////////////////////////////////////////////////////////*/
 
 	/// @dev Initializes the contract
-	function initialize(string calldata _name, string calldata _symbol, address _eoaAdmin, address _minter) external override initializer {
+	function initialize(
+		string calldata _name,
+		string calldata _symbol,
+		address _eoaAdmin,
+		address _minter
+	) external override initializer {
 		// Setup role for contract creator, otherwise subsequent checks will not work
 		_setupRole(_ADMIN_ROLE, _eoaAdmin);
 		_setRoleAdmin(_ADMIN_ROLE, _ADMIN_ROLE);
@@ -78,9 +84,17 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 	/// @param _artistTxId the arweave txId of the artist edition bundle contained on arweave
 	/// @param _collectorTxId the arweave txId of the collector edition bundle contained on arweave
 	/// @param _payout the address to distribute funds to, potentially to split them with collaborators
-	function mintFromAuction(uint256 _tokenId, address _artist, address _collector, string calldata _artistTxId, string calldata _collectorTxId, address payable _payout) external onlySonaMinter {
+	function mintFromAuction(
+		uint256 _tokenId,
+		address _artist,
+		address _collector,
+		string calldata _artistTxId,
+		string calldata _collectorTxId,
+		address payable _payout
+	) external onlySonaMinter {
 		if (_tokenId % 2 == 0) revert SonaRewardToken_ArtistEditionEven();
-		if (AddressableTokenId.getAddress(_tokenId) != _artist) revert SonaRewardToken_NoArtistInTokenId();
+		if (AddressableTokenId.getAddress(_tokenId) != _artist)
+			revert SonaRewardToken_NoArtistInTokenId();
 		uint256 artistTokenId = _tokenId.getArtistEdition();
 		_mint(_artist, artistTokenId);
 		_setTokenMetadata(artistTokenId, _artistTxId, _payout);
@@ -92,14 +106,20 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 	/// @dev Updates the IPFS CID for the metadata for a given RewardToken
 	/// @param _tokenId The ID of the token that will be updated
 	/// @param _txId The metadata's IPFS CID
-	function updateArweaveTxId(uint256 _tokenId, string calldata _txId) external checkExists(_tokenId) onlySonaAdminOrCreator(_tokenId) {
+	function updateArweaveTxId(
+		uint256 _tokenId,
+		string calldata _txId
+	) external checkExists(_tokenId) onlySonaAdminOrCreator(_tokenId) {
 		_updateArweaveTxId(_tokenId, _txId);
 	}
 
 	/// @dev Updates the Payout address for artist editions
 	/// @param _tokenId The ID of the token that will be updated
 	/// @param _payout The new payout address to be used. Set to address(0) if funds should be sent directly to the claimant
-	function updatePayoutAddress(uint256 _tokenId, address payable _payout) external checkExists(_tokenId) onlyTokenHolder(_tokenId) {
+	function updatePayoutAddress(
+		uint256 _tokenId,
+		address payable _payout
+	) external checkExists(_tokenId) onlyTokenHolder(_tokenId) {
 		if (_tokenId % 2 != 0) revert SonaRewardToken_ArtistEditionOdd();
 		rewardTokens[_tokenId].payout = _payout;
 
@@ -108,7 +128,9 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 
 	/// @dev Removes a RewardToken from the protocol, burning the NFT and striking the data from on-chain memory
 	/// @param _tokenId The ID of the token that will be deleted
-	function burnRewardToken(uint256 _tokenId) external onlyTokenHolder(_tokenId) {
+	function burnRewardToken(
+		uint256 _tokenId
+	) external onlyTokenHolder(_tokenId) {
 		delete rewardTokens[_tokenId];
 
 		_burn(_tokenId);
@@ -118,19 +140,31 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 
 	/// @dev Get a RewardToken's metadata from IPFS
 	/// @param _tokenId The ID of the token to fetch
-	function tokenURI(uint256 _tokenId) public view override(ERC721, ISonaRewardToken) checkExists(_tokenId) returns (string memory) {
+	function tokenURI(
+		uint256 _tokenId
+	)
+		public
+		view
+		override(ERC721, ISonaRewardToken)
+		checkExists(_tokenId)
+		returns (string memory)
+	{
 		return string(abi.encodePacked("ar://", rewardTokens[_tokenId].arTxId));
 	}
 
 	/// @dev Returns the metadata of the RewardToken
 	/// @param _tokenId The ID of the token to fetch
-	function getRewardTokenMetadata(uint256 _tokenId) external view checkExists(_tokenId) returns (RewardToken memory metadata) {
+	function getRewardTokenMetadata(
+		uint256 _tokenId
+	) external view checkExists(_tokenId) returns (RewardToken memory metadata) {
 		return rewardTokens[_tokenId];
 	}
 
 	/// @dev Returns the splits address of the RewardToken
 	/// @param _tokenId The ID of the token to fetch
-	function getRewardTokenPayoutAddr(uint256 _tokenId) external view checkExists(_tokenId) returns (address payable payout) {
+	function getRewardTokenPayoutAddr(
+		uint256 _tokenId
+	) external view checkExists(_tokenId) returns (address payable payout) {
 		return rewardTokens[_tokenId].payout;
 	}
 
@@ -144,15 +178,26 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 	/*//////////////////////////////////////////////////////////////
 	/                    INTERNAL FUNCTIONS
 	//////////////////////////////////////////////////////////////*/
-	function _updateArweaveTxId(uint256 _tokenId, string calldata _txId) internal {
+	function _updateArweaveTxId(
+		uint256 _tokenId,
+		string calldata _txId
+	) internal {
 		rewardTokens[_tokenId].arTxId = _txId;
 
 		emit RewardTokenArweaveTxIdUpdated({ tokenId: _tokenId, txId: _txId });
 	}
 
-	function _setTokenMetadata(uint256 _tokenId, string calldata _txId, address payable _payout) internal {
+	function _setTokenMetadata(
+		uint256 _tokenId,
+		string calldata _txId,
+		address payable _payout
+	) internal {
 		rewardTokens[_tokenId] = RewardToken({ arTxId: _txId, payout: _payout });
 
-		emit RewardTokenMetadataUpdated({ tokenId: _tokenId, txId: _txId, payout: _payout });
+		emit RewardTokenMetadataUpdated({
+			tokenId: _tokenId,
+			txId: _txId,
+			payout: _payout
+		});
 	}
 }

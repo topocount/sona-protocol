@@ -24,7 +24,7 @@
 
 [fmt]
     indent = 4
-    line_length = 180
+    line_length = 80
     tab_width = 4
     bracket_spacing = true
     func_attrs_with_params_multiline = false

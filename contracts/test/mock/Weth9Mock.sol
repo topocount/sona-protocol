@@ -38,7 +38,11 @@ contract Weth9Mock is IWETH {
 		return transferFrom(msg.sender, dst, wad);
 	}
 
-	function transferFrom(address src, address dst, uint wad) public virtual returns (bool) {
+	function transferFrom(
+		address src,
+		address dst,
+		uint wad
+	) public virtual returns (bool) {
 		require(totalSupply() >= wad, "mock weth: low balance");
 		emit Transfer(src, dst, wad);
 

@@ -15,7 +15,10 @@ contract ContractBidderMock {
 		canReceiveFunds = true;
 	}
 
-	function createETHBid(uint256 _tokenId, uint256 _ethBidAmount) external payable {
+	function createETHBid(
+		uint256 _tokenId,
+		uint256 _ethBidAmount
+	) external payable {
 		auction.createBid{ value: _ethBidAmount }(_tokenId, 0);
 	}
 

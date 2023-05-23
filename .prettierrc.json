@@ -6,7 +6,7 @@
   "singleQuote": false,
   "bracketSpacing": true,
   "bracketSameLine": true,
-  "printWidth": 200,
+  "printWidth": 80,
   "plugins": ["prettier-plugin-solidity"],
   "overrides": [
     {
@@ -14,7 +14,7 @@
       "options": {
         "tabWidth": 2,
         "useTabs": true,
-        "printWidth": 200,
+        "printWidth": 80,
         "singleQuote": false,
         "bracketSpacing": true
       }

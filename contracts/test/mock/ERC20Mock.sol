@@ -17,7 +17,11 @@ contract ERC20ReturnTrueMock {
 		return true;
 	}
 
-	function transferFrom(address from, address to, uint256 amount) public returns (bool) {
+	function transferFrom(
+		address from,
+		address to,
+		uint256 amount
+	) public returns (bool) {
 		unchecked {
 			balanceOf[to] += amount;
 			balanceOf[from] -= amount;
@@ -28,13 +32,21 @@ contract ERC20ReturnTrueMock {
 }
 
 contract ERC20ReturnFalseMock {
-	function transferFrom(address /*from*/, address /*to*/, uint256 /*amount*/) public pure returns (bool) {
+	function transferFrom(
+		address /*from*/,
+		address /*to*/,
+		uint256 /*amount*/
+	) public pure returns (bool) {
 		return false;
 	}
 }
 
 contract ERC20NoReturnMock {
-	function transferFrom(address /*from*/, address /*to*/, uint256 /*amount*/) public pure {
+	function transferFrom(
+		address /*from*/,
+		address /*to*/,
+		uint256 /*amount*/
+	) public pure {
 		return;
 	}
 }

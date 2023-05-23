@@ -52,12 +52,18 @@ interface ISonaReserveAuction {
 
 	/// @dev Emitted when a new bid is placed
 	/// @param tokenId The id of the token
-	event ReserveAuctionBidPlaced(uint256 indexed tokenId, uint256 indexed amount);
+	event ReserveAuctionBidPlaced(
+		uint256 indexed tokenId,
+		uint256 indexed amount
+	);
 
 	/// @dev Emitted when the currency of an auction is updated
 	/// @param tokenId The id of the token
 	/// @param auction The auction attributes
-	event ReserveAuctionPriceAndCurrencyUpdated(uint256 indexed tokenId, Auction auction);
+	event ReserveAuctionPriceAndCurrencyUpdated(
+		uint256 indexed tokenId,
+		Auction auction
+	);
 
 	/// @dev Emitted when the payout address is updated. The address can be set to zero to payout the token holder
 	/// @param tokenId The id of the token updated
@@ -105,15 +111,27 @@ interface ISonaReserveAuction {
 	/                         FUNCTIONS
 	//////////////////////////////////////////////////////////////*/
 
-	function createReserveAuction(MetadataBundle[2] calldata _bundles, Signature[2] calldata _signatures, address _currencyAddress, uint256 _reservePrice) external;
+	function createReserveAuction(
+		MetadataBundle[2] calldata _bundles,
+		Signature[2] calldata _signatures,
+		address _currencyAddress,
+		uint256 _reservePrice
+	) external;
 
 	function cancelReserveAuction(uint256 _tokenId) external;
 
 	function settleReserveAuction(uint256 _tokenId) external;
 
-	function updateReserveAuctionPrice(uint256 _tokenId, uint256 _reservePrice) external;
+	function updateReserveAuctionPrice(
+		uint256 _tokenId,
+		uint256 _reservePrice
+	) external;
 
-	function updateReserveAuctionPriceAndCurrency(address _currency, uint256 _tokenId, uint256 _reservePrice) external;
+	function updateReserveAuctionPriceAndCurrency(
+		address _currency,
+		uint256 _tokenId,
+		uint256 _reservePrice
+	) external;
 
 	function createBid(uint256 _tokenId, uint256 _bidAmount) external payable;
 

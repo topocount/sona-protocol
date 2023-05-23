@@ -20,7 +20,9 @@ contract RewardTokenMock is ERC721ConsecutiveEnumerableMock {
 		altAddress = _newSplit;
 	}
 
-	function getRewardTokenPayoutAddr(uint256 /*tokenId*/) external view returns (address payable splits) {
+	function getRewardTokenPayoutAddr(
+		uint256 /*tokenId*/
+	) external view returns (address payable splits) {
 		return altAddress;
 	}
 }

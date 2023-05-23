@@ -38,9 +38,15 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	// @dev The treasury fee charged to the seller (2%)
 	uint256 private constant _AUCTION_TREASURY_FEE_BPS = 200;
 	// @dev The signature of the Domain separator typehash
-	bytes32 private constant _EIP712DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+	bytes32 private constant _EIP712DOMAIN_TYPEHASH =
+		keccak256(
+			"EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+		);
 	// @dev The signature of the type that is hashed and prefixed to the TypedData payload
-	bytes32 private constant _METADATABUNDLE_TYPEHASH = keccak256("MetadataBundle(uint256 tokenId,address payout,string arweaveTxId)");
+	bytes32 private constant _METADATABUNDLE_TYPEHASH =
+		keccak256(
+			"MetadataBundle(uint256 tokenId,address payout,string arweaveTxId)"
+		);
 
 	/*//////////////////////////////////////////////////////////////
 	/                         STATE
@@ -72,13 +78,19 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 
 	/// @dev Modifier that ensures the calling wallet has the admin role or is the specified owner
 	modifier onlySonaAdminOrApprovedTokenOperator(uint256 _tokenId) {
-		if (_tokenId.getAddress() != msg.sender && !isSonaAdmin(msg.sender)) revert SonaReserveAuction_NotAuthorized();
+		if (_tokenId.getAddress() != msg.sender && !isSonaAdmin(msg.sender))
+			revert SonaReserveAuction_NotAuthorized();
 		_;
 	}
 
-	modifier bundlesAuthorized(MetadataBundle[2] calldata bundles, Signature[2] calldata signatures) {
-		if (!_verify(bundles[0], signatures[0].v, signatures[0].r, signatures[0].s) || !_verify(bundles[1], signatures[1].v, signatures[1].r, signatures[1].s))
-			revert SonaReserveAuction_BundlesNotAuthorized();
+	modifier bundlesAuthorized(
+		MetadataBundle[2] calldata bundles,
+		Signature[2] calldata signatures
+	) {
+		if (
+			!_verify(bundles[0], signatures[0].v, signatures[0].r, signatures[0].s) ||
+			!_verify(bundles[1], signatures[1].v, signatures[1].r, signatures[1].s)
+		) revert SonaReserveAuction_BundlesNotAuthorized();
 		_;
 	}
 
@@ -93,15 +105,26 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	/                     PUBLIC FUNCTIONS
 	//////////////////////////////////////////////////////////////*/
 
-	function initialize(address treasuryFeeRecipient_, address redistributionFeeRecipient_, address authorizer_, ISonaRewardToken _rewardTokenBase, address _eoaAdmin, IWETH weth_) public initializer {
+	function initialize(
+		address treasuryFeeRecipient_,
+		address redistributionFeeRecipient_,
+		address authorizer_,
+		ISonaRewardToken _rewardTokenBase,
+		address _eoaAdmin,
+		IWETH weth_
+	) public initializer {
 		// Setup role for contract creator, otherwise subsequent checks will not work
 		_setupRole(_ADMIN_ROLE, _eoaAdmin);
 		_setRoleAdmin(_ADMIN_ROLE, _ADMIN_ROLE);
 
-		treasuryFeeRecipient_.revertIfZero(SonaReserveAuction_InvalidAddress.selector);
+		treasuryFeeRecipient_.revertIfZero(
+			SonaReserveAuction_InvalidAddress.selector
+		);
 		_treasuryFeeRecipient = treasuryFeeRecipient_;
 
-		redistributionFeeRecipient_.revertIfZero(SonaReserveAuction_InvalidAddress.selector);
+		redistributionFeeRecipient_.revertIfZero(
+			SonaReserveAuction_InvalidAddress.selector
+		);
 		_redistributionFeeRecipient = redistributionFeeRecipient_;
 
 		authorizer_.revertIfZero(SonaReserveAuction_InvalidAddress.selector);
@@ -111,7 +134,18 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 
 		// Initialize the reward token. Admin is the auction
 		rewardToken = ISonaRewardToken(
-			address(new ERC1967Proxy(address(_rewardTokenBase), abi.encodeWithSelector(ISonaRewardToken.initialize.selector, "Sona Rewards Token", "RWRD", _eoaAdmin, address(this))))
+			address(
+				new ERC1967Proxy(
+					address(_rewardTokenBase),
+					abi.encodeWithSelector(
+						ISonaRewardToken.initialize.selector,
+						"Sona Rewards Token",
+						"RWRD",
+						_eoaAdmin,
+						address(this)
+					)
+				)
+			)
 		);
 
 		_DOMAIN_SEPARATOR = keccak256(
@@ -125,8 +159,12 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		);
 	}
 
-	function supportsInterface(bytes4 _interfaceId) public view virtual override returns (bool) {
-		return _interfaceId == type(ISonaReserveAuction).interfaceId || _interfaceId == 0x01ffc9a7;
+	function supportsInterface(
+		bytes4 _interfaceId
+	) public view virtual override returns (bool) {
+		return
+			_interfaceId == type(ISonaReserveAuction).interfaceId ||
+			_interfaceId == 0x01ffc9a7;
 	}
 
 	/// @notice Creates a new auction.
@@ -139,17 +177,26 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		Signature[2] calldata _signatures,
 		address _currencyAddress,
 		uint256 _reservePrice
-	) external bundlesAuthorized(_bundles, _signatures) onlySonaAdminOrApprovedTokenOperator(_bundles[0].tokenId) onlySonaAdminOrApprovedTokenOperator(_bundles[1].tokenId) {
+	)
+		external
+		bundlesAuthorized(_bundles, _signatures)
+		onlySonaAdminOrApprovedTokenOperator(_bundles[0].tokenId)
+		onlySonaAdminOrApprovedTokenOperator(_bundles[1].tokenId)
+	{
 		// Check that the reserve price is not zero. No free auctions
 		if (_reservePrice == 0) {
 			revert SonaReserveAuction_ReservePriceCannotBeZero();
 		}
-		if (auctions[_bundles[1].tokenId].reservePrice > 0) revert SonaReserveAuction_AlreadyListed();
+		if (auctions[_bundles[1].tokenId].reservePrice > 0)
+			revert SonaReserveAuction_AlreadyListed();
 
 		_ensureBundleIsUnique(_bundles[0]);
 		_ensureBundleIsUnique(_bundles[1]);
 
-		if (_bundles[0].tokenId % 2 != 0 || _bundles[0].tokenId + 1 != _bundles[1].tokenId) revert SonaReserveAuction_InvalidTokenIds();
+		if (
+			_bundles[0].tokenId % 2 != 0 ||
+			_bundles[0].tokenId + 1 != _bundles[1].tokenId
+		) revert SonaReserveAuction_InvalidTokenIds();
 
 		auctions[_bundles[1].tokenId].reservePrice = _reservePrice;
 		auctions[_bundles[1].tokenId].trackSeller = payable(msg.sender);
@@ -164,13 +211,17 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 
 	/// @dev Public function to settle the reseerve auction
 	/// @param _tokenId The ID of the token.
-	function settleReserveAuction(uint256 _tokenId) external onlySonaAdminOrApprovedTokenOperator(_tokenId) {
+	function settleReserveAuction(
+		uint256 _tokenId
+	) external onlySonaAdminOrApprovedTokenOperator(_tokenId) {
 		_settleReserveAuction(_tokenId);
 	}
 
 	/// @dev Public function to cancel the reserve auction
 	/// @param _tokenId The ID of the token.
-	function cancelReserveAuction(uint256 _tokenId) external onlySonaAdminOrApprovedTokenOperator(_tokenId) {
+	function cancelReserveAuction(
+		uint256 _tokenId
+	) external onlySonaAdminOrApprovedTokenOperator(_tokenId) {
 		Auction storage auction = auctions[_tokenId];
 
 		if (auction.reservePrice == 0) {
@@ -195,7 +246,10 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	/// @dev Public function to update the reserve price of the auction
 	/// @param _tokenId The ID of the token.
 	/// @param _reservePrice The reserve price to be updated to
-	function updateReserveAuctionPrice(uint256 _tokenId, uint256 _reservePrice) external onlySonaAdminOrApprovedTokenOperator(_tokenId) {
+	function updateReserveAuctionPrice(
+		uint256 _tokenId,
+		uint256 _reservePrice
+	) external onlySonaAdminOrApprovedTokenOperator(_tokenId) {
 		Auction storage auction = auctions[_tokenId];
 
 		if (_reservePrice == 0) {
@@ -216,7 +270,11 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	/// @param _currency The currency to be updated to
 	/// @param _tokenId The ID of the token.
 	/// @param _reservePrice The reserve price to be updated to
-	function updateReserveAuctionPriceAndCurrency(address _currency, uint256 _tokenId, uint256 _reservePrice) external onlySonaAdminOrApprovedTokenOperator(_tokenId) {
+	function updateReserveAuctionPriceAndCurrency(
+		address _currency,
+		uint256 _tokenId,
+		uint256 _reservePrice
+	) external onlySonaAdminOrApprovedTokenOperator(_tokenId) {
 		Auction storage auction = auctions[_tokenId];
 
 		// Can't settle an auction that can still be bidded on
@@ -238,7 +296,10 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	/// @dev setting the address to address(0) resets the payout address to the seller's address
 	/// @param _tokenId The artist tokenId used as the identifier for the auction
 	/// @param _payout The address to receive NFT sale proceeds and future reward claims
-	function updateArtistPayoutAddress(uint256 _tokenId, address payable _payout) external onlySonaAdminOrApprovedTokenOperator(_tokenId) {
+	function updateArtistPayoutAddress(
+		uint256 _tokenId,
+		address payable _payout
+	) external onlySonaAdminOrApprovedTokenOperator(_tokenId) {
 		Auction storage auction = auctions[_tokenId];
 
 		if (auction.reservePrice == 0) {
@@ -295,7 +356,13 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 
 			// transfer ERC20 bid amount to this contract
 			if (auction.currency.isNotZero()) {
-				if (!IERC20(auction.currency).transferFrom(msg.sender, address(this), attemptedBid)) revert SonaReserveAuction_TransferFailed();
+				if (
+					!IERC20(auction.currency).transferFrom(
+						msg.sender,
+						address(this),
+						attemptedBid
+					)
+				) revert SonaReserveAuction_TransferFailed();
 			}
 
 			unchecked {
@@ -321,11 +388,21 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 					auction.currentBidAmount = attemptedBid;
 
 					// Refund previous bidder
-					_sendCurrencyToParticipant(previousBidder, previousBidAmount, auction.currency);
+					_sendCurrencyToParticipant(
+						previousBidder,
+						previousBidAmount,
+						auction.currency
+					);
 
 					// transfer bid amount to this contract
 					if (auction.currency.isNotZero()) {
-						if (!IERC20(auction.currency).transferFrom(msg.sender, address(this), auction.currentBidAmount)) revert SonaReserveAuction_TransferFailed();
+						if (
+							!IERC20(auction.currency).transferFrom(
+								msg.sender,
+								address(this),
+								auction.currentBidAmount
+							)
+						) revert SonaReserveAuction_TransferFailed();
 					}
 
 					// if the bid is lower than the current bid, revert
@@ -348,18 +425,40 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	/                    PRIVATE FUNCTIONS
 	//////////////////////////////////////////////////////////////*/
 
-	function _verify(MetadataBundle calldata _bundle, uint8 v, bytes32 r, bytes32 s) internal view returns (bool valid) {
+	function _verify(
+		MetadataBundle calldata _bundle,
+		uint8 v,
+		bytes32 r,
+		bytes32 s
+	) internal view returns (bool valid) {
 		return _recoverAddress(_bundle, v, r, s) == _authorizer;
 	}
 
-	function _recoverAddress(MetadataBundle calldata _bundle, uint8 v, bytes32 r, bytes32 s) internal view returns (address recovered) {
+	function _recoverAddress(
+		MetadataBundle calldata _bundle,
+		uint8 v,
+		bytes32 r,
+		bytes32 s
+	) internal view returns (address recovered) {
 		// Note: we need to use `encodePacked` here instead of `encode`.
-		bytes32 digest = keccak256(abi.encodePacked("\x19\x01", _DOMAIN_SEPARATOR, _hash(_bundle)));
+		bytes32 digest = keccak256(
+			abi.encodePacked("\x19\x01", _DOMAIN_SEPARATOR, _hash(_bundle))
+		);
 		recovered = ecrecover(digest, v, r, s);
 	}
 
-	function _hash(MetadataBundle calldata bundle) internal pure returns (bytes32) {
-		return keccak256(abi.encode(_METADATABUNDLE_TYPEHASH, bundle.tokenId, bundle.payout, keccak256(bytes(bundle.arweaveTxId))));
+	function _hash(
+		MetadataBundle calldata bundle
+	) internal pure returns (bytes32) {
+		return
+			keccak256(
+				abi.encode(
+					_METADATABUNDLE_TYPEHASH,
+					bundle.tokenId,
+					bundle.payout,
+					keccak256(bytes(bundle.arweaveTxId))
+				)
+			);
 	}
 
 	/// @dev Internal function to settle the reserve auction
@@ -376,7 +475,14 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		address currency = auction.currency;
 
 		// Mint reward token to seller and buyer
-		rewardToken.mintFromAuction(_tokenId, auction.trackSeller, auction.currentBidder, auction.bundles[0].arweaveTxId, auction.bundles[1].arweaveTxId, auction.bundles[0].payout);
+		rewardToken.mintFromAuction(
+			_tokenId,
+			auction.trackSeller,
+			auction.currentBidder,
+			auction.bundles[0].arweaveTxId,
+			auction.bundles[1].arweaveTxId,
+			auction.bundles[0].payout
+		);
 
 		// Send redistribution fee to the redistribution fee recipient
 
@@ -395,10 +501,16 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 			// prevent div by 0
 			if gt(currentBidAmount, 0) {
 				// Calculate the redistribution fee amount
-				redistributionFeeAmount := div(mul(currentBidAmount, _AUCTION_REDISTRIBUTION_FEE_BPS), 10000)
+				redistributionFeeAmount := div(
+					mul(currentBidAmount, _AUCTION_REDISTRIBUTION_FEE_BPS),
+					10000
+				)
 
 				// Calculate the treasury fee amount
-				treasuryFeeAmount := div(mul(currentBidAmount, _AUCTION_TREASURY_FEE_BPS), 10000)
+				treasuryFeeAmount := div(
+					mul(currentBidAmount, _AUCTION_TREASURY_FEE_BPS),
+					10000
+				)
 
 				// Total fees
 				totalFeesAmount := add(redistributionFeeAmount, treasuryFeeAmount)
@@ -412,7 +524,11 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		_handleTokenTransfer(_treasuryFeeRecipient, treasuryFeeAmount, currency);
 
 		// Send the currency to the redistribution fee recipient
-		_handleTokenTransfer(_redistributionFeeRecipient, redistributionFeeAmount, currency);
+		_handleTokenTransfer(
+			_redistributionFeeRecipient,
+			redistributionFeeAmount,
+			currency
+		);
 
 		// Send the currency to the seller or the seller's delegated address
 		address payable payoutAddress = _getPayoutAddress(auction.bundles[0]);
@@ -425,11 +541,18 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	}
 
 	function _ensureBundleIsUnique(MetadataBundle calldata _bundle) internal {
-		if (_uriExists[keccak256(bytes(_bundle.arweaveTxId))] || rewardToken.tokenIdExists(_bundle.tokenId)) revert SonaReserveAuction_Duplicate();
+		if (
+			_uriExists[keccak256(bytes(_bundle.arweaveTxId))] ||
+			rewardToken.tokenIdExists(_bundle.tokenId)
+		) revert SonaReserveAuction_Duplicate();
 		_uriExists[keccak256(bytes(_bundle.arweaveTxId))] = true;
 	}
 
-	function _handleTokenTransfer(address _to, uint256 _amount, address _currency) internal {
+	function _handleTokenTransfer(
+		address _to,
+		uint256 _amount,
+		address _currency
+	) internal {
 		if (_currency.isZero()) {
 			_wrapAndSendEth(_to, _amount);
 		} else {
@@ -438,7 +561,11 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		}
 	}
 
-	function _sendCurrencyToParticipant(address payable _to, uint256 _amount, address _currency) internal {
+	function _sendCurrencyToParticipant(
+		address payable _to,
+		uint256 _amount,
+		address _currency
+	) internal {
 		if (_currency.isZero()) {
 			if (!_to.send(_amount)) {
 				_wrapAndSendEth(_to, _amount);
@@ -456,11 +583,18 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		_transferTokenOut(_to, _amount, address(_weth));
 	}
 
-	function _transferTokenOut(address _to, uint256 _amount, address _currency) internal {
-		if (!IERC20(_currency).transfer(_to, _amount)) revert SonaReserveAuction_TransferFailed();
+	function _transferTokenOut(
+		address _to,
+		uint256 _amount,
+		address _currency
+	) internal {
+		if (!IERC20(_currency).transfer(_to, _amount))
+			revert SonaReserveAuction_TransferFailed();
 	}
 
-	function _getPayoutAddress(MetadataBundle storage _bundle) internal view returns (address payable payoutAddress) {
+	function _getPayoutAddress(
+		MetadataBundle storage _bundle
+	) internal view returns (address payable payoutAddress) {
 		address payable payout = _bundle.payout;
 		return payout.isNotZero() ? payout : payable(_bundle.tokenId.getAddress());
 	}

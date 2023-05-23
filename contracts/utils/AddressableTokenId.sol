@@ -3,11 +3,15 @@ pragma solidity ^0.8.16;
 
 // solhint-disable no-inline-assembly
 library AddressableTokenId {
-	uint256 private constant _ADDRESSMASK = 0xffffffffffffffffffffffffffffffffffffffff000000000000000000000000;
-	uint256 private constant _IDMASK = 0x0000000000000000000000000000000000000000ffffffffffffffffffffffff;
+	uint256 private constant _ADDRESSMASK =
+		0xffffffffffffffffffffffffffffffffffffffff000000000000000000000000;
+	uint256 private constant _IDMASK =
+		0x0000000000000000000000000000000000000000ffffffffffffffffffffffff;
 
 	/// @dev convert a tokenId to its artist's address
-	function getAddress(uint256 tokenId) internal pure returns (address tokenAddress) {
+	function getAddress(
+		uint256 tokenId
+	) internal pure returns (address tokenAddress) {
 		//return address(uint160(tokenId >> 96));
 		assembly {
 			tokenAddress := shr(96, tokenId)
@@ -15,7 +19,9 @@ library AddressableTokenId {
 	}
 
 	/// @dev artistEditions are always even
-	function getArtistEdition(uint256 tokenId) internal pure returns (uint256 artistTokenId) {
+	function getArtistEdition(
+		uint256 tokenId
+	) internal pure returns (uint256 artistTokenId) {
 		assembly ("memory-safe") {
 			if iszero(mod(tokenId, 2)) {
 				mstore(0, "TokenId: Already Artist Edition")

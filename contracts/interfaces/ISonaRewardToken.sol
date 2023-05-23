@@ -37,7 +37,11 @@ interface ISonaRewardToken {
 	/// @dev Emitted when a RewardToken's metadata is changed.
 	/// @param tokenId The id of the token
 	/// @param txId The cid of the RewardToken
-	event RewardTokenMetadataUpdated(uint256 indexed tokenId, string txId, address payout);
+	event RewardTokenMetadataUpdated(
+		uint256 indexed tokenId,
+		string txId,
+		address payout
+	);
 
 	/// @dev Emitted when a RewardToken is removed.
 	/// @param tokenId The id of the RewardToken
@@ -69,7 +73,14 @@ interface ISonaRewardToken {
 	/                            FUNCTIONS
 	//////////////////////////////////////////////////////////////*/
 
-	function mintFromAuction(uint256 _tokenId, address _artist, address _collector, string memory _artistCid, string memory _collectorCid, address payable _payout) external;
+	function mintFromAuction(
+		uint256 _tokenId,
+		address _artist,
+		address _collector,
+		string memory _artistCid,
+		string memory _collectorCid,
+		address payable _payout
+	) external;
 
 	function updateArweaveTxId(uint256 _tokenId, string calldata _TxId) external;
 
@@ -77,11 +88,20 @@ interface ISonaRewardToken {
 
 	function tokenURI(uint256 _tokenId) external view returns (string memory);
 
-	function getRewardTokenMetadata(uint256 _tokenId) external view returns (RewardToken memory metadata);
+	function getRewardTokenMetadata(
+		uint256 _tokenId
+	) external view returns (RewardToken memory metadata);
 
-	function getRewardTokenPayoutAddr(uint256 _tokenId) external view returns (address payable payout);
+	function getRewardTokenPayoutAddr(
+		uint256 _tokenId
+	) external view returns (address payable payout);
 
-	function initialize(string memory _name, string memory _symbol, address _eoaAdmin, address _minter) external;
+	function initialize(
+		string memory _name,
+		string memory _symbol,
+		address _eoaAdmin,
+		address _minter
+	) external;
 
 	function tokenIdExists(uint256 _tokenId) external view returns (bool exists);
 }

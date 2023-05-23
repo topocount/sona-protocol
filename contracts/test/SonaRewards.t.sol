@@ -29,21 +29,55 @@ contract SonaTestRewards is Util, SonaRewards {
 	Merkle public m = new Merkle();
 	ERC20ReturnTrueMock public mockRewardToken = new ERC20ReturnTrueMock();
 	Weth9Mock public mockWeth = new Weth9Mock();
-	address[] private _holders = [rewardHolder, rewardHolder, rewardHolder, rewardHolder];
+	address[] private _holders = [
+		rewardHolder,
+		rewardHolder,
+		rewardHolder,
+		rewardHolder
+	];
 	uint96[] private _nftQtys = [1, 1, 1, 1];
 	string private _mockUrl = "https://mockurl.com/{address}/{data}.json";
-	MockRewardToken public mockRewardsToken = new MockRewardToken("Mock Tracks", "MOCK", _holders, _nftQtys, payable(address(0)));
+	MockRewardToken public mockRewardsToken =
+		new MockRewardToken(
+			"Mock Tracks",
+			"MOCK",
+			_holders,
+			_nftQtys,
+			payable(address(0))
+		);
 
 	function setUp() public {
 		// NOTE: if you get a generic delegatecall error during `setUp` it's probably
 		//because the encoded argument counts or types below don't match those in the initialize function interface
 		rewardsBase = new SonaRewards();
-		proxy = new ERC1967Proxy(address(rewardsBase), abi.encodeWithSelector(SonaRewards.initialize.selector, rewardAdmin, mockRewardsToken, mockRewardToken, address(0), address(0), _mockUrl));
+		proxy = new ERC1967Proxy(
+			address(rewardsBase),
+			abi.encodeWithSelector(
+				SonaRewards.initialize.selector,
+				rewardAdmin,
+				mockRewardsToken,
+				mockRewardToken,
+				address(0),
+				address(0),
+				_mockUrl
+			)
+		);
 
 		rewards = SonaRewards(payable(proxy));
 
 		wEthRewardsBase = new SonaRewards();
-		wEthProxy = new ERC1967Proxy(address(rewardsBase), abi.encodeWithSelector(SonaRewards.initialize.selector, rewardAdmin, mockRewardsToken, address(0), mockWeth, address(0), _mockUrl));
+		wEthProxy = new ERC1967Proxy(
+			address(rewardsBase),
+			abi.encodeWithSelector(
+				SonaRewards.initialize.selector,
+				rewardAdmin,
+				mockRewardsToken,
+				address(0),
+				mockWeth,
+				address(0),
+				_mockUrl
+			)
+		);
 		wEthRewards = SonaRewards(payable(wEthProxy));
 	}
 
@@ -51,10 +85,32 @@ contract SonaTestRewards is Util, SonaRewards {
 		rewardsBase = new SonaRewards();
 		// cannot init with zero-value rewardToken and wEthToken inputs
 		vm.expectRevert();
-		proxy = new ERC1967Proxy(address(rewardsBase), abi.encodeWithSelector(SonaRewards.initialize.selector, rewardAdmin, mockRewardsToken, address(0), address(0), address(0), _mockUrl));
+		proxy = new ERC1967Proxy(
+			address(rewardsBase),
+			abi.encodeWithSelector(
+				SonaRewards.initialize.selector,
+				rewardAdmin,
+				mockRewardsToken,
+				address(0),
+				address(0),
+				address(0),
+				_mockUrl
+			)
+		);
 		// cannot init with two non-zero rewardToken and wEthToken inputs
 		vm.expectRevert();
-		proxy = new ERC1967Proxy(address(rewardsBase), abi.encodeWithSelector(SonaRewards.initialize.selector, rewardAdmin, mockRewardsToken, address(1), address(2), address(0), _mockUrl));
+		proxy = new ERC1967Proxy(
+			address(rewardsBase),
+			abi.encodeWithSelector(
+				SonaRewards.initialize.selector,
+				rewardAdmin,
+				mockRewardsToken,
+				address(1),
+				address(2),
+				address(0),
+				_mockUrl
+			)
+		);
 	}
 
 	function test_ReceiveFail() public {
@@ -97,7 +153,11 @@ contract SonaTestRewards is Util, SonaRewards {
 		bytes32[] memory leaves = new bytes32[](_leafCount);
 		for (uint64 i = 0; i < _treeCount; i++) {
 			for (uint256 k = 0; k < _leafCount; k++) {
-				leaves[k] = keccak256(bytes.concat(keccak256(abi.encode(tokenId, _amount + i + k, i, i + 1))));
+				leaves[k] = keccak256(
+					bytes.concat(
+						keccak256(abi.encode(tokenId, _amount + i + k, i, i + 1))
+					)
+				);
 			}
 			bytes32 root = m.getRoot(leaves);
 			vm.prank(rewardAdmin);
@@ -114,7 +174,12 @@ contract SonaTestRewards is Util, SonaRewards {
 
 	function test_ClaimRewards() public {
 		// can claim ERC20 funds
-		(uint256 tokenId, uint256[] memory rootIds, bytes32[][] memory proofs, uint256[] memory amounts) = _setUpClaims(rewards);
+		(
+			uint256 tokenId,
+			uint256[] memory rootIds,
+			bytes32[][] memory proofs,
+			uint256[] memory amounts
+		) = _setUpClaims(rewards);
 		vm.prank(rewardHolder);
 		vm.expectEmit(true, true, true, true, address(rewards));
 		emit RewardsClaimed(tokenId, rewardHolder, rootIds[0], amounts[0]);
@@ -151,7 +216,12 @@ contract SonaTestRewards is Util, SonaRewards {
 		address payable splitsAddress = payable(makeAddr("splitsAddress"));
 		mockRewardsToken.setSplitAddr(splitsAddress);
 		// can claim ERC20 funds
-		(uint256 tokenId, uint256[] memory rootIds, bytes32[][] memory proofs, uint256[] memory amounts) = _setUpClaims(rewards);
+		(
+			uint256 tokenId,
+			uint256[] memory rootIds,
+			bytes32[][] memory proofs,
+			uint256[] memory amounts
+		) = _setUpClaims(rewards);
 		vm.prank(rewardHolder);
 		vm.expectEmit(true, true, true, true, address(rewards));
 		emit RewardsClaimed(tokenId, rewardHolder, rootIds[0], amounts[0]);
@@ -186,18 +256,36 @@ contract SonaTestRewards is Util, SonaRewards {
 	function testFuzz_nonHolderReverts(address nonHolder) public {
 		vm.assume(nonHolder != rewardHolder);
 		vm.assume(nonHolder != address(0));
-		(uint256 tokenId, uint256[] memory rootIds, bytes32[][] memory proofs, uint256[] memory amounts) = _setUpClaims(rewards);
+		(
+			uint256 tokenId,
+			uint256[] memory rootIds,
+			bytes32[][] memory proofs,
+			uint256[] memory amounts
+		) = _setUpClaims(rewards);
 		vm.startPrank(nonHolder);
-		vm.expectRevert(abi.encodeWithSelector(ClaimantNotHolder.selector, nonHolder, tokenId));
+		vm.expectRevert(
+			abi.encodeWithSelector(ClaimantNotHolder.selector, nonHolder, tokenId)
+		);
 		rewards.claimRewards(tokenId, rootIds, proofs, amounts);
 	}
 
 	function test_RevertOnTransferError() public {
 		ERC20NoReturnMock mockBadRewardToken = new ERC20NoReturnMock();
 		ERC20ReturnFalseMock mockFalseRewardToken = new ERC20ReturnFalseMock();
-		(uint256 tokenId, uint256[] memory rootIds, bytes32[][] memory proofs, uint256[] memory amounts) = _setUpClaims(rewards);
+		(
+			uint256 tokenId,
+			uint256[] memory rootIds,
+			bytes32[][] memory proofs,
+			uint256[] memory amounts
+		) = _setUpClaims(rewards);
 		vm.prank(rewardAdmin);
-		rewards.updateIntegrations(SonaRewardToken(address(mockRewardsToken)), IERC20(address(mockFalseRewardToken)), IWETH(address(0)), address(0), "");
+		rewards.updateIntegrations(
+			SonaRewardToken(address(mockRewardsToken)),
+			IERC20(address(mockFalseRewardToken)),
+			IWETH(address(0)),
+			address(0),
+			""
+		);
 
 		// expect to revert with our error when a transfer returns `false`
 		vm.prank(rewardHolder);
@@ -205,7 +293,13 @@ contract SonaTestRewards is Util, SonaRewards {
 		rewards.claimRewards(tokenId, rootIds, proofs, amounts);
 
 		vm.prank(rewardAdmin);
-		rewards.updateIntegrations(SonaRewardToken(address(mockRewardsToken)), IERC20(address(mockBadRewardToken)), IWETH(address(0)), address(0), "");
+		rewards.updateIntegrations(
+			SonaRewardToken(address(mockRewardsToken)),
+			IERC20(address(mockBadRewardToken)),
+			IWETH(address(0)),
+			address(0),
+			""
+		);
 
 		// expect to revert without a message when a transfer returns empty
 		vm.prank(rewardHolder);
@@ -224,7 +318,12 @@ contract SonaTestRewards is Util, SonaRewards {
 				OffchainLookup.selector,
 				address(rewards),
 				urls,
-				abi.encodeWithSelector(IRewardGateway.getRewardsforPeriod.selector, tokenId, start, end),
+				abi.encodeWithSelector(
+					IRewardGateway.getRewardsforPeriod.selector,
+					tokenId,
+					start,
+					end
+				),
 				SonaRewards.claimRewards.selector,
 				""
 			)
@@ -232,23 +331,47 @@ contract SonaTestRewards is Util, SonaRewards {
 		rewards.claimLookup(tokenId, start, end);
 	}
 
-	function _setUpClaims(SonaRewards _rewards) private returns (uint256 tokenId, uint256[] memory rootIds, bytes32[][] memory proofs, uint256[] memory amounts) {
+	function _setUpClaims(
+		SonaRewards _rewards
+	)
+		private
+		returns (
+			uint256 tokenId,
+			uint256[] memory rootIds,
+			bytes32[][] memory proofs,
+			uint256[] memory amounts
+		)
+	{
 		// all values here are from scripts/tree.json and scripts/tree2.json
 		// to generate this data.
 		vm.prank(rewardAdmin);
-		_rewards.addRoot(0x1c72fd6fe012bda2b12caa9ca5a34e102f4e79664d3e1e2524c2f1d9a984516d, 0, 1);
+		_rewards.addRoot(
+			0x1c72fd6fe012bda2b12caa9ca5a34e102f4e79664d3e1e2524c2f1d9a984516d,
+			0,
+			1
+		);
 		vm.prank(rewardAdmin);
-		_rewards.addRoot(0x24592ad25cf43069048365e7b15d4e82dfd50b2d00fa1efc860068a7b186ec39, 1, 2);
+		_rewards.addRoot(
+			0x24592ad25cf43069048365e7b15d4e82dfd50b2d00fa1efc860068a7b186ec39,
+			1,
+			2
+		);
 
 		rootIds = new uint256[](2);
 		rootIds[0] = 1;
 		rootIds[1] = 2;
 		bytes32[] memory proof = new bytes32[](2);
-		proof[0] = bytes32(0xb2bfa1ce84ca850057c842e96a8efda7da28dce25d50616ce6b579a82d756288);
-		proof[1] = bytes32(0xd6391653482705ca5b84440c9f76de84397f286e8890d865c89ddb518fe0b0a9);
+		proof[0] = bytes32(
+			0xb2bfa1ce84ca850057c842e96a8efda7da28dce25d50616ce6b579a82d756288
+		);
+		proof[1] = bytes32(
+			0xd6391653482705ca5b84440c9f76de84397f286e8890d865c89ddb518fe0b0a9
+		);
 
 		bytes32[] memory proof2 = new bytes32[](1);
-		proof2[0] = bytes32(0x5cf095043a988837ac9bb07020ab3ead4c47fcebba11b89e94e57dd8b6af4ce4);
+		proof2[0] = bytes32(
+			0x5cf095043a988837ac9bb07020ab3ead4c47fcebba11b89e94e57dd8b6af4ce4
+		);
 
 		proofs = new bytes32[][](2);
 		proofs[0] = proof;

@@ -33,7 +33,15 @@ contract Deployer is Script {
 		SonaRewardToken rewardTokenBase = new SonaRewardToken();
 		ERC1967Proxy proxy = new ERC1967Proxy(
 			address(auctionBase),
-			abi.encodeWithSelector(SonaReserveAuction.initialize.selector, _TREASURY_RECIPIENT, _REDISTRIBUTION_RECIPIENT, _AUTHORIZER, rewardTokenBase, _SONA_OWNER, address(mockToken))
+			abi.encodeWithSelector(
+				SonaReserveAuction.initialize.selector,
+				_TREASURY_RECIPIENT,
+				_REDISTRIBUTION_RECIPIENT,
+				_AUTHORIZER,
+				rewardTokenBase,
+				_SONA_OWNER,
+				address(mockToken)
+			)
 		);
 		SonaReserveAuction auction = SonaReserveAuction(address(proxy));
 

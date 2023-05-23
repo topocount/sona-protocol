@@ -34,8 +34,9 @@ contract SonaAdmin is UUPSUpgradeable, AccessControl {
 	}
 
 	/// @dev SonaAdmin is authorized for upgrades
-	// solhint-disable-next-line no-empty-blocks
-	function _authorizeUpgrade(address newImplementation) internal override onlySonaAdmin {}
+	function _authorizeUpgrade(
+		address newImplementation
+	) internal override onlySonaAdmin {} // solhint-disable no-empty-blocks
 
 	/// @dev This empty reserved space is put in place to allow future versions to add new
 	/// variables without shifting down storage in the inheritance chain.

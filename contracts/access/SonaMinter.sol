@@ -31,8 +31,12 @@ abstract contract SonaMinter is SonaAdmin, ERC721 {
 	}
 
 	/// @dev Resolves conflict between ERC721AUpgradable and AccessControl so we don't have to do it on a per contract basis.
-	function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, AccessControl) returns (bool) {
-		return ERC721.supportsInterface(interfaceId) || AccessControl.supportsInterface(interfaceId);
+	function supportsInterface(
+		bytes4 interfaceId
+	) public view virtual override(ERC721, AccessControl) returns (bool) {
+		return
+			ERC721.supportsInterface(interfaceId) ||
+			AccessControl.supportsInterface(interfaceId);
 	}
 
 	/// @dev This empty reserved space is put in place to allow future versions to add new

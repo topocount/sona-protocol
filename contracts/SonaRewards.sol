@@ -60,12 +60,28 @@ contract SonaRewards is Initializable, SonaAdmin {
 	/*//////////////////////////////////////////////////////////////
 		EVENTS
 	//////////////////////////////////////////////////////////////*/
-	event IntegrationsUpdated(address sonaRewardToken, address paymentToken, address wETHToken, address rewardVault, string claimLookupUrl);
+	event IntegrationsUpdated(
+		address sonaRewardToken,
+		address paymentToken,
+		address wETHToken,
+		address rewardVault,
+		string claimLookupUrl
+	);
 
-	event RewardRootCreated(uint256 indexed rootId, bytes32 indexed hash, uint64 start, uint64 end);
+	event RewardRootCreated(
+		uint256 indexed rootId,
+		bytes32 indexed hash,
+		uint64 start,
+		uint64 end
+	);
 	event RewardRootInvalidated(uint256 indexed rootId);
 
-	event RewardsClaimed(uint256 indexed tokenId, address indexed claimant, uint256 indexed rootId, uint256 amount);
+	event RewardsClaimed(
+		uint256 indexed tokenId,
+		address indexed claimant,
+		uint256 indexed rootId,
+		uint256 amount
+	);
 	/*//////////////////////////////////////////////////////////////
 		ERRORS
 	//////////////////////////////////////////////////////////////*/
@@ -78,7 +94,13 @@ contract SonaRewards is Initializable, SonaAdmin {
 	error StartNotBeforeEnd(uint64 start, uint64 end);
 	error RewardTransferFailed();
 	error InvalidTokenInputs(address paymentToken, address wETHToken);
-	error OffchainLookup(address sender, string[] urls, bytes callData, bytes4 callbackFunction, bytes extraData);
+	error OffchainLookup(
+		address sender,
+		string[] urls,
+		bytes callData,
+		bytes4 callbackFunction,
+		bytes extraData
+	);
 
 	/*//////////////////////////////////////////////////////////////
 		CONSTRUCTOR
@@ -97,11 +119,24 @@ contract SonaRewards is Initializable, SonaAdmin {
 	/// @param wETHToken_ The address of the wETH token if Collectors and Artists earn ETH
 	/// @param rewardVault_ The holder of the reward token that has granted this contract enough of an allowance to operate
 	/// @param claimLookupUrl_ The templated url returned via `OffchainLookup`. Must be EIP-3668 compliant
-	function initialize(address _eoaAdmin, SonaRewardToken sonaRewardToken_, IERC20 paymentToken_, IWETH wETHToken_, address rewardVault_, string calldata claimLookupUrl_) public initializer {
+	function initialize(
+		address _eoaAdmin,
+		SonaRewardToken sonaRewardToken_,
+		IERC20 paymentToken_,
+		IWETH wETHToken_,
+		address rewardVault_,
+		string calldata claimLookupUrl_
+	) public initializer {
 		_setupRole(_ADMIN_ROLE, _eoaAdmin);
 		_setRoleAdmin(_ADMIN_ROLE, _ADMIN_ROLE);
 
-		_updateIntegrations(sonaRewardToken_, paymentToken_, wETHToken_, rewardVault_, claimLookupUrl_);
+		_updateIntegrations(
+			sonaRewardToken_,
+			paymentToken_,
+			wETHToken_,
+			rewardVault_,
+			claimLookupUrl_
+		);
 	}
 
 	/*//////////////////////////////////////////////////////////////
@@ -124,7 +159,11 @@ contract SonaRewards is Initializable, SonaAdmin {
 	/// @param _root The hash of the merkle root to submit proofs against.
 	/// @param _start The epoch start time (in seconds) for the reward period
 	/// @param _end The epoch end time (in seconds) for the reward period
-	function addRoot(bytes32 _root, uint64 _start, uint64 _end) public onlySonaAdmin {
+	function addRoot(
+		bytes32 _root,
+		uint64 _start,
+		uint64 _end
+	) public onlySonaAdmin {
 		if (!(_start < _end)) revert StartNotBeforeEnd(_start, _end);
 		unchecked {
 			++lastRootId;
@@ -148,10 +187,25 @@ contract SonaRewards is Initializable, SonaAdmin {
 	/// @param _tokenId The SonaRewardToken token ID
 	/// @param _start The beginning of the time period to collect rewards for
 	/// @param _end The end of the time period to collect rewards for
-	function claimLookup(uint256 _tokenId, uint64 _start, uint64 _end) public view {
+	function claimLookup(
+		uint256 _tokenId,
+		uint64 _start,
+		uint64 _end
+	) public view {
 		string[] memory urls = new string[](1);
 		urls[0] = _claimLookupUrl;
-		revert OffchainLookup(address(this), urls, abi.encodeWithSelector(IRewardGateway.getRewardsforPeriod.selector, _tokenId, _start, _end), this.claimRewards.selector, "");
+		revert OffchainLookup(
+			address(this),
+			urls,
+			abi.encodeWithSelector(
+				IRewardGateway.getRewardsforPeriod.selector,
+				_tokenId,
+				_start,
+				_end
+			),
+			this.claimRewards.selector,
+			""
+		);
 	}
 
 	/// @notice collect tokens by presenting valid proofs and owning token number `_tokenId`
@@ -159,9 +213,16 @@ contract SonaRewards is Initializable, SonaAdmin {
 	/// @param _rootIds the index numbers of the roots to prove against
 	/// @param _proofs the proofs for each respective root
 	/// @param _amounts the amounts to be claimed from each respective root
-	function claimRewards(uint256 _tokenId, uint256[] calldata _rootIds, bytes32[][] calldata _proofs, uint256[] calldata _amounts) public {
-		if (_sonaRewardToken.ownerOf(_tokenId) != msg.sender) revert ClaimantNotHolder(msg.sender, _tokenId);
-		if (_rootIds.length != _proofs.length || _rootIds.length != _amounts.length) revert ClaimLengthMismatch();
+	function claimRewards(
+		uint256 _tokenId,
+		uint256[] calldata _rootIds,
+		bytes32[][] calldata _proofs,
+		uint256[] calldata _amounts
+	) public {
+		if (_sonaRewardToken.ownerOf(_tokenId) != msg.sender)
+			revert ClaimantNotHolder(msg.sender, _tokenId);
+		if (_rootIds.length != _proofs.length || _rootIds.length != _amounts.length)
+			revert ClaimLengthMismatch();
 
 		uint256 transferAmount;
 		uint256 _rootIdsArrayLength = _rootIds.length;
@@ -171,9 +232,12 @@ contract SonaRewards is Initializable, SonaAdmin {
 		}
 		address payoutAddress = _getPayoutAddress(_tokenId, msg.sender);
 		if (address(_paymentToken).isNotZero()) {
-			if (!_paymentToken.transferFrom(_rewardVault, payoutAddress, transferAmount)) revert RewardTransferFailed();
+			if (
+				!_paymentToken.transferFrom(_rewardVault, payoutAddress, transferAmount)
+			) revert RewardTransferFailed();
 		} else {
-			if (!_wETHToken.transferFrom(_rewardVault, address(this), transferAmount)) revert RewardTransferFailed();
+			if (!_wETHToken.transferFrom(_rewardVault, address(this), transferAmount))
+				revert RewardTransferFailed();
 			_wETHToken.withdraw(transferAmount);
 			payable(payoutAddress).transfer(transferAmount);
 		}
@@ -185,17 +249,39 @@ contract SonaRewards is Initializable, SonaAdmin {
 	/// @param wETHToken_ The address of the wETH token if Collectors and Artists earn ETH
 	/// @param rewardVault_ The holder of the reward token that has granted this contract enough of an allowance to operate
 	/// @param claimLookupUrl_ The templated url returned via `OffchainLookup`. Must be EIP-3668 compliant
-	function updateIntegrations(SonaRewardToken sonaRewardToken_, IERC20 paymentToken_, IWETH wETHToken_, address rewardVault_, string calldata claimLookupUrl_) public onlySonaAdmin {
-		_updateIntegrations(sonaRewardToken_, paymentToken_, wETHToken_, rewardVault_, claimLookupUrl_);
+	function updateIntegrations(
+		SonaRewardToken sonaRewardToken_,
+		IERC20 paymentToken_,
+		IWETH wETHToken_,
+		address rewardVault_,
+		string calldata claimLookupUrl_
+	) public onlySonaAdmin {
+		_updateIntegrations(
+			sonaRewardToken_,
+			paymentToken_,
+			wETHToken_,
+			rewardVault_,
+			claimLookupUrl_
+		);
 	}
 
 	/*//////////////////////////////////////////////////////////////
 		Internal Functions
 	//////////////////////////////////////////////////////////////*/
-	function _claimRewardsOne(uint256 _tokenId, uint256 _rootId, bytes32[] calldata _proof, uint256 _amount) internal {
+	function _claimRewardsOne(
+		uint256 _tokenId,
+		uint256 _rootId,
+		bytes32[] calldata _proof,
+		uint256 _amount
+	) internal {
 		RewardRoot storage root = rewardRoots[_rootId];
-		if (root.start < dateTimeLastClaimed[_tokenId]) revert InvalidClaimAttempt();
-		bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(_tokenId, _amount, root.start, root.end))));
+		if (root.start < dateTimeLastClaimed[_tokenId])
+			revert InvalidClaimAttempt();
+		bytes32 leaf = keccak256(
+			bytes.concat(
+				keccak256(abi.encode(_tokenId, _amount, root.start, root.end))
+			)
+		);
 		if (_proof.verify(root.hash, leaf)) {
 			dateTimeLastClaimed[_tokenId] = root.end; // prevent reentrancy by updating this before transfer
 			emit RewardsClaimed(_tokenId, msg.sender, _rootId, _amount);
@@ -204,8 +290,17 @@ contract SonaRewards is Initializable, SonaAdmin {
 		revert InvalidProof();
 	}
 
-	function _updateIntegrations(SonaRewardToken sonaRewardToken_, IERC20 paymentToken_, IWETH wETHToken_, address rewardVault_, string calldata claimLookupUrl_) internal {
-		if ((address(paymentToken_).isNotZero() && address(wETHToken_).isNotZero()) || address(paymentToken_) == address(wETHToken_)) {
+	function _updateIntegrations(
+		SonaRewardToken sonaRewardToken_,
+		IERC20 paymentToken_,
+		IWETH wETHToken_,
+		address rewardVault_,
+		string calldata claimLookupUrl_
+	) internal {
+		if (
+			(address(paymentToken_).isNotZero() && address(wETHToken_).isNotZero()) ||
+			address(paymentToken_) == address(wETHToken_)
+		) {
 			revert InvalidTokenInputs(address(paymentToken_), address(wETHToken_));
 		}
 		_sonaRewardToken = sonaRewardToken_;
@@ -213,11 +308,22 @@ contract SonaRewards is Initializable, SonaAdmin {
 		_wETHToken = wETHToken_;
 		_rewardVault = rewardVault_;
 		_claimLookupUrl = claimLookupUrl_;
-		emit IntegrationsUpdated(address(sonaRewardToken_), address(paymentToken_), address(wETHToken_), rewardVault_, claimLookupUrl_);
+		emit IntegrationsUpdated(
+			address(sonaRewardToken_),
+			address(paymentToken_),
+			address(wETHToken_),
+			rewardVault_,
+			claimLookupUrl_
+		);
 	}
 
-	function _getPayoutAddress(uint256 _tokenId, address _holder) internal view returns (address payable payoutAddress) {
-		address payable splits = _sonaRewardToken.getRewardTokenPayoutAddr(_tokenId);
+	function _getPayoutAddress(
+		uint256 _tokenId,
+		address _holder
+	) internal view returns (address payable payoutAddress) {
+		address payable splits = _sonaRewardToken.getRewardTokenPayoutAddr(
+			_tokenId
+		);
 		return splits.isNotZero() ? splits : payable(_holder);
 	}
 }
