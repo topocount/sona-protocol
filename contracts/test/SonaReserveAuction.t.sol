@@ -510,6 +510,70 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 		assertEq(auctionData.currentBidder, address(0));
 	}
 
+	function test_UpdateReserveAuctionPayoutAddress() public {
+		(MetadataBundle[2] memory bundles, Signature[2] memory signatures) = _createSignedBundles();
+		vm.prank(trackMinter);
+		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+
+		ISonaReserveAuction.Auction memory auctionData = auction.getAuction(tokenId);
+
+		assertEq(auctionData.bundles[0].payout, artistPayout);
+
+		address payable newPayout = payable(address(26));
+
+		vm.prank(trackMinter);
+		auction.updateArtistPayoutAddress(tokenId, newPayout);
+
+		ISonaReserveAuction.Auction memory newAuctionData = auction.getAuction(tokenId);
+
+		assertEq(newAuctionData.bundles[0].payout, newPayout);
+
+		hoax(bidder);
+		auction.createBid{ value: 1.1 ether }(tokenId, 0);
+
+		newPayout = payable(address(27));
+
+		vm.prank(trackMinter);
+		auction.updateArtistPayoutAddress(tokenId, newPayout);
+
+		newAuctionData = auction.getAuction(tokenId);
+
+		assertEq(newAuctionData.bundles[0].payout, newPayout);
+	}
+
+	function test_InvalidUpdateReserveAuctionPayoutAddress() public {
+		address payable newPayout = payable(address(26));
+		// cannot be updated before auction is created
+		vm.prank(trackMinter);
+		vm.expectRevert(ISonaReserveAuction.SonaReserveAuction_InvalidAuction.selector);
+		auction.updateArtistPayoutAddress(tokenId, newPayout);
+
+		(MetadataBundle[2] memory bundles, Signature[2] memory signatures) = _createSignedBundles();
+		vm.prank(trackMinter);
+		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+
+		ISonaReserveAuction.Auction memory auctionData = auction.getAuction(tokenId);
+
+		assertEq(auctionData.bundles[0].payout, artistPayout);
+
+		// cannot be updated by non-minter
+		vm.expectRevert(ISonaReserveAuction.SonaReserveAuction_NotAuthorized.selector);
+		auction.updateArtistPayoutAddress(tokenId, newPayout);
+
+		hoax(bidder);
+		auction.createBid{ value: 1.1 ether }(tokenId, 0);
+
+		vm.warp(2 days);
+
+		vm.prank(trackMinter);
+		auction.settleReserveAuction(tokenId);
+
+		// cannot be updated after auction is settled
+		vm.prank(trackMinter);
+		vm.expectRevert(ISonaReserveAuction.SonaReserveAuction_InvalidAuction.selector);
+		auction.updateArtistPayoutAddress(tokenId, newPayout);
+	}
+
 	function test_UpdateReserveAuctionPriceAndCurrency() public {
 		(MetadataBundle[2] memory bundles, Signature[2] memory signatures) = _createSignedBundles();
 		vm.prank(trackMinter);

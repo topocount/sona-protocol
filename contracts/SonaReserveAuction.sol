@@ -233,6 +233,20 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		emit ReserveAuctionPriceUpdated({ tokenId: _tokenId, auction: auction });
 	}
 
+	/// @notice set the payout address to `_payout` for auction with id `_tokenId`
+	/// @dev setting the address to address(0) resets the payout address to the seller's address
+	/// @param _tokenId The artist tokenId used as the identifier for the auction
+	/// @param _payout The address to receive NFT sale proceeds and future reward claims
+	function updateArtistPayoutAddress(uint256 _tokenId, address payable _payout) external onlySonaAdminOrApprovedTokenOperator(_tokenId) {
+		Auction storage auction = auctions[_tokenId];
+
+		if (auction.reservePrice == 0) {
+			revert SonaReserveAuction_InvalidAuction();
+		}
+
+		auction.bundles[0].payout = _payout;
+	}
+
 	/// @dev Public function to bid on a reserve auction
 	/// @param _tokenId The ID of the token.
 	/// @param _bidAmount The amount of the bid if the currency is not ETH
