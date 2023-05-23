@@ -243,7 +243,7 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 		assertEq(IERC20(address(mockERC20)).balanceOf(bidder), 100);
 	}
 
-	function test_CreateMultipleBidsReturnsOriginalETHBidderFundsWithWeth() public {
+	function test_CreateMultipleBidsReturnsOriginalETHEOABidderFundsWithEth() public {
 		(MetadataBundle[2] memory bundles, Signature[2] memory signatures) = _createSignedBundles();
 		vm.prank(trackMinter);
 		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
@@ -254,7 +254,7 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 		hoax(secondBidder);
 		auction.createBid{ value: 2 ether }(tokenId, 0);
 
-		assertEq(IERC20(address(mockWeth)).balanceOf(address(bidder)), 1.1 ether);
+		assertEq(address(bidder).balance, 1.1 ether);
 	}
 
 	function test_CreateBidWithOnExpiredAuctionReverts() public {
@@ -590,7 +590,7 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 
 		assertEq(IERC20(address(mockWeth)).balanceOf(treasuryRecipient), treasuryFee);
 		assertEq(IERC20(address(mockWeth)).balanceOf(redistributionRecipient), redistributionFee);
-		assertEq(IERC20(address(mockWeth)).balanceOf(trackMinter), sellerProceeds);
+		assertEq(trackMinter.balance, sellerProceeds);
 	}
 
 	function testFuzz_SettleReserveAuctionSendsERC20FundsToRecipients(uint256 _reservePrice, uint256 _bidAmount) public {
@@ -618,6 +618,29 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 		assertEq(IERC20(address(mockERC20)).balanceOf(trackMinter), sellerProceeds);
 	}
 
+	function test_ContractBidderAcceptsEthRefunds() public {
+		(MetadataBundle[2] memory bundles, Signature[2] memory signatures) = _createSignedBundles();
+		vm.prank(trackMinter);
+		auction.createReserveAuction(bundles, signatures, address(0), .1 ether);
+
+		// Contract is original bidder
+		hoax(address(contractBidder));
+		uint256 originalBalance = address(contractBidder).balance;
+		contractBidder.createETHBid(tokenId, .1 ether);
+
+		// Bidder outbids contract
+		hoax(bidder);
+		auction.createBid{ value: .3 ether }(tokenId, 0);
+
+		vm.warp(2 days);
+
+		vm.prank(trackMinter);
+		auction.settleReserveAuction(tokenId);
+
+		// Contract bidder should have 0.1 eth refunded
+		assertEq(address(contractBidder).balance, originalBalance);
+	}
+
 	function test_ContractBidderRejectsEthRefunds() public {
 		(MetadataBundle[2] memory bundles, Signature[2] memory signatures) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -637,7 +660,7 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 		vm.prank(trackMinter);
 		auction.settleReserveAuction(tokenId);
 
-		// Contract bidder should have 1.1 weth refunded
+		// Contract bidder should have 0.1 weth refunded
 		assertEq(IERC20(address(mockWeth)).balanceOf(address(contractBidder)), .1 ether);
 	}
 
