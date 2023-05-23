@@ -66,7 +66,7 @@ interface ISonaReserveAuction {
 	// @dev the information composing the NFT for use onchain and offchain
 	struct MetadataBundle {
 		uint256 tokenId;
-		address payable splits;
+		address payable payout;
 		string arweaveTxId;
 	}
 

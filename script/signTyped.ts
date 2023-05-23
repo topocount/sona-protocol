@@ -34,20 +34,20 @@ const domain = {
 const types = {
 	MetadataBundle: [
 		{ name: "tokenId", type: "uint256" },
-		{ name: "splits", type: "address" },
+		{ name: "payout", type: "address" },
 		{ name: "arweaveTxId", type: "string" },
 	],
 }
 
 const artistBundle = {
 	tokenId: concat(["0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f", numberToHex(68, { size: 12 })]),
-	splits: numberToHex(25, { size: 20 }),
+	payout: numberToHex(25, { size: 20 }),
 	arweaveTxId: "Hello World!",
 } as const
 
 const collectorBundle = {
 	tokenId: concat(["0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f", numberToHex(69, { size: 12 })]),
-	splits: numberToHex(0, { size: 20 }),
+	payout: numberToHex(0, { size: 20 }),
 	arweaveTxId: "Hello World",
 } as const
 

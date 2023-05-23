@@ -217,7 +217,7 @@ contract SonaRewards is Initializable, SonaAdmin {
 	}
 
 	function _getPayoutAddress(uint256 _tokenId, address _holder) internal view returns (address payable payoutAddress) {
-		address payable splits = _sonaRewardToken.getRewardTokenSplitsAddr(_tokenId);
+		address payable splits = _sonaRewardToken.getRewardTokenPayoutAddr(_tokenId);
 		return splits.isNotZero() ? splits : payable(_holder);
 	}
 }

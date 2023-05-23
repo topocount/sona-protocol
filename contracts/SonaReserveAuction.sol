@@ -39,7 +39,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	// @dev The signature of the Domain separator typehash
 	bytes32 private constant _EIP712DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
 	// @dev The signature of the type that is hashed and prefixed to the TypedData payload
-	bytes32 private constant _METADATABUNDLE_TYPEHASH = keccak256("MetadataBundle(uint256 tokenId,address splits,string arweaveTxId)");
+	bytes32 private constant _METADATABUNDLE_TYPEHASH = keccak256("MetadataBundle(uint256 tokenId,address payout,string arweaveTxId)");
 
 	/*//////////////////////////////////////////////////////////////
 	/                         STATE
@@ -342,7 +342,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	}
 
 	function _hash(MetadataBundle calldata bundle) internal pure returns (bytes32) {
-		return keccak256(abi.encode(_METADATABUNDLE_TYPEHASH, bundle.tokenId, bundle.splits, keccak256(bytes(bundle.arweaveTxId))));
+		return keccak256(abi.encode(_METADATABUNDLE_TYPEHASH, bundle.tokenId, bundle.payout, keccak256(bytes(bundle.arweaveTxId))));
 	}
 
 	/// @dev Internal function to settle the reserve auction
@@ -359,7 +359,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		address currency = auction.currency;
 
 		// Mint reward token to seller and buyer
-		rewardToken.mintFromAuction(_tokenId, auction.trackSeller, auction.currentBidder, auction.bundles[0].arweaveTxId, auction.bundles[1].arweaveTxId, auction.bundles[0].splits);
+		rewardToken.mintFromAuction(_tokenId, auction.trackSeller, auction.currentBidder, auction.bundles[0].arweaveTxId, auction.bundles[1].arweaveTxId, auction.bundles[0].payout);
 
 		// Send redistribution fee to the redistribution fee recipient
 

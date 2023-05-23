@@ -77,13 +77,13 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 	/// @param _collector The address that won the auction
 	/// @param _artistTxId the arweave txId of the artist edition bundle contained on arweave
 	/// @param _collectorTxId the arweave txId of the collector edition bundle contained on arweave
-	/// @param _splits the address to distribute funds to, potentially to split them with collaborators
-	function mintFromAuction(uint256 _tokenId, address _artist, address _collector, string calldata _artistTxId, string calldata _collectorTxId, address payable _splits) external onlySonaMinter {
+	/// @param _payout the address to distribute funds to, potentially to split them with collaborators
+	function mintFromAuction(uint256 _tokenId, address _artist, address _collector, string calldata _artistTxId, string calldata _collectorTxId, address payable _payout) external onlySonaMinter {
 		if (_tokenId % 2 == 0) revert SonaRewardToken_ArtistEditionEven();
 		if (AddressableTokenId.getAddress(_tokenId) != _artist) revert SonaRewardToken_NoArtistInTokenId();
 		uint256 artistTokenId = _tokenId.getArtistEdition();
 		_mint(_artist, artistTokenId);
-		_setTokenMetadata(artistTokenId, _artistTxId, _splits);
+		_setTokenMetadata(artistTokenId, _artistTxId, _payout);
 
 		_mint(_collector, _tokenId);
 		_setTokenMetadata(_tokenId, _collectorTxId, payable(address(0)));
@@ -120,8 +120,8 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 
 	/// @dev Returns the splits address of the RewardToken
 	/// @param _tokenId The ID of the token to fetch
-	function getRewardTokenSplitsAddr(uint256 _tokenId) external view checkExists(_tokenId) returns (address payable splits) {
-		return rewardTokens[_tokenId].splits;
+	function getRewardTokenPayoutAddr(uint256 _tokenId) external view checkExists(_tokenId) returns (address payable payout) {
+		return rewardTokens[_tokenId].payout;
 	}
 
 	/// @notice Check if token `_tokenId` exists
@@ -140,9 +140,9 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 		emit RewardTokenArweaveTxIdUpdated({ tokenId: _tokenId, txId: _txId });
 	}
 
-	function _setTokenMetadata(uint256 _tokenId, string calldata _txId, address payable _splits) internal {
-		rewardTokens[_tokenId] = RewardToken({ arTxId: _txId, splits: _splits });
+	function _setTokenMetadata(uint256 _tokenId, string calldata _txId, address payable _payout) internal {
+		rewardTokens[_tokenId] = RewardToken({ arTxId: _txId, payout: _payout });
 
-		emit RewardTokenMetadataUpdated({ tokenId: _tokenId, txId: _txId, splits: _splits });
+		emit RewardTokenMetadataUpdated({ tokenId: _tokenId, txId: _txId, payout: _payout });
 	}
 }

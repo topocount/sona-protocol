@@ -26,7 +26,7 @@ contract SonaRewardTokenTest is Util, ERC721Holder {
 	address public auctionInitializer = makeAddr("auctionInitializer");
 
 	address payable public zeroSplitsAddr = payable(address(0));
-	address payable public splitsAddr = payable(makeAddr("splitAddress"));
+	address payable public payoutAddr = payable(makeAddr("splitAddress"));
 
 	uint256 private _tokenId = (uint256(uint160(address(this))) << 96) | 3;
 	uint256 private _artistTokenId = (uint256(uint160(address(this))) << 96) | 2;
@@ -128,13 +128,13 @@ contract SonaRewardTokenTest is Util, ERC721Holder {
 		string memory cid = "Qmabcdefghijklmnopqrstuv";
 		string memory cid2 = "Qmabcdefghijklmnopqrstuvx";
 
-		rewardToken.mintFromAuction(_tokenId, address(this), rewardTokenRecipient, cid, cid2, splitsAddr);
+		rewardToken.mintFromAuction(_tokenId, address(this), rewardTokenRecipient, cid, cid2, payoutAddr);
 		ISonaRewardToken.RewardToken memory collectorData = rewardToken.getRewardTokenMetadata(_tokenId);
 		assertEq(collectorData.arTxId, cid2);
-		assertEq(collectorData.splits, address(0));
+		assertEq(collectorData.payout, address(0));
 		ISonaRewardToken.RewardToken memory artistData = rewardToken.getRewardTokenMetadata(_artistTokenId);
 		assertEq(artistData.arTxId, cid);
-		assertEq(artistData.splits, splitsAddr);
+		assertEq(artistData.payout, payoutAddr);
 
 		vm.expectRevert("TokenId: Already Artist Edition");
 		_artistTokenId.getArtistEdition();

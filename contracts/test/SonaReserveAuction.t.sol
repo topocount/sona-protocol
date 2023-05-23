@@ -34,6 +34,7 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 	address public nonEthToken = makeAddr("nonEthToken");
 	// derived from ../../scripts/signTyped.ts
 	address public authorizer = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
+	address payable public artistPayout = payable(address(25));
 
 	uint256 public tokenId = (uint256(uint160(trackMinter)) << 96) | 69;
 
@@ -76,11 +77,11 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 		new ERC1967Proxy(address(auctionBase), abi.encodeWithSelector(SonaReserveAuction.initialize.selector, treasuryRecipient, redistributionRecipient, authorizer, address(0), address(0), mockWeth));
 	}
 
-	function _createSignedBundles() private pure returns (MetadataBundle[2] memory bundles, Signature[2] memory signatures) {
-		MetadataBundle memory artistBundle = MetadataBundle({ arweaveTxId: "Hello World!", tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000044, splits: payable(address(25)) });
-		MetadataBundle memory collectorBundle = MetadataBundle({ arweaveTxId: "Hello World", tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000045, splits: payable(address(0)) });
-		Signature memory artistSignature = Signature(27, 0x5cca1003a453dd7f2291db9b3bba02170de8e7b03c28b23e7e0d1ad599c6ef42, 0x378a5dccd72e4c9728a5f9a36b0ec14945e40246ff6d5c71ab7dfd22a0742a8e);
-		Signature memory collectorSignature = Signature(27, 0x37517faa62bc85cf1759550bc93a8940880277c5b7465ccd633ee0ff44135354, 0x196d6ce9ccd73edfc61135a32c3d75f828a8fd2eb645bdeb8266b62d7a9bcd69);
+	function _createSignedBundles() private view returns (MetadataBundle[2] memory bundles, Signature[2] memory signatures) {
+		MetadataBundle memory artistBundle = MetadataBundle({ arweaveTxId: "Hello World!", tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000044, payout: artistPayout });
+		MetadataBundle memory collectorBundle = MetadataBundle({ arweaveTxId: "Hello World", tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000045, payout: payable(address(0)) });
+		Signature memory artistSignature = Signature(28, 0xffc0fb30061f17a53c5c2467f59a3eb97e8ec4b5b0c06fa52142daf608d12d8b, 0x66f4b7b6d74b4c84f92f2bae1661bb6000a0d8b5806bb1862368e39b35bb8183);
+		Signature memory collectorSignature = Signature(27, 0x54826a459211de0cc74e8ee384b1c7d051b8ba6eb89d2e8b337ce6e8e3d0fe26, 0x5217cb99f9f960c6bfb2ada761d0a7da7473468e4a4ff75c0effac2897d21cf2);
 
 		bundles = [artistBundle, collectorBundle];
 		signatures = [artistSignature, collectorSignature];
