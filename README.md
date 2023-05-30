@@ -158,5 +158,5 @@ The repo comes with two static analyzers for checking for security vulnerabiltii
 
 ## Maintainers
 
-- [@partyscript](https://github.com/partyscript)
+- [@mudrush](https://github.com/mudrush)
 - [@topocount](https://github.com/topocount)
