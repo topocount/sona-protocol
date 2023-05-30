@@ -148,4 +148,24 @@ contract SonaRewardTokenTest is Util, ERC721Holder {
 		vm.expectRevert(ISonaRewardToken.SonaRewardToken_NoArtistInTokenId.selector);
 		rewardToken.mintFromAuction(bad_artistTokenId, address(this), rewardTokenRecipient, "", "", zeroSplitsAddr);
 	}
+
+	function test_updatePayoutAddress() public {
+		string memory cid = "Qmabcdefghijklmnopqrstuv";
+		string memory cid2 = "Qmabcdefghijklmnopqrstuvx";
+
+		rewardToken.mintFromAuction(_tokenId, address(this), rewardTokenRecipient, cid, cid2, payoutAddr);
+
+		rewardToken.updatePayoutAddress(_artistTokenId, payable(address(1)));
+
+		address payable result = rewardToken.getRewardTokenPayoutAddr(_artistTokenId);
+		assertEq(result, payable(address(1)));
+
+		vm.prank(rewardTokenRecipient);
+		vm.expectRevert(ISonaRewardToken.SonaRewardToken_Unauthorized.selector);
+		rewardToken.updatePayoutAddress(_artistTokenId, payable(rewardTokenRecipient));
+
+		vm.prank(rewardTokenRecipient);
+		vm.expectRevert(ISonaRewardToken.SonaRewardToken_ArtistEditionOdd.selector);
+		rewardToken.updatePayoutAddress(_tokenId, payable(address(1)));
+	}
 }

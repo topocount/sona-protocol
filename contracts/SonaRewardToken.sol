@@ -96,6 +96,14 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 		_updateArweaveTxId(_tokenId, _txId);
 	}
 
+	/// @dev Updates the Payout address for artist editions
+	/// @param _tokenId The ID of the token that will be updated
+	/// @param _payout The new payout address to be used. Set to address(0) if funds should be sent directly to the claimant
+	function updatePayoutAddress(uint256 _tokenId, address payable _payout) external checkExists(_tokenId) onlyTokenHolder(_tokenId) {
+		if (_tokenId % 2 != 0) revert SonaRewardToken_ArtistEditionOdd();
+		rewardTokens[_tokenId].payout = _payout;
+	}
+
 	/// @dev Removes a RewardToken from the protocol, burning the NFT and striking the data from on-chain memory
 	/// @param _tokenId The ID of the token that will be deleted
 	function burnRewardToken(uint256 _tokenId) external onlyTokenHolder(_tokenId) {

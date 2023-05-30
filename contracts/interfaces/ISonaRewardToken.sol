@@ -16,6 +16,8 @@ interface ISonaRewardToken {
 
 	error SonaRewardToken_ArtistEditionEven();
 
+	error SonaRewardToken_ArtistEditionOdd();
+
 	error SonaRewardToken_NoArtistInTokenId();
 
 	/*//////////////////////////////////////////////////////////////
