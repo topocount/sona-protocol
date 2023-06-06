@@ -9,10 +9,8 @@ import { SonaReserveAuction } from "../../contracts/SonaReserveAuction.sol";
 import { ERC1967Proxy } from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 import { ERC20 } from "openzeppelin/token/ERC20/ERC20.sol";
 import { ERC1967Proxy } from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
-
-interface ImmutableCreate2Factory {
-	function safeCreate2(bytes32, bytes memory) external;
-}
+import { IWETH } from "../../contracts/interfaces/IWETH.sol";
+import { Weth9Mock } from "../../contracts/test/mock/Weth9Mock.sol";
 
 contract Deployer is Script {
 	address private _SONA_OWNER = vm.envAddress("OWNER");
@@ -23,15 +21,21 @@ contract Deployer is Script {
 	function setUp() public {}
 
 	function run() external {
-		vm.startBroadcast();
+		string memory mnemonic = vm.envString("MNEMONIC");
+		uint256 key = vm.deriveKey(mnemonic, 0);
+		vm.startBroadcast(key);
 
-		// Deploy TrackMinter
+		// Deploy Mocks for PoC Tests
 		ERC20Mock mockToken = new ERC20Mock();
+		//Weth9Mock mockWeth = new Weth9Mock();
+
+		// Deploy Reward NFT contract
 
 		// Deploy TrackAuction
 		SonaReserveAuction auctionBase = new SonaReserveAuction();
 		SonaRewardToken rewardTokenBase = new SonaRewardToken();
 		ERC1967Proxy proxy = new ERC1967Proxy(
+
 			address(auctionBase),
 			abi.encodeWithSelector(
 				SonaReserveAuction.initialize.selector,
@@ -45,6 +49,7 @@ contract Deployer is Script {
 		);
 		SonaReserveAuction auction = SonaReserveAuction(address(proxy));
 
+		console.log("Reward NFT Address: ", address(auction.rewardToken()));
 		console.log("Auction Address: ", address(auction));
 
 		SonaRewards rewardsBase = new SonaRewards();
@@ -55,12 +60,14 @@ contract Deployer is Script {
 				_SONA_OWNER,
 				address(auction.rewardToken()),
 				address(mockToken),
+				address(0),
 				_REDISTRIBUTION_RECIPIENT, //todo: holder of protocol fees(?)
 				"" //todo: claimLookupUrl
 			)
 		);
 
 		console.log("Reward Claims address: ", address(rewards));
+
 
 		vm.stopBroadcast();
 	}

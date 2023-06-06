@@ -31,12 +31,23 @@ gas_snapshot :; forge clean && forge snapshot
 # chmod scripts
 scripts :; chmod +x ./scripts/*
 
+# deploy with doppler env
+deploy_private_doppler:; doppler run -- make deploy_private
+
 # deploy local
-deploy_local :; forge script ./scripts/solidity/Deploy.s.sol:Deployer \
+deploy_local :; FOUNDRY_PROFILE=optimized forge script ./scripts/solidity/Deploy.s.sol:Deployer \
 	--fork-url "http://localhost:8545" \
 	--private-key ${PRIVATE_KEY} \
 	-vvv \
 	--broadcast
+
+deploy_private:; forge script script/solidity/Deploy.s.sol:Deployer \
+	--slow \
+	-vvvv \
+	--skip-simulation \
+	--broadcast \
+	--rpc-url ${RPC_URL} \
+	--mnemonics ${MNEMONIC}
 
 deploy_testnet :; forge script ./script/solidity/Deploy.s.sol \
 	--optimizer-runs 10000 \

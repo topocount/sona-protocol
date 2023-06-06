@@ -3,14 +3,19 @@ import fs from "fs"
 
 // (1)
 let values = [
-  // [tokenId								, amount, 			,start, end]
-  ["1", "5000000000000000000", 0, 1],
-  ["2", "2500000000000000000", 0, 1],
-  ["3", "1250000000000000000", 0, 1],
+	// [tokenId								, amount, 			,start, end]
+	["0x1", "5000000000000000000", 0, 1],
+	["0x2", "2500000000000000000", 0, 1],
+	["0x3", "1250000000000000000", 0, 1],
 ]
 
 // (2)
-let tree = StandardMerkleTree.of(values, ["uint256", "uint256", "uint64", "uint64"])
+let tree = StandardMerkleTree.of(values, [
+	"uint256",
+	"uint256",
+	"uint64",
+	"uint64",
+])
 
 // (3)
 console.log("Merkle Root:", tree.root)
@@ -25,14 +30,19 @@ fs.writeFileSync("script/tree.json", JSON.stringify(tree.dump(), null, 2))
 console.log("\n\ntree 2")
 // (1)
 values = [
-  // [tokenId								, amount, 			,start, end]
-  ["1", "5000000000000000000", 1, 2],
-  ["2", "2500000000000000000", 1, 2],
-  ["3", "1250000000000000000", 1, 2],
+	// [tokenId								, amount, 			,start, end]
+	["0x1", "5000000000000000000", 1, 2],
+	["0x2", "2500000000000000000", 1, 2],
+	["0x3", "1250000000000000000", 1, 2],
 ]
 
 // (2)
-tree = StandardMerkleTree.of(values, ["uint256", "uint256", "uint256", "uint256"])
+tree = StandardMerkleTree.of(values, [
+	"uint256",
+	"uint256",
+	"uint256",
+	"uint256",
+])
 
 // (3)
 console.log("Merkle Root:", tree.root)
