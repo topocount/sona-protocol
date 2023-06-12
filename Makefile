@@ -38,10 +38,10 @@ deploy_private_doppler:; doppler run -- make deploy_private
 deploy_local :; FOUNDRY_PROFILE=optimized forge script ./scripts/solidity/Deploy.s.sol:Deployer \
 	--fork-url "http://localhost:8545" \
 	--private-key ${PRIVATE_KEY} \
-	-vvv \
+	-vvvv \
 	--broadcast
 
-deploy_private:; forge script script/solidity/Deploy.s.sol:Deployer \
+deploy_private :; FOUNDRY_PROFILE=optimized forge script script/solidity/Deploy.s.sol:Deployer \
 	--slow \
 	-vvvv \
 	--skip-simulation \
