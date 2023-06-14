@@ -32,8 +32,8 @@
 	"files": [
 		"abi/"
 	],
-	"main": "abi/generated.ts",
-	"browser": "abi/generated.ts",
+	"main": "abi/generated.js",
+	"browser": "abi/generated.js",
 	"publishConfig": {
 		"access": "restricted"
 	},
