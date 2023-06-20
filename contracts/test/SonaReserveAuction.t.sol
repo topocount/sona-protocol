@@ -534,6 +534,8 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 		newPayout = payable(address(27));
 
 		vm.prank(trackMinter);
+		vm.expectEmit(true, false, false, true, address(auction));
+		emit PayoutAddressUpdated(tokenId, newPayout);
 		auction.updateArtistPayoutAddress(tokenId, newPayout);
 
 		newAuctionData = auction.getAuction(tokenId);

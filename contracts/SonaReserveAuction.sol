@@ -245,6 +245,8 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		}
 
 		auction.bundles[0].payout = _payout;
+
+		emit PayoutAddressUpdated(_tokenId, _payout);
 	}
 
 	/// @dev Public function to bid on a reserve auction

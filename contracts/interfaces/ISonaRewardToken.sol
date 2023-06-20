@@ -49,6 +49,11 @@ interface ISonaRewardToken {
 	/// @param symbol The symbol of the contract
 	event Initialized(address owner, string name, string symbol);
 
+	/// @dev Emitted when the payout address is updated. The address can be set to zero to payout the token holder
+	/// @param tokenId The id of the token updated
+	/// @param payout The payout address change
+	event PayoutAddressUpdated(uint256 indexed tokenId, address payout);
+
 	/*//////////////////////////////////////////////////////////////
 	/                             STRUCTS
 	//////////////////////////////////////////////////////////////*/

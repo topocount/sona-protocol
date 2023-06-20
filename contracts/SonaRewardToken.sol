@@ -102,6 +102,8 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 	function updatePayoutAddress(uint256 _tokenId, address payable _payout) external checkExists(_tokenId) onlyTokenHolder(_tokenId) {
 		if (_tokenId % 2 != 0) revert SonaRewardToken_ArtistEditionOdd();
 		rewardTokens[_tokenId].payout = _payout;
+
+		emit PayoutAddressUpdated(_tokenId, _payout);
 	}
 
 	/// @dev Removes a RewardToken from the protocol, burning the NFT and striking the data from on-chain memory

@@ -14,7 +14,7 @@ import { ISonaRewardToken } from "../interfaces/ISonaRewardToken.sol";
 import { ERC1967Proxy } from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 import { Util } from "./Util.sol";
 
-contract SonaRewardTokenTest is Util, ERC721Holder {
+contract SonaRewardTokenTest is Util, ERC721Holder, SonaRewardToken {
 	using AddressableTokenId for uint256;
 	// treasury address getting the fees
 	address public treasuryRecipient = makeAddr("treasuryRecipient");
@@ -155,6 +155,8 @@ contract SonaRewardTokenTest is Util, ERC721Holder {
 
 		rewardToken.mintFromAuction(_tokenId, address(this), rewardTokenRecipient, cid, cid2, payoutAddr);
 
+		vm.expectEmit(true, false, false, true, address(rewardToken));
+		emit PayoutAddressUpdated(_artistTokenId, address(1));
 		rewardToken.updatePayoutAddress(_artistTokenId, payable(address(1)));
 
 		address payable result = rewardToken.getRewardTokenPayoutAddr(_artistTokenId);
