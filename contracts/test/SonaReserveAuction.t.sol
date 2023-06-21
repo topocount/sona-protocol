@@ -34,6 +34,7 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 	address public nonEthToken = makeAddr("nonEthToken");
 	// derived from ../../scripts/signTyped.ts
 	address public authorizer = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
+	address payable public artistPayout = payable(address(25));
 
 	uint256 public tokenId = (uint256(uint160(trackMinter)) << 96) | 69;
 
@@ -76,11 +77,11 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 		new ERC1967Proxy(address(auctionBase), abi.encodeWithSelector(SonaReserveAuction.initialize.selector, treasuryRecipient, redistributionRecipient, authorizer, address(0), address(0), mockWeth));
 	}
 
-	function _createSignedBundles() private pure returns (MetadataBundle[2] memory bundles, Signature[2] memory signatures) {
-		MetadataBundle memory artistBundle = MetadataBundle("Hello World!", 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000044);
-		MetadataBundle memory collectorBundle = MetadataBundle("Hello World", 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000045);
-		Signature memory artistSignature = Signature(28, 0x17a63f8e164ff300abc7e6f46fcecbd6f86ceb999446c6c9f3d7f2fda15603cf, 0x7effc1119b1cb2b1f8974979da63ac29089e2f484718789462263de38a6e7cd4);
-		Signature memory collectorSignature = Signature(27, 0x0d43e4410a8d0c45dc98354210e58c9af0c00baa738a41ffac5daef8d6388e95, 0x2d409dd510323b6066ef2fbf8a766734884295c907c6c6fbb7b1871b61ff1120);
+	function _createSignedBundles() private view returns (MetadataBundle[2] memory bundles, Signature[2] memory signatures) {
+		MetadataBundle memory artistBundle = MetadataBundle({ arweaveTxId: "Hello World!", tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000044, payout: artistPayout });
+		MetadataBundle memory collectorBundle = MetadataBundle({ arweaveTxId: "Hello World", tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000045, payout: payable(address(0)) });
+		Signature memory artistSignature = Signature(28, 0xffc0fb30061f17a53c5c2467f59a3eb97e8ec4b5b0c06fa52142daf608d12d8b, 0x66f4b7b6d74b4c84f92f2bae1661bb6000a0d8b5806bb1862368e39b35bb8183);
+		Signature memory collectorSignature = Signature(27, 0x54826a459211de0cc74e8ee384b1c7d051b8ba6eb89d2e8b337ce6e8e3d0fe26, 0x5217cb99f9f960c6bfb2ada761d0a7da7473468e4a4ff75c0effac2897d21cf2);
 
 		bundles = [artistBundle, collectorBundle];
 		signatures = [artistSignature, collectorSignature];
@@ -507,6 +508,72 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 
 		assertEq(auctionData.currentBidAmount, 0);
 		assertEq(auctionData.currentBidder, address(0));
+	}
+
+	function test_UpdateReserveAuctionPayoutAddress() public {
+		(MetadataBundle[2] memory bundles, Signature[2] memory signatures) = _createSignedBundles();
+		vm.prank(trackMinter);
+		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+
+		ISonaReserveAuction.Auction memory auctionData = auction.getAuction(tokenId);
+
+		assertEq(auctionData.bundles[0].payout, artistPayout);
+
+		address payable newPayout = payable(address(26));
+
+		vm.prank(trackMinter);
+		auction.updateArtistPayoutAddress(tokenId, newPayout);
+
+		ISonaReserveAuction.Auction memory newAuctionData = auction.getAuction(tokenId);
+
+		assertEq(newAuctionData.bundles[0].payout, newPayout);
+
+		hoax(bidder);
+		auction.createBid{ value: 1.1 ether }(tokenId, 0);
+
+		newPayout = payable(address(27));
+
+		vm.prank(trackMinter);
+		vm.expectEmit(true, false, false, true, address(auction));
+		emit PayoutAddressUpdated(tokenId, newPayout);
+		auction.updateArtistPayoutAddress(tokenId, newPayout);
+
+		newAuctionData = auction.getAuction(tokenId);
+
+		assertEq(newAuctionData.bundles[0].payout, newPayout);
+	}
+
+	function test_InvalidUpdateReserveAuctionPayoutAddress() public {
+		address payable newPayout = payable(address(26));
+		// cannot be updated before auction is created
+		vm.prank(trackMinter);
+		vm.expectRevert(ISonaReserveAuction.SonaReserveAuction_InvalidAuction.selector);
+		auction.updateArtistPayoutAddress(tokenId, newPayout);
+
+		(MetadataBundle[2] memory bundles, Signature[2] memory signatures) = _createSignedBundles();
+		vm.prank(trackMinter);
+		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+
+		ISonaReserveAuction.Auction memory auctionData = auction.getAuction(tokenId);
+
+		assertEq(auctionData.bundles[0].payout, artistPayout);
+
+		// cannot be updated by non-minter
+		vm.expectRevert(ISonaReserveAuction.SonaReserveAuction_NotAuthorized.selector);
+		auction.updateArtistPayoutAddress(tokenId, newPayout);
+
+		hoax(bidder);
+		auction.createBid{ value: 1.1 ether }(tokenId, 0);
+
+		vm.warp(2 days);
+
+		vm.prank(trackMinter);
+		auction.settleReserveAuction(tokenId);
+
+		// cannot be updated after auction is settled
+		vm.prank(trackMinter);
+		vm.expectRevert(ISonaReserveAuction.SonaReserveAuction_InvalidAuction.selector);
+		auction.updateArtistPayoutAddress(tokenId, newPayout);
 	}
 
 	function test_UpdateReserveAuctionPriceAndCurrency() public {

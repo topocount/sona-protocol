@@ -59,15 +59,23 @@ interface ISonaReserveAuction {
 	/// @param auction The auction attributes
 	event ReserveAuctionPriceAndCurrencyUpdated(uint256 indexed tokenId, Auction auction);
 
+	/// @dev Emitted when the payout address is updated. The address can be set to zero to payout the token holder
+	/// @param tokenId The id of the token updated
+	/// @param payout The payout address change
+	event PayoutAddressUpdated(uint256 indexed tokenId, address payout);
+
 	/*//////////////////////////////////////////////////////////////
 	/                        STRUCTS
 	//////////////////////////////////////////////////////////////*/
 
+	// @dev the information composing the NFT for use onchain and offchain
 	struct MetadataBundle {
-		string arweaveTxId;
 		uint256 tokenId;
+		address payable payout;
+		string arweaveTxId;
 	}
 
+	// @dev the an elliptic curve signature, provided by the authorizer
 	struct Signature {
 		uint8 v;
 		bytes32 r;

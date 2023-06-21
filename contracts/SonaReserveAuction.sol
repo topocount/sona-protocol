@@ -39,7 +39,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	// @dev The signature of the Domain separator typehash
 	bytes32 private constant _EIP712DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
 	// @dev The signature of the type that is hashed and prefixed to the TypedData payload
-	bytes32 private constant _METADATABUNDLE_TYPEHASH = keccak256("MetadataBundle(string arweaveTxId,uint256 tokenId)");
+	bytes32 private constant _METADATABUNDLE_TYPEHASH = keccak256("MetadataBundle(uint256 tokenId,address payout,string arweaveTxId)");
 
 	/*//////////////////////////////////////////////////////////////
 	/                         STATE
@@ -233,6 +233,22 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		emit ReserveAuctionPriceUpdated({ tokenId: _tokenId, auction: auction });
 	}
 
+	/// @notice set the payout address to `_payout` for auction with id `_tokenId`
+	/// @dev setting the address to address(0) resets the payout address to the seller's address
+	/// @param _tokenId The artist tokenId used as the identifier for the auction
+	/// @param _payout The address to receive NFT sale proceeds and future reward claims
+	function updateArtistPayoutAddress(uint256 _tokenId, address payable _payout) external onlySonaAdminOrApprovedTokenOperator(_tokenId) {
+		Auction storage auction = auctions[_tokenId];
+
+		if (auction.reservePrice == 0) {
+			revert SonaReserveAuction_InvalidAuction();
+		}
+
+		auction.bundles[0].payout = _payout;
+
+		emit PayoutAddressUpdated(_tokenId, _payout);
+	}
+
 	/// @dev Public function to bid on a reserve auction
 	/// @param _tokenId The ID of the token.
 	/// @param _bidAmount The amount of the bid if the currency is not ETH
@@ -342,7 +358,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	}
 
 	function _hash(MetadataBundle calldata bundle) internal pure returns (bytes32) {
-		return keccak256(abi.encode(_METADATABUNDLE_TYPEHASH, keccak256(bytes(bundle.arweaveTxId)), bundle.tokenId));
+		return keccak256(abi.encode(_METADATABUNDLE_TYPEHASH, bundle.tokenId, bundle.payout, keccak256(bytes(bundle.arweaveTxId))));
 	}
 
 	/// @dev Internal function to settle the reserve auction
@@ -359,7 +375,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		address currency = auction.currency;
 
 		// Mint reward token to seller and buyer
-		rewardToken.mintFromAuction(_tokenId, auction.trackSeller, auction.currentBidder, auction.bundles[0].arweaveTxId, auction.bundles[1].arweaveTxId);
+		rewardToken.mintFromAuction(_tokenId, auction.trackSeller, auction.currentBidder, auction.bundles[0].arweaveTxId, auction.bundles[1].arweaveTxId, auction.bundles[0].payout);
 
 		// Send redistribution fee to the redistribution fee recipient
 
