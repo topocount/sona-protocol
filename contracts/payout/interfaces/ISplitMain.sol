@@ -30,12 +30,6 @@ interface ISplitMain {
 		uint32 distributorFee
 	) external;
 
-	function transferControl(address split, address newController) external;
-
-	function cancelControlTransfer(address split) external;
-
-	function acceptControl(address split) external;
-
 	function makeSplitImmutable(address split) external;
 
 	function distributeETH(

@@ -59,8 +59,7 @@ contract SplitMain is ISplitMain {
 	/// @notice holds Split metadata
 	struct Split {
 		bytes32 hash;
-		address controller;
-		address newPotentialController;
+		address[] controllers;
 	}
 
 	//
@@ -96,16 +95,7 @@ contract SplitMain is ISplitMain {
 	/// @notice Reverts if the sender doesn't own the split `split`
 	/// @param split Address to check for control
 	modifier onlySplitController(address split) {
-		if (msg.sender != _splits[split].controller)
-			revert Unauthorized(msg.sender);
-		_;
-	}
-
-	/// @notice Reverts if the sender isn't the new potential controller of split `split`
-	/// @param split Address to check for new potential control
-	modifier onlySplitNewPotentialController(address split) {
-		if (msg.sender != _splits[split].newPotentialController)
-			revert Unauthorized(msg.sender);
+		if (!_isController(split, msg.sender)) revert Unauthorized(msg.sender);
 		_;
 	}
 
@@ -198,7 +188,7 @@ contract SplitMain is ISplitMain {
 		} else {
 			// create mutable split
 			split = Clones.clone(walletImplementation);
-			_splits[split].controller = controller;
+			_splits[split].controllers = accounts;
 		}
 		// store split's hash in storage for future verification
 		_splits[split].hash = splitHash;
@@ -248,50 +238,12 @@ contract SplitMain is ISplitMain {
 		_updateSplit(split, accounts, percentAllocations, distributorFee);
 	}
 
-	/// @notice Begins transfer of the controlling address of mutable split `split` to `newController`
-	/// @dev Two-step control transfer inspired by [dharma](https://github.com/dharma-eng/dharma-smart-wallet/blob/master/contracts/helpers/TwoStepOwnable.sol)
-	/// @param split Address of mutable split to transfer control for
-	/// @param newController Address to begin transferring control to
-	function transferControl(
-		address split,
-		address newController
-	)
-		external
-		override
-		onlySplitController(split)
-		validNewController(newController)
-	{
-		_splits[split].newPotentialController = newController;
-		emit InitiateControlTransfer(split, newController);
-	}
-
-	/// @notice Cancels transfer of the controlling address of mutable split `split`
-	/// @param split Address of mutable split to cancel control transfer for
-	function cancelControlTransfer(
-		address split
-	) external override onlySplitController(split) {
-		delete _splits[split].newPotentialController;
-		emit CancelControlTransfer(split);
-	}
-
-	/// @notice Accepts transfer of the controlling address of mutable split `split`
-	/// @param split Address of mutable split to accept control transfer for
-	function acceptControl(
-		address split
-	) external override onlySplitNewPotentialController(split) {
-		delete _splits[split].newPotentialController;
-		emit ControlTransfer(split, _splits[split].controller, msg.sender);
-		_splits[split].controller = msg.sender;
-	}
-
 	/// @notice Turns mutable split `split` immutable
 	/// @param split Address of mutable split to turn immutable
 	function makeSplitImmutable(
 		address split
 	) external override onlySplitController(split) {
-		delete _splits[split].newPotentialController;
-		emit ControlTransfer(split, _splits[split].controller, address(0));
-		_splits[split].controller = address(0);
+		delete _splits[split].controllers;
 	}
 
 	/// @notice Distributes the ETH balance for split `split`
@@ -449,20 +401,13 @@ contract SplitMain is ISplitMain {
 		return _splits[split].hash;
 	}
 
-	/// @notice Returns the current controller of split `split`
+	/// @notice Returns the current controllers of split `split`
 	/// @param split Split to return controller for
-	/// @return Split's controller
-	function getController(address split) external view returns (address) {
-		return _splits[split].controller;
-	}
-
-	/// @notice Returns the current newPotentialController of split `split`
-	/// @param split Split to return newPotentialController for
-	/// @return Split's newPotentialController
-	function getNewPotentialController(
+	/// @return controllers Split's controller list
+	function getControllers(
 		address split
-	) external view returns (address) {
-		return _splits[split].newPotentialController;
+	) external view returns (address[] memory controllers) {
+		return _splits[split].controllers;
 	}
 
 	/// @notice Returns the current ETH balance of account `account`
@@ -552,6 +497,20 @@ contract SplitMain is ISplitMain {
 	) internal view {
 		bytes32 hash = _hashSplit(accounts, percentAllocations, distributorFee);
 		if (_splits[split].hash != hash) revert InvalidSplit__InvalidHash(hash);
+	}
+
+	function _isController(
+		address split,
+		address caller
+	) internal view returns (bool) {
+		address[] memory controllers = _splits[split].controllers;
+		uint256 length = controllers.length;
+		unchecked {
+			for (uint i = 0; i < length; i++) {
+				if (controllers[i] == caller) return true;
+			}
+		}
+		return false;
 	}
 
 	/// @notice Distributes the ETH balance for split `split`
