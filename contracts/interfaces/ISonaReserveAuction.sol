@@ -7,7 +7,7 @@ pragma solidity ^0.8.16;
 // \__ \ )(_)(  )  (  /(__)\   \__ \  )(   )   / )__)  /(__)\  )    (
 // (___/(_____)(_)\_)(__)(__)  (___/ (__) (_)\_)(____)(__)(__)(_/\/\_)
 
-import {ISonaAuthorizer} from "./ISonaAuthorizer.sol";
+import { ISonaAuthorizer } from "./ISonaAuthorizer.sol";
 
 interface ISonaReserveAuction is ISonaAuthorizer {
 	/*//////////////////////////////////////////////////////////////

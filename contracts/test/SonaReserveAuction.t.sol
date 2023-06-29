@@ -250,9 +250,7 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 		signatures[0].v = 69;
 
 		vm.startPrank(trackMinter);
-		vm.expectRevert(
-			ISonaAuthorizer.SonaAuthorizer_InvalidSignature.selector
-		);
+		vm.expectRevert(ISonaAuthorizer.SonaAuthorizer_InvalidSignature.selector);
 		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
 	}
 
@@ -264,9 +262,7 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 		signatures[1].v = 69;
 
 		vm.startPrank(trackMinter);
-		vm.expectRevert(
-			ISonaAuthorizer.SonaAuthorizer_InvalidSignature.selector
-		);
+		vm.expectRevert(ISonaAuthorizer.SonaAuthorizer_InvalidSignature.selector);
 		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
 	}
 

@@ -73,7 +73,7 @@ library Clones {
 	 *
 	 */
 	function clone(address implementation) internal returns (address instance) {
-		assembly {
+		assembly ("memory-safe") {
 			let ptr := mload(0x40)
 			mstore(
 				ptr,
@@ -101,7 +101,7 @@ library Clones {
 		address implementation,
 		bytes32 salt
 	) internal returns (address instance) {
-		assembly {
+		assembly ("memory-safe") {
 			let ptr := mload(0x40)
 			mstore(
 				ptr,
@@ -133,7 +133,7 @@ library Clones {
 		bytes32 salt,
 		address deployer
 	) internal pure returns (address predicted) {
-		assembly {
+		assembly ("memory-safe") {
 			let ptr := mload(0x40)
 			mstore(
 				ptr,

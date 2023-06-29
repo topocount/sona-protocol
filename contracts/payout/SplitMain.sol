@@ -5,7 +5,7 @@ import { ISplitMain } from "./interfaces/ISplitMain.sol";
 import { SplitWallet } from "./SplitWallet.sol";
 import { Clones } from "../utils/Clones.sol";
 // TODO convert ERC20 to IERC20 to save some gas
-import { ERC20 } from "solmate/tokens/ERC20.sol";
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { SafeTransferLib } from "solmate/utils/SafeTransferLib.sol";
 
 /// @title SplitMain
@@ -17,7 +17,6 @@ import { SafeTransferLib } from "solmate/utils/SafeTransferLib.sol";
 /// hard gas-capped `sends` & `transfers`.
 contract SplitMain is ISplitMain {
 	using SafeTransferLib for address;
-	using SafeTransferLib for ERC20;
 
 	/// ERRORS
 
@@ -77,6 +76,16 @@ contract SplitMain is ISplitMain {
 	uint256 internal constant _MAX_DISTRIBUTOR_FEE = 1e5;
 	/// @notice address of wallet implementation for split proxies
 	address public immutable override walletImplementation;
+	// @dev The signature of the Domain separator typehash
+	bytes32 private constant _EIP712DOMAIN_TYPEHASH =
+		keccak256(
+			"EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+		);
+	// @dev The signature of the type that is hashed and prefixed to the TypedData payload
+	bytes32 private constant _SPLIT_TYPEHASH =
+		keccak256(
+			"SplitConfig(address split,address[] accounts,uint32[] percentAllocations)"
+		);
 
 	//
 	// STORAGE - VARIABLES - PRIVATE & INTERNAL
@@ -85,13 +94,29 @@ contract SplitMain is ISplitMain {
 	/// @notice mapping to account ETH balances
 	mapping(address => uint256) internal _ethBalances;
 	/// @notice mapping to account ERC20 balances
-	mapping(ERC20 => mapping(address => uint256)) internal _erc20Balances;
+	mapping(IERC20 => mapping(address => uint256)) internal _erc20Balances;
 	/// @notice mapping to Split metadata
 	mapping(address => Split) internal _splits;
+	/// @dev part of the EIP-712 standard for structured data hashes
+	bytes32 private _DOMAIN_SEPARATOR;
+	/// @dev the address of the authorizing signer
+	address private _authorizer;
 
 	//
 	// MODIFIERS
 	//
+
+	modifier checkUpdateSignature(
+		address split,
+		address[] calldata accounts,
+		uint32[] calldata percentAllocations,
+		Signature calldata sig
+	) {
+		if (!_verify(split, accounts, percentAllocations, sig.v, sig.r, sig.s))
+			revert SonaAuthorizer_InvalidSignature();
+
+		_;
+	}
 
 	/// @notice Reverts if the sender doesn't own the split `split`
 	/// @param split Address to check for control
@@ -135,17 +160,21 @@ contract SplitMain is ISplitMain {
 		_;
 	}
 
-	/// @notice Reverts if `newController` is the zero address
-	/// @param newController Proposed new controlling address
-	modifier validNewController(address newController) {
-		if (newController == address(0)) revert InvalidNewController(newController);
-		_;
-	}
-
 	// CONSTRUCTOR
 
-	constructor() {
+	constructor(address authorizer_) {
 		walletImplementation = address(new SplitWallet());
+		_authorizer = authorizer_;
+
+		_DOMAIN_SEPARATOR = keccak256(
+			abi.encode(
+				_EIP712DOMAIN_TYPEHASH,
+				keccak256("SplitMain"), // name
+				keccak256("1"), // version
+				block.chainid, //chain ID
+				address(this)
+			)
+		);
 	}
 
 	// FUNCTIONS
@@ -157,6 +186,7 @@ contract SplitMain is ISplitMain {
 	///		Funds sent outside of `distributeETH` will be unrecoverable
 	receive() external payable {} // solhint-disable-line no-empty-blocks
 
+	// TODO gate this on SonaAdmin
 	/// @notice Creates a new split with recipients `accounts` with ownerships `percentAllocations`, a keeper fee for splitting of `distributorFee` and the controlling address `controller`
 	/// @param accounts Ordered, unique list of addresses with ownership in the split
 	/// @param percentAllocations Percent allocations associated with each address
@@ -186,10 +216,12 @@ contract SplitMain is ISplitMain {
 	function updateSplit(
 		address split,
 		address[] calldata accounts,
-		uint32[] calldata percentAllocations
+		uint32[] calldata percentAllocations,
+		Signature calldata sig
 	)
 		external
 		override
+		checkUpdateSignature(split, accounts, percentAllocations, sig)
 		onlySplitController(split)
 		validSplit(accounts, percentAllocations)
 	{
@@ -220,10 +252,12 @@ contract SplitMain is ISplitMain {
 	function updateAndDistributeETH(
 		address split,
 		address[] calldata accounts,
-		uint32[] calldata percentAllocations
+		uint32[] calldata percentAllocations,
+		Signature calldata sig
 	)
 		external
 		override
+		checkUpdateSignature(split, accounts, percentAllocations, sig)
 		onlySplitController(split)
 		validSplit(accounts, percentAllocations)
 	{
@@ -243,7 +277,7 @@ contract SplitMain is ISplitMain {
 	/// @param percentAllocations Percent allocations associated with each address
 	function distributeERC20(
 		address split,
-		ERC20 token,
+		IERC20 token,
 		address[] calldata accounts,
 		uint32[] calldata percentAllocations
 	) external override validSplit(accounts, percentAllocations) {
@@ -262,14 +296,16 @@ contract SplitMain is ISplitMain {
 	/// @param percentAllocations Percent allocations associated with each address
 	function updateAndDistributeERC20(
 		address split,
-		ERC20 token,
+		IERC20 token,
 		address[] calldata accounts,
-		uint32[] calldata percentAllocations
+		uint32[] calldata percentAllocations,
+		Signature calldata sig
 	)
 		external
 		override
 		onlySplitController(split)
 		validSplit(accounts, percentAllocations)
+		checkUpdateSignature(split, accounts, percentAllocations, sig)
 	{
 		_updateSplit(split, accounts, percentAllocations);
 		// know splitHash is valid immediately after updating; only accessible via controller
@@ -283,7 +319,7 @@ contract SplitMain is ISplitMain {
 	function withdraw(
 		address account,
 		uint256 withdrawETH,
-		ERC20[] calldata tokens
+		IERC20[] calldata tokens
 	) external override {
 		uint256[] memory tokenAmounts = new uint256[](tokens.length);
 		uint256 ethAmount;
@@ -333,7 +369,7 @@ contract SplitMain is ISplitMain {
 	/// @return Account's balance of `token`
 	function getERC20Balance(
 		address account,
-		ERC20 token
+		IERC20 token
 	) external view returns (uint256) {
 		return
 			_erc20Balances[token][account] +
@@ -465,7 +501,7 @@ contract SplitMain is ISplitMain {
 	/// @param percentAllocations Percent allocations associated with each address
 	function _distributeERC20(
 		address split,
-		ERC20 token,
+		IERC20 token,
 		address[] memory accounts,
 		uint32[] memory percentAllocations
 	) internal {
@@ -521,7 +557,7 @@ contract SplitMain is ISplitMain {
 		// pernicious ERC20s may cause overflow, but results do not affect ETH & other ERC20 balances
 
 		// solhint-disable-next-line no-inline-assembly
-		assembly {
+		assembly ("memory-safe") {
 			/* eg (100/// 2*1e4) / (1e6) */
 			scaledAmount := div(mul(amount, scaledPercent), PERCENTAGE_SCALE)
 		}
@@ -543,12 +579,61 @@ contract SplitMain is ISplitMain {
 	/// @return withdrawn Amount of ERC20 `token` withdrawn
 	function _withdrawERC20(
 		address account,
-		ERC20 token
+		IERC20 token
 	) internal returns (uint256 withdrawn) {
 		// leave balance of 1 for gas efficiency
 		// underflow if erc20Balance is 0
 		withdrawn = _erc20Balances[token][account] - 1;
 		_erc20Balances[token][account] = 1;
-		token.safeTransfer(account, withdrawn);
+		// TODO make safe
+		token.transfer(account, withdrawn);
+	}
+
+	function _verify(
+		address split,
+		address[] calldata accounts,
+		uint32[] calldata percentAllocations,
+		uint8 v,
+		bytes32 r,
+		bytes32 s
+	) internal view returns (bool valid) {
+		return
+			_recoverAddress(split, accounts, percentAllocations, v, r, s) ==
+			_authorizer;
+	}
+
+	function _recoverAddress(
+		address split,
+		address[] calldata accounts,
+		uint32[] calldata percentAllocations,
+		uint8 v,
+		bytes32 r,
+		bytes32 s
+	) internal view returns (address recovered) {
+		// Note: we need to use `encodePacked` here instead of `encode`.
+		bytes32 digest = keccak256(
+			abi.encodePacked(
+				"\x19\x01",
+				_DOMAIN_SEPARATOR,
+				_hashSplitConfig(split, accounts, percentAllocations)
+			)
+		);
+		recovered = ecrecover(digest, v, r, s);
+	}
+
+	function _hashSplitConfig(
+		address split,
+		address[] calldata accounts,
+		uint32[] calldata percentAllocations
+	) internal pure returns (bytes32) {
+		return
+			keccak256(
+				abi.encode(
+					_SPLIT_TYPEHASH,
+					split,
+					keccak256(abi.encodePacked(accounts)),
+					keccak256(abi.encodePacked(percentAllocations))
+				)
+			);
 	}
 }

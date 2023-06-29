@@ -2,7 +2,7 @@
 pragma solidity ^0.8.16;
 
 import { ISplitMain } from "./interfaces/ISplitMain.sol";
-import { ERC20 } from "solmate/tokens/ERC20.sol";
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { SafeTransferLib } from "solmate/utils/SafeTransferLib.sol";
 
 ///ERRORS
@@ -17,7 +17,7 @@ error Unauthorized();
 ///@dev `SplitProxy` handles `receive()` itself to avoid the gas cost with `DELEGATECALL`.
 contract SplitWallet {
 	using SafeTransferLib for address;
-	using SafeTransferLib for ERC20;
+	using SafeTransferLib for IERC20;
 
 	///EVENTS
 
@@ -63,9 +63,10 @@ contract SplitWallet {
 	/// @param token Token to send
 	/// @param amount Amount to send
 	function sendERC20ToMain(
-		ERC20 token,
+		IERC20 token,
 		uint256 amount
 	) external payable onlySplitMain {
-		token.safeTransfer(address(splitMain), amount);
+		// TODO make safe
+		token.transfer(address(splitMain), amount);
 	}
 }

@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.16;
 
-import { ERC20 } from "solmate/tokens/ERC20.sol";
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { ISonaAuthorizer } from "../../interfaces/ISonaAuthorizer.sol";
 
 /// @title ISplitMain
 /// @author 0xSplits <will@0xSplits.xyz>
-interface ISplitMain {
+interface ISplitMain is ISonaAuthorizer {
 	/// FUNCTIONS
 
 	function walletImplementation() external returns (address);
@@ -18,7 +19,8 @@ interface ISplitMain {
 	function updateSplit(
 		address split,
 		address[] calldata accounts,
-		uint32[] calldata percentAllocations
+		uint32[] calldata percentAllocations,
+		Signature calldata sig
 	) external;
 
 	function distributeETH(
@@ -30,27 +32,29 @@ interface ISplitMain {
 	function updateAndDistributeETH(
 		address split,
 		address[] calldata accounts,
-		uint32[] calldata percentAllocations
+		uint32[] calldata percentAllocations,
+		Signature calldata sig
 	) external;
 
 	function distributeERC20(
 		address split,
-		ERC20 token,
+		IERC20 token,
 		address[] calldata accounts,
 		uint32[] calldata percentAllocations
 	) external;
 
 	function updateAndDistributeERC20(
 		address split,
-		ERC20 token,
+		IERC20 token,
 		address[] calldata accounts,
-		uint32[] calldata percentAllocations
+		uint32[] calldata percentAllocations,
+		Signature calldata sig
 	) external;
 
 	function withdraw(
 		address account,
 		uint256 withdrawETH,
-		ERC20[] calldata tokens
+		IERC20[] calldata tokens
 	) external;
 
 	/// EVENTS
@@ -96,7 +100,7 @@ interface ISplitMain {
 	/// @param amount Amount of ERC20 distributed
 	event DistributeERC20(
 		address indexed split,
-		ERC20 indexed token,
+		IERC20 indexed token,
 		uint256 amount
 	);
 
@@ -108,7 +112,7 @@ interface ISplitMain {
 	event Withdrawal(
 		address indexed account,
 		uint256 ethAmount,
-		ERC20[] tokens,
+		IERC20[] tokens,
 		uint256[] tokenAmounts
 	);
 }
