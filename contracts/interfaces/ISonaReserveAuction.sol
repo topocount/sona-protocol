@@ -7,7 +7,9 @@ pragma solidity ^0.8.16;
 // \__ \ )(_)(  )  (  /(__)\   \__ \  )(   )   / )__)  /(__)\  )    (
 // (___/(_____)(_)\_)(__)(__)  (___/ (__) (_)\_)(____)(__)(__)(_/\/\_)
 
-interface ISonaReserveAuction {
+import {ISonaAuthorizer} from "./ISonaAuthorizer.sol";
+
+interface ISonaReserveAuction is ISonaAuthorizer {
 	/*//////////////////////////////////////////////////////////////
 	/                       ERRORS
 	//////////////////////////////////////////////////////////////*/
@@ -15,7 +17,6 @@ interface ISonaReserveAuction {
 	error SonaReserveAuction_AlreadyCanceled();
 	error SonaReserveAuction_AlreadyListed();
 	error SonaReserveAuction_NotAuthorized();
-	error SonaReserveAuction_BundlesNotAuthorized();
 	error SonaReserveAuction_TransferFailed();
 	error SonaReserveAuction_BidTooLow();
 	error SonaReserveAuction_AlreadySettled();
@@ -79,13 +80,6 @@ interface ISonaReserveAuction {
 		uint256 tokenId;
 		address payable payout;
 		string arweaveTxId;
-	}
-
-	// @dev the an elliptic curve signature, provided by the authorizer
-	struct Signature {
-		uint8 v;
-		bytes32 r;
-		bytes32 s;
 	}
 
 	struct Auction {

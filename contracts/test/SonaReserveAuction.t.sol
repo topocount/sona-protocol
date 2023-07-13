@@ -4,6 +4,7 @@ pragma solidity ^0.8.16;
 import { SonaReserveAuction } from "../SonaReserveAuction.sol";
 import { SonaRewardToken } from "../SonaRewardToken.sol";
 import { ISonaReserveAuction } from "../interfaces/ISonaReserveAuction.sol";
+import { ISonaAuthorizer } from "../interfaces/ISonaAuthorizer.sol";
 import { ERC721 } from "solmate/tokens/ERC721.sol";
 import { Util } from "./Util.sol";
 import { ERC1967Proxy } from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
@@ -250,7 +251,7 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 
 		vm.startPrank(trackMinter);
 		vm.expectRevert(
-			ISonaReserveAuction.SonaReserveAuction_BundlesNotAuthorized.selector
+			ISonaAuthorizer.SonaAuthorizer_InvalidSignature.selector
 		);
 		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
 	}
@@ -264,7 +265,7 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 
 		vm.startPrank(trackMinter);
 		vm.expectRevert(
-			ISonaReserveAuction.SonaReserveAuction_BundlesNotAuthorized.selector
+			ISonaAuthorizer.SonaAuthorizer_InvalidSignature.selector
 		);
 		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
 	}

@@ -90,7 +90,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		if (
 			!_verify(bundles[0], signatures[0].v, signatures[0].r, signatures[0].s) ||
 			!_verify(bundles[1], signatures[1].v, signatures[1].r, signatures[1].s)
-		) revert SonaReserveAuction_BundlesNotAuthorized();
+		) revert SonaAuthorizer_InvalidSignature();
 		_;
 	}
 
