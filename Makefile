@@ -19,6 +19,9 @@ build :; forge build --extra-output-files abi
 # Optimized build
 build_optimized :; FOUNDRY_PROFILE=optimized forge build --extra-output-files abi
 
+# Optimized build
+build_optimized_size :; FOUNDRY_PROFILE=optimized forge build --sizes --extra-output-files abi
+
 # Test Coverage
 coverage :; forge coverage --report summary
 
@@ -46,8 +49,7 @@ deploy_private :; FOUNDRY_PROFILE=optimized forge script script/solidity/Deploy.
 	-vvvv \
 	--skip-simulation \
 	--broadcast \
-	--rpc-url ${RPC_URL} \
-	--mnemonics ${MNEMONIC}
+	--rpc-url ${RPC_URL}
 
 deploy_testnet :; forge script ./script/solidity/Deploy.s.sol \
 	--optimizer-runs 10000 \
@@ -79,7 +81,9 @@ deploy_mainnet :; forge script ./script/solidity/Deploy.s.sol \
     --verify
 
 # Tests
-test :; forge clean && forge test --optimize --optimizer-runs 1000000 -vvv # --ffi # enable if you need the `ffi` cheat code on HEVM
+test :; forge clean && forge test -vvv --via-ir # --ffi # enable if you need the `ffi` cheat code on HEVM
+
+test_watch :; forge clean && forge test -w -vvv --via-ir # --ffi # enable if you need the `ffi` cheat code on HEVM
 
 # Docs buld
 docs_build :; rm -rf docs && forge doc --build
