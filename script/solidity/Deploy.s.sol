@@ -8,7 +8,6 @@ import { SonaRewardToken } from "../../contracts/SonaRewardToken.sol";
 import { SonaReserveAuction } from "../../contracts/SonaReserveAuction.sol";
 import { ERC1967Proxy } from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 import { ERC20 } from "openzeppelin/token/ERC20/ERC20.sol";
-import { ERC1967Proxy } from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 import { IWETH } from "../../contracts/interfaces/IWETH.sol";
 import { Weth9Mock } from "../../contracts/test/mock/Weth9Mock.sol";
 
@@ -27,7 +26,7 @@ contract Deployer is Script {
 
 		// Deploy Mocks for PoC Tests
 		ERC20Mock mockToken = new ERC20Mock();
-		//Weth9Mock mockWeth = new Weth9Mock();
+		Weth9Mock mockWeth = new Weth9Mock();
 
 		// Deploy Reward NFT contract
 
@@ -44,11 +43,13 @@ contract Deployer is Script {
 				_AUTHORIZER,
 				rewardTokenBase,
 				_SONA_OWNER,
-				address(mockToken)
+				address(mockWeth)
 			)
 		);
 		SonaReserveAuction auction = SonaReserveAuction(address(proxy));
 
+		console.log("mock WETH address: ", address(mockWeth));
+		console.log("mock ERC20 address: ", address(mockToken));
 		console.log("Reward NFT Address: ", address(auction.rewardToken()));
 		console.log("Auction Address: ", address(auction));
 
