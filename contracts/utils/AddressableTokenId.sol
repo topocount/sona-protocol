@@ -13,7 +13,7 @@ library AddressableTokenId {
 		uint256 tokenId
 	) internal pure returns (address tokenAddress) {
 		//return address(uint160(tokenId >> 96));
-		assembly {
+		assembly ("memory-safe") {
 			tokenAddress := shr(96, tokenId)
 		}
 	}
