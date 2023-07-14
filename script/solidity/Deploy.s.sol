@@ -34,7 +34,6 @@ contract Deployer is Script {
 		SonaReserveAuction auctionBase = new SonaReserveAuction();
 		SonaRewardToken rewardTokenBase = new SonaRewardToken();
 		ERC1967Proxy proxy = new ERC1967Proxy(
-
 			address(auctionBase),
 			abi.encodeWithSelector(
 				SonaReserveAuction.initialize.selector,
@@ -68,7 +67,6 @@ contract Deployer is Script {
 		);
 
 		console.log("Reward Claims address: ", address(rewards));
-
 
 		vm.stopBroadcast();
 	}
