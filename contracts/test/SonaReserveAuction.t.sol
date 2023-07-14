@@ -924,6 +924,28 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		assertEq(auctionData.currentBidder, address(0));
 	}
 
+	function test_CreateBidEthWithERC20Reverts() public {
+		(
+			MetadataBundle[2] memory bundles,
+			Signature[2] memory signatures
+		) = _createSignedBundles();
+		vm.prank(trackMinter);
+		auction.createReserveAuction(bundles, signatures, address(0), 0.05 ether);
+
+		hoax(bidder);
+		vm.expectRevert(
+			ISonaReserveAuction.SonaReserveAuction_InvalidCurrency.selector
+		);
+		auction.createBid(tokenId, 0.05 ether);
+
+		ISonaReserveAuction.Auction memory auctionData = auction.getAuction(
+			tokenId
+		);
+
+		assertEq(auctionData.currentBidAmount, 0);
+		assertEq(auctionData.currentBidder, address(0));
+	}
+
 	function test_UpdateReserveAuctionPayoutAddress() public {
 		(
 			MetadataBundle[2] memory bundles,

@@ -356,7 +356,10 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 
 		Auction storage auction = auctions[_tokenId];
 
-		if (msg.value > 0 && auction.currency.isNotZero()) {
+		if (
+			(msg.value > 0 && auction.currency.isNotZero()) ||
+			(auction.currency.isZero() && msg.value == 0)
+		) {
 			revert SonaReserveAuction_InvalidCurrency();
 		}
 
