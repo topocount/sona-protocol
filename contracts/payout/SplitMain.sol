@@ -6,7 +6,7 @@ import { SplitWallet } from "./SplitWallet.sol";
 import { Clones } from "../utils/Clones.sol";
 // TODO convert ERC20 to IERC20 to save some gas
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
-import { SafeTransferLib } from "solmate/utils/SafeTransferLib.sol";
+import { SafeTransferLib } from "solady/utils/SafeTransferLib.sol";
 
 /// @title SplitMain
 /// @author 0xSplits <will@0xSplits.xyz>
@@ -17,6 +17,7 @@ import { SafeTransferLib } from "solmate/utils/SafeTransferLib.sol";
 /// hard gas-capped `sends` & `transfers`.
 contract SplitMain is ISplitMain {
 	using SafeTransferLib for address;
+	using SafeTransferLib for IERC20;
 
 	/// ERRORS
 
@@ -469,26 +470,40 @@ contract SplitMain is ISplitMain {
 		if (mainBalance > 0) _ethBalances[split] = 1;
 		// emit event with gross amountToSplit
 		emit DistributeETH(split, amountToSplit);
-		unchecked {
-			// distribute remaining balance
-			// overflow should be impossible in for-loop index
-			// cache accounts length to save gas
-			uint256 accountsLength = accounts.length;
-			for (uint256 i = 0; i < accountsLength; ++i) {
-				// overflow should be impossible with validated allocations
-				_ethBalances[accounts[i]] += _scaleAmountByPercentage(
-					amountToSplit,
-					percentAllocations[i]
-				);
-			}
-		}
+
 		// flush proxy ETH balance to SplitMain
 		// split proxy should be guaranteed to exist at this address after validating splitHash
 		// (attacker can't deploy own contract to address with high balance & empty sendETHToMain
 		// to drain ETH from SplitMain)
 		// could technically check if (change in proxy balance == change in SplitMain balance)
 		// before/after external call, but seems like extra gas for no practical benefit
+
 		if (proxyBalance > 0) SplitWallet(split).sendETHToMain(proxyBalance);
+		unchecked {
+			// distribute remaining balance
+			// overflow should be impossible in for-loop index
+			// cache accounts length to save gas
+			uint256 accountsLength = accounts.length;
+			for (uint256 i = 0; i < accountsLength; ++i) {
+				uint256 balance = _scaleAmountByPercentage(
+					amountToSplit,
+					percentAllocations[i]
+				);
+
+				if (!_trySendingETH(accounts[i], balance)) {
+					// overflow should be impossible with validated allocations
+					_ethBalances[accounts[i]] += balance;
+				}
+			}
+		}
+	}
+
+	function _trySendingETH(
+		address account,
+		uint256 amount
+	) internal returns (bool success) {
+		// solhint-disable-next-line check-send-result
+		return payable(account).send(amount);
 	}
 
 	/// @notice Distributes the ERC20 `token` balance for split `split`
@@ -522,18 +537,7 @@ contract SplitMain is ISplitMain {
 		if (mainBalance > 0) _erc20Balances[token][split] = 1;
 		// emit event with gross amountToSplit (before deducting distributorFee)
 		emit DistributeERC20(split, token, amountToSplit);
-		// distribute remaining balance
-		// overflows should be impossible in for-loop with validated allocations
-		unchecked {
-			// cache accounts length to save gas
-			uint256 accountsLength = accounts.length;
-			for (uint256 i = 0; i < accountsLength; ++i) {
-				_erc20Balances[token][accounts[i]] += _scaleAmountByPercentage(
-					amountToSplit,
-					percentAllocations[i]
-				);
-			}
-		}
+
 		// split proxy should be guaranteed to exist at this address after validating splitHash
 		// (attacker can't deploy own contract to address with high ERC20 balance & empty
 		// sendERC20ToMain to drain ERC20 from SplitMain)
@@ -541,6 +545,32 @@ contract SplitMain is ISplitMain {
 		// flush extra proxy ERC20 balance to SplitMain
 		if (proxyBalance > 0)
 			SplitWallet(split).sendERC20ToMain(token, proxyBalance);
+
+		// distribute remaining balance
+		// overflows should be impossible in for-loop with validated allocations
+		unchecked {
+			// cache accounts length to save gas
+			uint256 accountsLength = accounts.length;
+			for (uint256 i = 0; i < accountsLength; ++i) {
+				uint256 balance = _scaleAmountByPercentage(
+					amountToSplit,
+					percentAllocations[i]
+				);
+
+				if (!_trySendingERC20(token, accounts[i], balance))
+					_erc20Balances[token][accounts[i]] += balance;
+			}
+		}
+	}
+
+	function _trySendingERC20(
+		IERC20 token,
+		address account,
+		uint256 amount
+	) internal returns (bool success) {
+		// TODO for and modify the solady `safeTransfer` function to return false
+		// when the receiver contract doesn't have the right interface
+		return token.transfer(account, amount);
 	}
 
 	/// @notice Multiplies an amount by a scaled percentage
@@ -585,8 +615,7 @@ contract SplitMain is ISplitMain {
 		// underflow if erc20Balance is 0
 		withdrawn = _erc20Balances[token][account] - 1;
 		_erc20Balances[token][account] = 1;
-		// TODO make safe
-		token.transfer(account, withdrawn);
+		address(token).safeTransfer(account, withdrawn);
 	}
 
 	function _verify(
