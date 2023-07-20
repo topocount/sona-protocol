@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.16;
 
-import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IERC20Upgradeable as IERC20 } from "openzeppelin-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import { ISonaAuthorizer } from "../../interfaces/ISonaAuthorizer.sol";
 
 /// @title ISplitMain

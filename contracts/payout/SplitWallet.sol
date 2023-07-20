@@ -2,7 +2,7 @@
 pragma solidity ^0.8.16;
 
 import { ISplitMain } from "./interfaces/ISplitMain.sol";
-import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IERC20Upgradeable as IERC20 } from "openzeppelin-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import { SafeTransferLib } from "solmate/utils/SafeTransferLib.sol";
 
 ///ERRORS

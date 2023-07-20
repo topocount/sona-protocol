@@ -5,7 +5,7 @@ import { ISplitMain } from "./interfaces/ISplitMain.sol";
 import { SplitWallet } from "./SplitWallet.sol";
 import { Clones } from "../utils/Clones.sol";
 // TODO convert ERC20 to IERC20 to save some gas
-import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IERC20Upgradeable as IERC20 } from "openzeppelin-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import { SafeTransferLib } from "solady/utils/SafeTransferLib.sol";
 
 /// @title SplitMain
