@@ -81,9 +81,9 @@ deploy_mainnet :; forge script ./script/solidity/Deploy.s.sol \
     --verify
 
 # Tests
-test :; forge clean && forge test -vvv --via-ir # --ffi # enable if you need the `ffi` cheat code on HEVM
+test :; forge clean && forge test -vvv # --ffi # enable if you need the `ffi` cheat code on HEVM
 
-test_watch :; forge clean && forge test -w -vvv --via-ir # --ffi # enable if you need the `ffi` cheat code on HEVM
+test_watch :; forge clean && forge test -w -vvv # --ffi # enable if you need the `ffi` cheat code on HEVM
 
 # Docs buld
 docs_build :; rm -rf docs && forge doc --build

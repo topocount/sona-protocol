@@ -3,23 +3,18 @@
     out = 'dist/artifacts'
     libs = ['lib']
     solc-version = "0.8.18"
-    via_ir = true
     optimizer = true
-    optimizer_runs = 1000000
     bytecode_hash = "none"
     verbosity = 3
     gas_reports = ["*"]
 
 [profile.optimized]
     via_ir = true
+    optimizer_runs = 1000000
     out = 'out-via-ir'
-    fuzz_runs = 5000
 
-[profile.test]
-    via_ir = true
-    out = 'out-via-ir'
-    fuzz_runs = 5000
-    src = 'contracts/test'
+[fuzz]
+runs = 5000
 
 [fmt]
     indent = 4

@@ -133,31 +133,7 @@ contract SplitMain is ISplitMain {
 		address[] memory accounts,
 		uint32[] memory percentAllocations
 	) {
-		if (accounts.length < 2)
-			revert InvalidSplit__TooFewAccounts(accounts.length);
-		if (accounts.length != percentAllocations.length)
-			revert InvalidSplit__AccountsAndAllocationsMismatch(
-				accounts.length,
-				percentAllocations.length
-			);
-		// _getSum should overflow if any percentAllocation[i] < 0
-		if (_getSum(percentAllocations) != PERCENTAGE_SCALE)
-			revert InvalidSplit__InvalidAllocationsSum(_getSum(percentAllocations));
-		unchecked {
-			// overflow should be impossible in for-loop index
-			// cache accounts length to save gas
-			uint256 loopLength = accounts.length - 1;
-			for (uint256 i = 0; i < loopLength; ++i) {
-				// overflow should be impossible in array access math
-				if (accounts[i] >= accounts[i + 1])
-					revert InvalidSplit__AccountsOutOfOrder(i);
-				if (percentAllocations[i] == uint32(0))
-					revert InvalidSplit__AllocationMustBePositive(i);
-			}
-			// overflow should be impossible in array access math with validated equal array lengths
-			if (percentAllocations[loopLength] == uint32(0))
-				revert InvalidSplit__AllocationMustBePositive(loopLength);
-		}
+		_validSplit(accounts, percentAllocations);
 		_;
 	}
 
@@ -305,9 +281,9 @@ contract SplitMain is ISplitMain {
 		external
 		override
 		onlySplitController(split)
-		validSplit(accounts, percentAllocations)
 		checkUpdateSignature(split, accounts, percentAllocations, sig)
 	{
+		_validSplit(accounts, percentAllocations);
 		_updateSplit(split, accounts, percentAllocations);
 		// know splitHash is valid immediately after updating; only accessible via controller
 		_distributeERC20(split, token, accounts, percentAllocations);
@@ -391,6 +367,42 @@ contract SplitMain is ISplitMain {
 				// overflow should be impossible in for-loop index
 				++i;
 			}
+		}
+	}
+
+	/// @notice ensure a split configuration is valid in both contents and organization
+	/// @dev reverts if there are fewer than 2 accounts, the arrays are different length,
+	/// the allocations don't add up to 1e6, or accounts aren't sorted in the array
+	/// @param accounts Ordered, unique list of addresses with ownership in the split
+	/// @param percentAllocations Percent allocations associated with each address
+	function _validSplit(
+		address[] memory accounts,
+		uint32[] memory percentAllocations
+	) internal pure {
+		if (accounts.length < 2)
+			revert InvalidSplit__TooFewAccounts(accounts.length);
+		if (accounts.length != percentAllocations.length)
+			revert InvalidSplit__AccountsAndAllocationsMismatch(
+				accounts.length,
+				percentAllocations.length
+			);
+		// _getSum should overflow if any percentAllocation[i] < 0
+		if (_getSum(percentAllocations) != PERCENTAGE_SCALE)
+			revert InvalidSplit__InvalidAllocationsSum(_getSum(percentAllocations));
+		unchecked {
+			// overflow should be impossible in for-loop index
+			// cache accounts length to save gas
+			uint256 loopLength = accounts.length - 1;
+			for (uint256 i = 0; i < loopLength; ++i) {
+				// overflow should be impossible in array access math
+				if (accounts[i] >= accounts[i + 1])
+					revert InvalidSplit__AccountsOutOfOrder(i);
+				if (percentAllocations[i] == uint32(0))
+					revert InvalidSplit__AllocationMustBePositive(i);
+			}
+			// overflow should be impossible in array access math with validated equal array lengths
+			if (percentAllocations[loopLength] == uint32(0))
+				revert InvalidSplit__AllocationMustBePositive(loopLength);
 		}
 	}
 
