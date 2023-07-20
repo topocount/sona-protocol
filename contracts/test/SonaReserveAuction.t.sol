@@ -5,19 +5,21 @@ import { SonaReserveAuction } from "../SonaReserveAuction.sol";
 import { SonaRewardToken } from "../SonaRewardToken.sol";
 import { ISonaReserveAuction } from "../interfaces/ISonaReserveAuction.sol";
 import { ISonaAuthorizer } from "../interfaces/ISonaAuthorizer.sol";
+import { ISplitMain } from "../payout/interfaces/ISplitMain.sol";
 import { ERC721 } from "solmate/tokens/ERC721.sol";
 import { Util } from "./Util.sol";
+import { SplitHelpers } from "./util/SplitHelpers.t.sol";
 import { ERC1967Proxy } from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 import { Weth9Mock, IWETH } from "./mock/Weth9Mock.sol";
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { ERC20ReturnTrueMock, ERC20NoReturnMock, ERC20ReturnFalseMock } from "./mock/ERC20Mock.sol";
 import { ContractBidderMock } from "./mock/ContractBidderMock.sol";
 import { Weth9Mock, IWETH } from "./mock/Weth9Mock.sol";
+import { SplitMain } from "../payout/SplitMain.sol";
 
 /* solhint-disable max-states-count */
-contract SonaReserveAuctionTest is Util, SonaReserveAuction {
+contract SonaReserveAuctionTest is Util, SonaReserveAuction, SplitHelpers {
 	SonaReserveAuction public auction;
-	address public trackAddress;
 
 	// treasury address getting the fees
 	address public treasuryRecipient = makeAddr("treasuryRecipient");
@@ -34,10 +36,6 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 	// address for non-eth token
 	address public nonEthToken = makeAddr("nonEthToken");
 	// derived from ../../scripts/signTyped.ts
-	string public mnemonic =
-		"test test test test test test test test test test test junk";
-	uint256 public authorizerKey = vm.deriveKey(mnemonic, 0);
-	address public authorizer = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
 	address payable public artistPayout = payable(address(25));
 
 	uint256 public tokenId = (uint256(uint160(trackMinter)) << 96) | 69;
@@ -49,6 +47,7 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 	ContractBidderMock public contractBidder;
 
 	function setUp() public {
+		splitMainImpl = new SplitMain(authorizer);
 		vm.startPrank(rootOwner);
 		// WARNING: deployment order matters for the signatures below
 		SonaRewardToken rewardTokenBase = new SonaRewardToken();
@@ -61,6 +60,7 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 				redistributionRecipient,
 				authorizer,
 				rewardTokenBase,
+				splitMainImpl,
 				address(0),
 				mockWeth
 			)
@@ -85,6 +85,7 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 				authorizer,
 				rewardTokenBase,
 				address(0),
+				address(0),
 				mockWeth
 			)
 		);
@@ -101,6 +102,7 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 				authorizer,
 				rewardTokenBase,
 				address(0),
+				address(0),
 				mockWeth
 			)
 		);
@@ -116,6 +118,7 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 				redistributionRecipient,
 				address(0),
 				rewardTokenBase,
+				address(0),
 				address(0),
 				mockWeth
 			)
@@ -129,6 +132,7 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 				treasuryRecipient,
 				redistributionRecipient,
 				authorizer,
+				address(0),
 				address(0),
 				address(0),
 				mockWeth
@@ -568,6 +572,84 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction {
 		ISonaReserveAuction.Auction memory auctionData = auction.getAuction(
 			tokenId
 		);
+
+		assertEq(auctionData.trackSeller, address(0));
+		assertEq(auctionData.reservePrice, 0);
+		assertEq(ERC721(address(auction.rewardToken())).balanceOf(bidder), 1);
+		assertEq(ERC721(address(auction.rewardToken())).balanceOf(trackMinter), 1);
+	}
+
+	function test_DistributeERC20ToSplit() public {
+		ERC20ReturnTrueMock mockERC20 = new ERC20ReturnTrueMock();
+		(address[] memory accounts, uint32[] memory amounts) = _createSimpleSplit();
+		MetadataBundle[2] memory bundles = _createBundles();
+		bundles[0].payout = split;
+		Signature[2] memory signatures = _getBundleSignatures(bundles);
+		vm.prank(trackMinter);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(mockERC20),
+			1 ether
+		);
+
+		uint256 bidAmount = 1.1 ether;
+
+		hoax(bidder);
+		auction.createBid(tokenId, bidAmount);
+
+		vm.warp(2 days);
+
+		uint initialBalance0 = mockERC20.balanceOf(accounts[0]);
+		uint initialBalance1 = mockERC20.balanceOf(accounts[1]);
+
+		vm.prank(trackMinter);
+		auction.settleReserveAuctionAndDistributePayout(tokenId, accounts, amounts);
+
+		uint finalBalance0 = mockERC20.balanceOf(accounts[0]);
+		uint finalBalance1 = mockERC20.balanceOf(accounts[1]);
+
+		assertEq(finalBalance0 - initialBalance0, 511500000000000000 - 1);
+		assertEq(finalBalance1 - initialBalance1, 511500000000000000 - 1);
+
+		ISonaReserveAuction.Auction memory auctionData = auction.getAuction(
+			tokenId
+		);
+
+		assertEq(auctionData.trackSeller, address(0));
+		assertEq(auctionData.reservePrice, 0);
+		assertEq(ERC721(address(auction.rewardToken())).balanceOf(bidder), 1);
+		assertEq(ERC721(address(auction.rewardToken())).balanceOf(trackMinter), 1);
+	}
+
+	function test_DistributeETHToSplit() public {
+		(address[] memory accounts, uint32[] memory amounts) = _createSimpleSplit();
+		MetadataBundle[2] memory bundles = _createBundles();
+		bundles[0].payout = split;
+		Signature[2] memory signatures = _getBundleSignatures(bundles);
+		vm.prank(trackMinter);
+		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+
+		hoax(bidder);
+		auction.createBid{ value: 1.1 ether }(tokenId, 0);
+
+		vm.warp(2 days);
+
+		uint initialBalance0 = accounts[0].balance;
+		uint initialBalance1 = accounts[1].balance;
+
+		vm.prank(trackMinter);
+		auction.settleReserveAuctionAndDistributePayout(tokenId, accounts, amounts);
+
+		ISonaReserveAuction.Auction memory auctionData = auction.getAuction(
+			tokenId
+		);
+
+		uint finalBalance0 = accounts[0].balance;
+		uint finalBalance1 = accounts[1].balance;
+
+		assertEq(finalBalance0 - initialBalance0, 511500000000000000);
+		assertEq(finalBalance1 - initialBalance1, 511500000000000000);
 
 		assertEq(auctionData.trackSeller, address(0));
 		assertEq(auctionData.reservePrice, 0);

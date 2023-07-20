@@ -8,6 +8,7 @@ pragma solidity ^0.8.16;
 // (___/(_____)(_)\_)(__)(__)  (___/ (__) (_)\_)(____)(__)(__)(_/\/\_)
 
 import { ISonaReserveAuction } from "./interfaces/ISonaReserveAuction.sol";
+import { ISplitMain } from "./payout/interfaces/ISplitMain.sol";
 import { Initializable } from "openzeppelin-upgradeable/proxy/utils/Initializable.sol";
 import { SonaAdmin } from "./access/SonaAdmin.sol";
 import { IERC721Upgradeable as IERC721 } from "openzeppelin-upgradeable/token/ERC721/IERC721Upgradeable.sol";
@@ -58,6 +59,8 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	address private _redistributionFeeRecipient;
 	// @dev The instance of the rewardToken contract
 	ISonaRewardToken public rewardToken;
+	/// @dev splits contract to execute distributions on
+	ISplitMain public splitMain;
 	// @dev part of the EIP-712 standard for structured data hashes
 	bytes32 private _DOMAIN_SEPARATOR;
 	// @dev the address of the authorizing signer
@@ -110,6 +113,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		address redistributionFeeRecipient_,
 		address authorizer_,
 		ISonaRewardToken _rewardTokenBase,
+		ISplitMain _splitMain,
 		address _eoaAdmin,
 		IWETH weth_
 	) public initializer {
@@ -131,6 +135,8 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		_authorizer = authorizer_;
 
 		_weth = weth_;
+
+		splitMain = _splitMain;
 
 		// Initialize the reward token. Admin is the auction
 		rewardToken = ISonaRewardToken(
@@ -215,6 +221,32 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		uint256 _tokenId
 	) external onlySonaAdminOrApprovedTokenOperator(_tokenId) {
 		_settleReserveAuction(_tokenId);
+	}
+
+	/// @notice Settle the reserve auction and distribute a split
+	/// @dev This function is secured on the Splits-side and will revert if the
+	/// 			payout address is not a registered split
+	/// @param _tokenId The ID of the token.
+	/// @param _accounts The list of accounts in the configured split
+	/// @param _percentAllocations The list of proportional amounts in the configured split
+	function settleReserveAuctionAndDistributePayout(
+		uint256 _tokenId,
+		address[] calldata _accounts,
+		uint32[] calldata _percentAllocations
+	) external onlySonaAdminOrApprovedTokenOperator(_tokenId) {
+		address payout = auctions[_tokenId].bundles[0].payout;
+		address currency = auctions[_tokenId].currency;
+		_settleReserveAuction(_tokenId);
+		if (currency.isZero()) {
+			splitMain.distributeETH(payout, _accounts, _percentAllocations);
+		} else {
+			splitMain.distributeERC20(
+				payout,
+				IERC20(currency),
+				_accounts,
+				_percentAllocations
+			);
+		}
 	}
 
 	/// @dev Public function to cancel the reserve auction
