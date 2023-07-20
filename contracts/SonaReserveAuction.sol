@@ -46,7 +46,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	// @dev The signature of the type that is hashed and prefixed to the TypedData payload
 	bytes32 private constant _METADATABUNDLE_TYPEHASH =
 		keccak256(
-			"MetadataBundle(uint256 tokenId,address payout,string arweaveTxId)"
+			"MetadataBundle(uint256 tokenId,address payout,address rewardsPayout,string arweaveTxId)"
 		);
 
 	/*//////////////////////////////////////////////////////////////
@@ -488,6 +488,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 					_METADATABUNDLE_TYPEHASH,
 					bundle.tokenId,
 					bundle.payout,
+					bundle.rewardsPayout,
 					keccak256(bytes(bundle.arweaveTxId))
 				)
 			);

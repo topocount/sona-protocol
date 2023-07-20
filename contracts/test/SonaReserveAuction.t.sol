@@ -37,6 +37,7 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction, SplitHelpers {
 	address public nonEthToken = makeAddr("nonEthToken");
 	// derived from ../../scripts/signTyped.ts
 	address payable public artistPayout = payable(address(25));
+	address payable public zeroPayout = payable(address(0));
 
 	uint256 public tokenId = (uint256(uint160(trackMinter)) << 96) | 69;
 
@@ -146,14 +147,14 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction, SplitHelpers {
 		returns (MetadataBundle[2] memory bundles, Signature[2] memory signatures)
 	{
 		Signature memory artistSignature = Signature(
-			28,
-			0xffc0fb30061f17a53c5c2467f59a3eb97e8ec4b5b0c06fa52142daf608d12d8b,
-			0x66f4b7b6d74b4c84f92f2bae1661bb6000a0d8b5806bb1862368e39b35bb8183
+			27,
+			0xc52d5322b2123504e8fa2d4f4201864a8963f1cee34089ef658178ee98a2931c,
+			0x5f78ab90cb573c3150b5828a36abee18447db2a918723948a9bef235d6dec314
 		);
 		Signature memory collectorSignature = Signature(
 			27,
-			0x54826a459211de0cc74e8ee384b1c7d051b8ba6eb89d2e8b337ce6e8e3d0fe26,
-			0x5217cb99f9f960c6bfb2ada761d0a7da7473468e4a4ff75c0effac2897d21cf2
+			0x15208b7948eca71121fcdee28001f81036ca7331f48f474be538f0d80c719863,
+			0x7f9a2d05566a9c9eb52b21a7159c61dd8fc650fec20df551a3024eeafd72c2d1
 		);
 
 		bundles = _createBundles();
@@ -168,12 +169,14 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction, SplitHelpers {
 		MetadataBundle memory artistBundle = MetadataBundle({
 			arweaveTxId: "Hello World!",
 			tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000044,
-			payout: artistPayout
+			payout: artistPayout,
+			rewardsPayout: zeroPayout
 		});
 		MetadataBundle memory collectorBundle = MetadataBundle({
 			arweaveTxId: "Hello World",
 			tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000045,
-			payout: payable(address(0))
+			payout: payable(address(0)),
+			rewardsPayout: zeroPayout
 		});
 
 		bundles = [artistBundle, collectorBundle];
@@ -318,10 +321,8 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction, SplitHelpers {
 	}
 
 	function test_CreateBid() public {
-		(
-			MetadataBundle[2] memory bundles,
-			Signature[2] memory signatures
-		) = _createSignedBundles();
+		MetadataBundle[2] memory bundles = _createBundles();
+		Signature[2] memory signatures = _getBundleSignatures(bundles);
 		vm.prank(trackMinter);
 		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
 
@@ -1343,7 +1344,7 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction, SplitHelpers {
 		MetadataBundle memory bundle
 	) internal pure returns (bytes32) {
 		bytes32 _METADATABUNDLE_TYPEHASH = keccak256(
-			"MetadataBundle(uint256 tokenId,address payout,string arweaveTxId)"
+			"MetadataBundle(uint256 tokenId,address payout,address rewardsPayout,string arweaveTxId)"
 		);
 		return
 			keccak256(
@@ -1351,6 +1352,7 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction, SplitHelpers {
 					_METADATABUNDLE_TYPEHASH,
 					bundle.tokenId,
 					bundle.payout,
+					bundle.rewardsPayout,
 					keccak256(bytes(bundle.arweaveTxId))
 				)
 			);

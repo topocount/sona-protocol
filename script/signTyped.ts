@@ -1,8 +1,14 @@
-import { createTestClient, createWalletClient, http, numberToHex, bytesToHex, hexToBytes, createPublicClient, getContract, hexToBigInt, concat } from "viem"
-import { HDAccount, mnemonicToAccount } from "viem/accounts"
+import {
+	createTestClient,
+	createWalletClient,
+	http,
+	numberToHex,
+	bytesToHex,
+	hexToBytes,
+	concat,
+} from "viem"
+import { mnemonicToAccount } from "viem/accounts"
 import { foundry } from "viem/chains"
-import SonaReserveAuction from "../out-via-ir/SonaReserveAuction.sol/SonaReserveAuction.json"
-import { sonaReserveAuctionABI } from "../abi/generated"
 
 const testClient = createTestClient({
 	chain: foundry,
@@ -10,16 +16,14 @@ const testClient = createTestClient({
 	transport: http(),
 })
 
-const account = mnemonicToAccount("test test test test test test test test test test test junk", { accountIndex: 0 })
+const account = mnemonicToAccount(
+	"test test test test test test test test test test test junk",
+	{ accountIndex: 0 },
+)
 
 console.log({ account })
 const walletClient = createWalletClient({
 	account,
-	chain: foundry,
-	transport: http(),
-})
-
-const publicClient = createPublicClient({
 	chain: foundry,
 	transport: http(),
 })
@@ -35,19 +39,28 @@ const types = {
 	MetadataBundle: [
 		{ name: "tokenId", type: "uint256" },
 		{ name: "payout", type: "address" },
+		{ name: "rewardsPayout", type: "address" },
 		{ name: "arweaveTxId", type: "string" },
 	],
 }
 
 const artistBundle = {
-	tokenId: concat(["0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f", numberToHex(68, { size: 12 })]),
+	tokenId: concat([
+		"0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f",
+		numberToHex(68, { size: 12 }),
+	]),
 	payout: numberToHex(25, { size: 20 }),
+	rewardsPayout: numberToHex(0, { size: 20 }),
 	arweaveTxId: "Hello World!",
 } as const
 
 const collectorBundle = {
-	tokenId: concat(["0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f", numberToHex(69, { size: 12 })]),
+	tokenId: concat([
+		"0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f",
+		numberToHex(69, { size: 12 }),
+	]),
 	payout: numberToHex(0, { size: 20 }),
+	rewardsPayout: numberToHex(0, { size: 20 }),
 	arweaveTxId: "Hello World",
 } as const
 
@@ -61,26 +74,13 @@ async function main() {
 	console.log("artistBundle signature: ", split(sig))
 	sig = await signMessage(collectorBundle)
 	console.log("collectorBundle signature: ", split(sig))
-	/*
-  await testClient.setCode({
-    address: domain.verifyingContract,
-    bytecode: SonaReserveAuction.bytecode.object as `0x${string}`,
-  })
-
-  const auction = getContract({
-    address: domain.verifyingContract,
-    abi: sonaReserveAuctionABI,
-    walletClient,
-    publicClient,
-  })
-
-  auction.read.verify([{ arweaveTxId: message.arweaveTxId, tokenId: hexToBigInt(message.tokenId) }, v, r, s])
-  */
 }
 
 main()
 
-async function signMessage(msg: { [key: string]: unknown }): Promise<`0x${string}`> {
+async function signMessage(msg: {
+	[key: string]: unknown
+}): Promise<`0x${string}`> {
 	return walletClient.signTypedData({
 		domain,
 		types,
@@ -89,7 +89,9 @@ async function signMessage(msg: { [key: string]: unknown }): Promise<`0x${string
 	})
 }
 
-function split(signature: `0x${string}`): [number, `0x${string}`, `0x${string}`] {
+function split(
+	signature: `0x${string}`,
+): [number, `0x${string}`, `0x${string}`] {
 	const raw = hexToBytes(signature)
 	switch (raw.length) {
 		case 65:
