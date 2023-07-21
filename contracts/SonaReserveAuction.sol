@@ -514,7 +514,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 			auction.currentBidder,
 			auction.bundles[0].arweaveTxId,
 			auction.bundles[1].arweaveTxId,
-			auction.bundles[0].payout
+			auction.bundles[0].rewardsPayout
 		);
 
 		// Send redistribution fee to the redistribution fee recipient

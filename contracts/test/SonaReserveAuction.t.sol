@@ -2,7 +2,7 @@
 pragma solidity ^0.8.16;
 
 import { SonaReserveAuction } from "../SonaReserveAuction.sol";
-import { SonaRewardToken } from "../SonaRewardToken.sol";
+import { SonaRewardToken, ISonaRewardToken } from "../SonaRewardToken.sol";
 import { ISonaReserveAuction } from "../interfaces/ISonaReserveAuction.sol";
 import { ISonaAuthorizer } from "../interfaces/ISonaAuthorizer.sol";
 import { ISplitMain } from "../payout/interfaces/ISplitMain.sol";
@@ -19,6 +19,12 @@ import { SplitMain } from "../payout/SplitMain.sol";
 
 /* solhint-disable max-states-count */
 contract SonaReserveAuctionTest is Util, SonaReserveAuction, SplitHelpers {
+	event RewardTokenMetadataUpdated(
+		uint256 indexed tokenId,
+		string txId,
+		address payout
+	);
+
 	SonaReserveAuction public auction;
 
 	// treasury address getting the fees
@@ -554,6 +560,49 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction, SplitHelpers {
 		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
 	}
 
+	function test_SettleReserveAuctionWithrewardsPayoutSet() public {
+		address payable rewardsPayout = payable(makeAddr("rewardsPayout"));
+		MetadataBundle[2] memory bundles = _createBundles();
+		bundles[0].rewardsPayout = rewardsPayout;
+		Signature[2] memory signatures = _getBundleSignatures(bundles);
+		vm.prank(trackMinter);
+		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+
+		hoax(bidder);
+		auction.createBid{ value: 1.1 ether }(tokenId, 0);
+
+		vm.warp(2 days);
+
+		vm.prank(trackMinter);
+		vm.expectEmit(true, false, false, false, address(auction));
+		emit ReserveAuctionSettled({ tokenId: tokenId });
+		auction.settleReserveAuction(tokenId);
+
+		ISonaReserveAuction.Auction memory auctionData = auction.getAuction(
+			tokenId
+		);
+
+		assertEq(auctionData.trackSeller, address(0));
+		assertEq(auctionData.reservePrice, 0);
+		assertEq(ERC721(address(auction.rewardToken())).balanceOf(bidder), 1);
+		assertEq(ERC721(address(auction.rewardToken())).balanceOf(trackMinter), 1);
+		assertEq(
+			ERC721(address(auction.rewardToken())).ownerOf(tokenId - 1),
+			trackMinter
+		);
+		assertEq(ERC721(address(auction.rewardToken())).ownerOf(tokenId), bidder);
+
+		ISonaRewardToken token = auction.rewardToken();
+
+		ISonaRewardToken.RewardToken memory metadata = token.getRewardTokenMetadata(
+			tokenId - 1
+		);
+		assertEq(metadata.payout, rewardsPayout);
+
+		metadata = token.getRewardTokenMetadata(tokenId);
+		assertEq(metadata.payout, address(0));
+	}
+
 	function test_SettleReserveAuction() public {
 		(
 			MetadataBundle[2] memory bundles,
@@ -567,7 +616,9 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction, SplitHelpers {
 
 		vm.warp(2 days);
 
-		vm.prank(trackMinter);
+		vm.startPrank(trackMinter);
+		vm.expectEmit(true, false, false, false, address(auction));
+		emit ReserveAuctionSettled(tokenId);
 		auction.settleReserveAuction(tokenId);
 
 		ISonaReserveAuction.Auction memory auctionData = auction.getAuction(
@@ -578,6 +629,20 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction, SplitHelpers {
 		assertEq(auctionData.reservePrice, 0);
 		assertEq(ERC721(address(auction.rewardToken())).balanceOf(bidder), 1);
 		assertEq(ERC721(address(auction.rewardToken())).balanceOf(trackMinter), 1);
+		assertEq(
+			ERC721(address(auction.rewardToken())).ownerOf(tokenId - 1),
+			trackMinter
+		);
+		assertEq(ERC721(address(auction.rewardToken())).ownerOf(tokenId), bidder);
+
+		ISonaRewardToken token = auction.rewardToken();
+
+		ISonaRewardToken.RewardToken memory metadata = token.getRewardTokenMetadata(
+			tokenId - 1
+		);
+		assertEq(metadata.payout, address(0));
+		metadata = token.getRewardTokenMetadata(tokenId);
+		assertEq(metadata.payout, address(0));
 	}
 
 	function test_DistributeERC20ToSplit() public {
