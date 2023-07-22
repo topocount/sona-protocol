@@ -559,7 +559,7 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction, SplitHelpers {
 		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
 	}
 
-	function test_SettleReserveAuctionWithrewardsPayoutSet() public {
+	function test_SettleReserveAuctionWithRewardsPayoutSet() public {
 		address payable rewardsPayout = payable(makeAddr("rewardsPayout"));
 		MetadataBundle[2] memory bundles = _createBundles();
 		bundles[0].rewardsPayout = rewardsPayout;
@@ -572,9 +572,21 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction, SplitHelpers {
 
 		vm.warp(2 days);
 
-		vm.prank(trackMinter);
+		vm.expectEmit(true, false, false, true, address(auction.rewardToken()));
+		emit RewardTokenMetadataUpdated(
+			tokenId - 1,
+			bundles[0].arweaveTxId,
+			bundles[0].rewardsPayout
+		);
+		vm.expectEmit(true, false, false, true, address(auction.rewardToken()));
+		emit RewardTokenMetadataUpdated(
+			tokenId,
+			bundles[1].arweaveTxId,
+			bundles[1].rewardsPayout
+		);
 		vm.expectEmit(true, false, false, false, address(auction));
-		emit ReserveAuctionSettled({ tokenId: tokenId });
+		emit ReserveAuctionSettled(tokenId);
+		vm.prank(trackMinter);
 		auction.settleReserveAuction(tokenId);
 
 		ISonaReserveAuction.Auction memory auctionData = auction.getAuction(
