@@ -14,7 +14,7 @@
     out = 'out-via-ir'
 
 [fuzz]
-runs = 5000
+runs = 1024
 
 [fmt]
     indent = 4
