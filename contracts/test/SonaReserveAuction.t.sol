@@ -5,7 +5,6 @@ import { SonaReserveAuction } from "../SonaReserveAuction.sol";
 import { SonaRewardToken, ISonaRewardToken } from "../SonaRewardToken.sol";
 import { ISonaReserveAuction } from "../interfaces/ISonaReserveAuction.sol";
 import { ISonaAuthorizer } from "../interfaces/ISonaAuthorizer.sol";
-import { ISplitMain } from "../payout/interfaces/ISplitMain.sol";
 import { ERC721 } from "solmate/tokens/ERC721.sol";
 import { Util } from "./Util.sol";
 import { SplitHelpers } from "./util/SplitHelpers.t.sol";
@@ -15,7 +14,7 @@ import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { ERC20ReturnTrueMock, ERC20NoReturnMock, ERC20ReturnFalseMock } from "./mock/ERC20Mock.sol";
 import { ContractBidderMock } from "./mock/ContractBidderMock.sol";
 import { Weth9Mock, IWETH } from "./mock/Weth9Mock.sol";
-import { SplitMain } from "../payout/SplitMain.sol";
+import { ISplitMain, SplitMain } from "../payout/SplitMain.sol";
 
 /* solhint-disable max-states-count */
 contract SonaReserveAuctionTest is Util, SonaReserveAuction, SplitHelpers {

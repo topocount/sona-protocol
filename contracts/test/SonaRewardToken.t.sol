@@ -184,6 +184,8 @@ contract SonaRewardTokenTest is Util, ERC721Holder, SonaRewardToken {
 		string memory cid = "Qmabcdefghijklmnopqrstuv";
 		string memory cid2 = "Qmabcdefghijklmnopqrstuvx";
 
+		vm.expectEmit(true, false, false, true, address(rewardToken));
+		emit RewardTokenMetadataUpdated(_tokenId - 1, cid, payoutAddr);
 		rewardToken.mintFromAuction(
 			_tokenId,
 			address(this),
