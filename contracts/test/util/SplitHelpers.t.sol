@@ -78,7 +78,9 @@ contract SplitHelpers is Util, ISonaAuthorizer {
 			amountSum += percents[i];
 		}
 		require(amountSum == 1e6, "_createSplit: percents dont add to 100");
+		vm.startPrank(accounts[0]);
 		split = payable(splitMainImpl.createSplit(accounts, percents));
+		vm.stopPrank();
 	}
 
 	function _getSplitConfigHash(

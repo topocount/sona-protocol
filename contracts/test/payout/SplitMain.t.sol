@@ -23,9 +23,16 @@ contract SonaTestSplits is Util, ISonaAuthorizer, SplitHelpers {
 		(address[] memory accounts, uint32[] memory amounts) = _createSimpleSplit();
 		Signature memory sig = _signSplitConfig(split, accounts, amounts);
 
+		// Only a controller can update a Split
 		vm.expectEmit(true, false, false, false, address(splitMainImpl));
 		emit UpdateSplit(address(split));
-		hoax(account1);
+		hoax(accounts[0]);
+		splitMainImpl.updateSplit(split, accounts, amounts, sig);
+
+		vm.expectRevert(
+			abi.encodeWithSelector(SplitMain.Unauthorized.selector, accounts[1])
+		);
+		hoax(accounts[1]);
 		splitMainImpl.updateSplit(split, accounts, amounts, sig);
 	}
 

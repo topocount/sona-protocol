@@ -60,7 +60,8 @@ contract SplitMain is ISplitMain {
 	/// @notice holds Split metadata
 	struct Split {
 		bytes32 hash;
-		address[] controllers;
+		address controller;
+		address newPotentialController;
 	}
 
 	//
@@ -122,7 +123,16 @@ contract SplitMain is ISplitMain {
 	/// @notice Reverts if the sender doesn't own the split `split`
 	/// @param split Address to check for control
 	modifier onlySplitController(address split) {
-		if (!_isController(split, msg.sender)) revert Unauthorized(msg.sender);
+		if (msg.sender != _splits[split].controller)
+			revert Unauthorized(msg.sender);
+		_;
+	}
+
+	/// @notice Reverts if the sender isn't the new potential controller of split `split`
+	/// @param split Address to check for new potential control
+	modifier onlySplitNewPotentialController(address split) {
+		if (msg.sender != _splits[split].newPotentialController)
+			revert Unauthorized(msg.sender);
 		_;
 	}
 
@@ -180,7 +190,7 @@ contract SplitMain is ISplitMain {
 		bytes32 splitHash = _hashSplit(accounts, percentAllocations);
 		// create mutable split
 		split = Clones.clone(walletImplementation);
-		_splits[split].controllers = accounts;
+		_splits[split].controller = msg.sender;
 		// store split's hash in storage for future verification
 		_splits[split].hash = splitHash;
 		emit CreateSplit(split);
@@ -198,8 +208,8 @@ contract SplitMain is ISplitMain {
 	)
 		external
 		override
-		checkUpdateSignature(split, accounts, percentAllocations, sig)
 		onlySplitController(split)
+		checkUpdateSignature(split, accounts, percentAllocations, sig)
 		validSplit(accounts, percentAllocations)
 	{
 		_updateSplit(split, accounts, percentAllocations);
@@ -322,13 +332,20 @@ contract SplitMain is ISplitMain {
 		return _splits[split].hash;
 	}
 
-	/// @notice Returns the current controllers of split `split`
+	/// @notice Returns the current controller of split `split`
 	/// @param split Split to return controller for
-	/// @return controllers Split's controller list
-	function getControllers(
+	/// @return Split's controller
+	function getController(address split) external view returns (address) {
+		return _splits[split].controller;
+	}
+
+	/// @notice Returns the current newPotentialController of split `split`
+	/// @param split Split to return newPotentialController for
+	/// @return Split's newPotentialController
+	function getNewPotentialController(
 		address split
-	) external view returns (address[] memory controllers) {
-		return _splits[split].controllers;
+	) external view returns (address) {
+		return _splits[split].newPotentialController;
 	}
 
 	/// @notice Returns the current ETH balance of account `account`
@@ -443,20 +460,6 @@ contract SplitMain is ISplitMain {
 	) internal view {
 		bytes32 hash = _hashSplit(accounts, percentAllocations);
 		if (_splits[split].hash != hash) revert InvalidSplit__InvalidHash(hash);
-	}
-
-	function _isController(
-		address split,
-		address caller
-	) internal view returns (bool) {
-		address[] memory controllers = _splits[split].controllers;
-		uint256 length = controllers.length;
-		unchecked {
-			for (uint i = 0; i < length; i++) {
-				if (controllers[i] == caller) return true;
-			}
-		}
-		return false;
 	}
 
 	/// @notice Distributes the ETH balance for split `split`
