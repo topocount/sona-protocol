@@ -5,6 +5,7 @@ import { SonaReserveAuction } from "../SonaReserveAuction.sol";
 import { SonaRewardToken, ISonaRewardToken } from "../SonaRewardToken.sol";
 import { ISonaReserveAuction } from "../interfaces/ISonaReserveAuction.sol";
 import { ISonaAuthorizer } from "../interfaces/ISonaAuthorizer.sol";
+import { AuctionSigner } from "./utils/AuctionSigner.sol";
 import { ERC721 } from "solmate/tokens/ERC721.sol";
 import { Util } from "./Util.sol";
 import { SplitHelpers } from "./util/SplitHelpers.t.sol";
@@ -17,14 +18,12 @@ import { Weth9Mock, IWETH } from "./mock/Weth9Mock.sol";
 import { ISplitMain, SplitMain } from "../payout/SplitMain.sol";
 
 /* solhint-disable max-states-count */
-contract SonaReserveAuctionTest is Util, SonaReserveAuction, SplitHelpers {
+contract SonaReserveAuctionTest is SplitHelpers {
 	event RewardTokenMetadataUpdated(
 		uint256 indexed tokenId,
 		string txId,
 		address payout
 	);
-
-	SonaReserveAuction public auction;
 
 	// treasury address getting the fees
 	address public treasuryRecipient = makeAddr("treasuryRecipient");
@@ -40,7 +39,6 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction, SplitHelpers {
 	address public secondBidder = makeAddr("secondBidder");
 	// address for non-eth token
 	address public nonEthToken = makeAddr("nonEthToken");
-	// derived from ../../scripts/signTyped.ts
 	address payable public artistPayout = payable(address(25));
 	address payable public zeroPayout = payable(address(0));
 
@@ -185,22 +183,6 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction, SplitHelpers {
 		});
 
 		bundles = [artistBundle, collectorBundle];
-	}
-
-	function _signBundle(
-		MetadataBundle memory _bundle
-	) private view returns (Signature memory signature) {
-		bytes32 bundleHash = _getBundleHash(_bundle);
-		(uint8 v, bytes32 r, bytes32 s) = vm.sign(authorizerKey, bundleHash);
-
-		return Signature({ v: v, r: r, s: s });
-	}
-
-	function _getBundleSignatures(
-		MetadataBundle[2] memory _bundles
-	) private view returns (Signature[2] memory signatures) {
-		signatures[0] = _signBundle(_bundles[0]);
-		signatures[1] = _signBundle(_bundles[1]);
 	}
 
 	function test_CreateReserveAuction() public {
@@ -1398,49 +1380,5 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction, SplitHelpers {
 		);
 		vm.prank(trackMinter);
 		auction.cancelReserveAuction(tokenId);
-	}
-
-	function _makeDomainHash() private view returns (bytes32) {
-		bytes32 _EIP712DOMAIN_TYPEHASH = keccak256(
-			"EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
-		);
-		return
-			keccak256(
-				abi.encode(
-					_EIP712DOMAIN_TYPEHASH,
-					keccak256("SonaReserveAuction"), // name
-					keccak256("1"), // version
-					block.chainid, // chain ID
-					address(auction) // verifying contract
-				)
-			);
-	}
-
-	function _hashFromMemory(
-		MetadataBundle memory bundle
-	) internal pure returns (bytes32) {
-		bytes32 _METADATABUNDLE_TYPEHASH = keccak256(
-			"MetadataBundle(uint256 tokenId,address payout,address rewardsPayout,string arweaveTxId)"
-		);
-		return
-			keccak256(
-				abi.encode(
-					_METADATABUNDLE_TYPEHASH,
-					bundle.tokenId,
-					bundle.payout,
-					bundle.rewardsPayout,
-					keccak256(bytes(bundle.arweaveTxId))
-				)
-			);
-	}
-
-	function _getBundleHash(
-		MetadataBundle memory _bundle
-	) private view returns (bytes32) {
-		bytes32 domainSeparator = _makeDomainHash();
-		return
-			keccak256(
-				abi.encodePacked("\x19\x01", domainSeparator, _hashFromMemory(_bundle))
-			);
 	}
 }

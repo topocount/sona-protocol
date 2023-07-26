@@ -4,18 +4,13 @@ pragma solidity ^0.8.16;
 import { ISplitMain } from "../../payout/interfaces/ISplitMain.sol";
 import { SplitMain } from "../../payout/SplitMain.sol";
 import { SplitWallet } from "../../payout/SplitWallet.sol";
+import { AuctionSigner } from "../utils/AuctionSigner.sol";
 import { Util } from "../Util.sol";
 import { MockERC20 } from "../../../lib/solady/test/utils/mocks/MockERC20.sol";
 
-contract SplitHelpers is Util {
+contract SplitHelpers is Util, AuctionSigner {
 	SplitMain public splitMainImpl;
 	address payable public split;
-
-	// derived from ../../scripts/signTyped.ts
-	string public mnemonic =
-		"test test test test test test test test test test test junk";
-	uint256 public authorizerKey = vm.deriveKey(mnemonic, 0);
-	address public authorizer = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
 
 	address public account1 = makeAddr("account1");
 	address public account2 = makeAddr("account2");
