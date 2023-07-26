@@ -165,14 +165,6 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		);
 	}
 
-	function supportsInterface(
-		bytes4 _interfaceId
-	) public view virtual override returns (bool) {
-		return
-			_interfaceId == type(ISonaReserveAuction).interfaceId ||
-			_interfaceId == 0x01ffc9a7;
-	}
-
 	/// @notice Creates a new auction.
 	/// @dev Creating a reserve auction does not start it.
 	/// Auctions are started once a bid of the reserve price or higher is placed.
