@@ -2,7 +2,6 @@
 pragma solidity ^0.8.16;
 
 import { ISplitMain } from "../../payout/interfaces/ISplitMain.sol";
-import { ISonaAuthorizer } from "../../interfaces/ISonaAuthorizer.sol";
 import { SplitMain } from "../../payout/SplitMain.sol";
 import { SplitWallet } from "../../payout/SplitWallet.sol";
 import { Util } from "../Util.sol";
@@ -10,41 +9,29 @@ import { IERC20Upgradeable as IERC20 } from "openzeppelin-upgradeable/token/ERC2
 import { SplitHelpers } from "../util/SplitHelpers.t.sol";
 import { MockERC20 } from "../../../lib/solady/test/utils/mocks/MockERC20.sol";
 
-contract SonaTestSplits is Util, ISonaAuthorizer, SplitHelpers {
+contract SonaTestSplits is SplitHelpers {
 	MockERC20 public mockERC20 = new MockERC20("Mock Token", "USDC", 6);
 
 	event UpdateSplit(address indexed split);
 
 	function setUp() public {
-		splitMainImpl = new SplitMain(authorizer);
+		splitMainImpl = new SplitMain();
 	}
 
 	function test_UpdateSplit() public {
 		(address[] memory accounts, uint32[] memory amounts) = _createSimpleSplit();
-		Signature memory sig = _signSplitConfig(split, accounts, amounts);
 
 		// Only a controller can update a Split
 		vm.expectEmit(true, false, false, false, address(splitMainImpl));
 		emit UpdateSplit(address(split));
 		hoax(accounts[0]);
-		splitMainImpl.updateSplit(split, accounts, amounts, sig);
+		splitMainImpl.updateSplit(split, accounts, amounts);
 
 		vm.expectRevert(
 			abi.encodeWithSelector(SplitMain.Unauthorized.selector, accounts[1])
 		);
 		hoax(accounts[1]);
-		splitMainImpl.updateSplit(split, accounts, amounts, sig);
-	}
-
-	function test_revertUpdateSplitUnauthorized() public {
-		(address[] memory accounts, uint32[] memory amounts) = _createSimpleSplit();
-		Signature memory sig = _signSplitConfig(split, accounts, amounts);
-
-		vm.expectRevert(
-			abi.encodeWithSelector(SplitMain.Unauthorized.selector, address(3))
-		);
-		hoax(address(3));
-		splitMainImpl.updateSplit(split, accounts, amounts, sig);
+		splitMainImpl.updateSplit(split, accounts, amounts);
 	}
 
 	function test_distributeERC20ToEOA() public {
@@ -126,6 +113,4 @@ contract SonaTestSplits is Util, ISonaAuthorizer, SplitHelpers {
 		assertEq(finalBalance2 - initialBalance2, 0);
 		assertEq(finalBalance1 - initialBalance1, 0);
 	}
-
-	// TODO add check to ensure invalid signatures revert
 }

@@ -2,13 +2,12 @@
 pragma solidity ^0.8.16;
 
 import { ISplitMain } from "../../payout/interfaces/ISplitMain.sol";
-import { ISonaAuthorizer } from "../../interfaces/ISonaAuthorizer.sol";
 import { SplitMain } from "../../payout/SplitMain.sol";
 import { SplitWallet } from "../../payout/SplitWallet.sol";
 import { Util } from "../Util.sol";
 import { MockERC20 } from "../../../lib/solady/test/utils/mocks/MockERC20.sol";
 
-contract SplitHelpers is Util, ISonaAuthorizer {
+contract SplitHelpers is Util {
 	SplitMain public splitMainImpl;
 	address payable public split;
 
@@ -47,22 +46,6 @@ contract SplitHelpers is Util, ISonaAuthorizer {
 		amounts[0] = 5e5;
 		amounts[1] = 5e5;
 		_createSplit(accounts, amounts);
-	}
-
-	function _signSplitConfig(
-		address _split,
-		address[] memory _accounts,
-		uint32[] memory _percentAllocations
-	) internal view returns (Signature memory signature) {
-		bytes32 splitConfigHash = _getSplitConfigHash(
-			_split,
-			_accounts,
-			_percentAllocations
-		);
-
-		(uint8 v, bytes32 r, bytes32 s) = vm.sign(authorizerKey, splitConfigHash);
-
-		return Signature({ v: v, r: r, s: s });
 	}
 
 	function _createSplit(

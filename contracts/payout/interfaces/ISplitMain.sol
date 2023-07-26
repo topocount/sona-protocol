@@ -2,11 +2,10 @@
 pragma solidity ^0.8.16;
 
 import { IERC20Upgradeable as IERC20 } from "openzeppelin-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import { ISonaAuthorizer } from "../../interfaces/ISonaAuthorizer.sol";
 
 /// @title ISplitMain
 /// @author 0xSplits <will@0xSplits.xyz>
-interface ISplitMain is ISonaAuthorizer {
+interface ISplitMain {
 	/// FUNCTIONS
 
 	function walletImplementation() external returns (address);
@@ -19,8 +18,7 @@ interface ISplitMain is ISonaAuthorizer {
 	function updateSplit(
 		address split,
 		address[] calldata accounts,
-		uint32[] calldata percentAllocations,
-		Signature calldata sig
+		uint32[] calldata percentAllocations
 	) external;
 
 	function distributeETH(
@@ -32,8 +30,7 @@ interface ISplitMain is ISonaAuthorizer {
 	function updateAndDistributeETH(
 		address split,
 		address[] calldata accounts,
-		uint32[] calldata percentAllocations,
-		Signature calldata sig
+		uint32[] calldata percentAllocations
 	) external;
 
 	function distributeERC20(
@@ -47,8 +44,7 @@ interface ISplitMain is ISonaAuthorizer {
 		address split,
 		IERC20 token,
 		address[] calldata accounts,
-		uint32[] calldata percentAllocations,
-		Signature calldata sig
+		uint32[] calldata percentAllocations
 	) external;
 
 	function withdraw(

@@ -53,7 +53,7 @@ contract SonaReserveAuctionTest is Util, SonaReserveAuction, SplitHelpers {
 	ContractBidderMock public contractBidder;
 
 	function setUp() public {
-		splitMainImpl = new SplitMain(authorizer);
+		splitMainImpl = new SplitMain();
 		vm.startPrank(rootOwner);
 		// WARNING: deployment order matters for the signatures below
 		SonaRewardToken rewardTokenBase = new SonaRewardToken();

@@ -49,7 +49,7 @@ contract SonaTestRewards is Util, SonaRewards, SplitHelpers {
 		);
 
 	function setUp() public {
-		splitMainImpl = new SplitMain(address(0));
+		splitMainImpl = new SplitMain();
 		rewardsBase = new SonaRewards();
 		// NOTE: if you get a generic delegatecall error during `setUp` it's probably
 		//because the encoded argument counts or types below don't match those in the initialize function interface
