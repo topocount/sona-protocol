@@ -12,16 +12,16 @@ import { IWETH } from "../../contracts/interfaces/IWETH.sol";
 import { Weth9Mock } from "../../contracts/test/mock/Weth9Mock.sol";
 
 contract Deployer is Script {
-	address private _SONA_OWNER = vm.envAddress("OWNER");
-	address private _TREASURY_RECIPIENT = vm.envAddress("TREASURY");
-	address private _REDISTRIBUTION_RECIPIENT = vm.envAddress("REDISTRIBUTION");
-	address private _AUTHORIZER = vm.envAddress("AUTHORIZER");
 
 	function setUp() public {}
 
 	function run() external {
 		string memory mnemonic = vm.envString("MNEMONIC");
 		uint256 key = vm.deriveKey(mnemonic, 0);
+		address _SONA_OWNER = vm.addr(vm.deriveKey(mnemonic, 1));
+		address _AUTHORIZER = vm.addr(vm.deriveKey(mnemonic, 2));
+		address _TREASURY_RECIPIENT = vm.addr(vm.deriveKey(mnemonic, 3));
+		address _REDISTRIBUTION_RECIPIENT = vm.addr(vm.deriveKey(mnemonic, 3));
 		vm.startBroadcast(key);
 
 		// Deploy Mocks for PoC Tests
@@ -41,8 +41,9 @@ contract Deployer is Script {
 				_REDISTRIBUTION_RECIPIENT,
 				_AUTHORIZER,
 				rewardTokenBase,
+				address(0), // TODO deploy splitMain impl
 				_SONA_OWNER,
-				address(mockWeth)
+				mockWeth
 			)
 		);
 		SonaReserveAuction auction = SonaReserveAuction(address(proxy));
