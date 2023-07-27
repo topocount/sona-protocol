@@ -51,24 +51,13 @@ deploy_private :; FOUNDRY_PROFILE=optimized forge script script/solidity/Deploy.
 	--broadcast \
 	--rpc-url ${RPC_URL}
 
-deploy_testnet :; forge script ./script/solidity/Deploy.s.sol \
-	--optimizer-runs 10000 \
+deploy_goerli :; FOUNDRY_PROFILE=optimized forge script script/solidity/Deploy.s.sol:Deployer \
 	--rpc-url ${RPC_URL} \
-	--private-key ${PRIVATE_KEY} \
 	-vvv \
+	--slow \
+	--skip-simulation \
 	--broadcast \
-	--chain-id 888 \
-	--verify
-
-deploy_goerli :; forge script ./script/solidity/Deploy.s.sol \
-	--optimizer-runs 10000 \
-	--rpc-url ${RPC_URL} \
-	--private-key ${PRIVATE_KEY} \
-	-vvv \
-	--broadcast \
-	--chain-id 5 \
-	--etherscan-api-key ${ETHERSCAN_API_KEY} \
-    --verify
+	--chain-id 5
 
 deploy_mainnet :; forge script ./script/solidity/Deploy.s.sol \
 	--optimizer-runs 10000 \
@@ -78,7 +67,7 @@ deploy_mainnet :; forge script ./script/solidity/Deploy.s.sol \
 	--broadcast \
 	--chain-id 1 \
 	--etherscan-api-key ${ETHERSCAN_API_KEY} \
-    --verify
+  --verify
 
 # Tests
 test :; forge clean && forge test -vvv # --ffi # enable if you need the `ffi` cheat code on HEVM
