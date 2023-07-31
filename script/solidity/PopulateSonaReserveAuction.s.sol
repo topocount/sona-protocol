@@ -29,14 +29,12 @@ contract PopulateAuction is Script, AuctionSigner {
 		MetadataBundle memory artistBundle = MetadataBundle({
 			arweaveTxId: "Hello World4!",
 			tokenId: 0x70997970C51812dc3A010C7d01b50e0d17dc79C800000000000000000000004a,
-			payout: payable(address(0)),
-			rewardsPayout: payable(address(0))
+			payout: payable(address(0))
 		});
 		MetadataBundle memory collectorBundle = MetadataBundle({
 			arweaveTxId: "Hello World4",
 			tokenId: 0x70997970C51812dc3A010C7d01b50e0d17dc79C800000000000000000000004b,
-			payout: payable(address(0)),
-			rewardsPayout: payable(address(0))
+			payout: payable(address(0))
 		});
 
 		bundles = [artistBundle, collectorBundle];

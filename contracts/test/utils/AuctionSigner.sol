@@ -36,7 +36,7 @@ abstract contract AuctionSigner is SonaReserveAuction {
 		MetadataBundle memory bundle
 	) internal pure returns (bytes32) {
 		bytes32 _METADATABUNDLE_TYPEHASH = keccak256(
-			"MetadataBundle(uint256 tokenId,address payout,address rewardsPayout,string arweaveTxId)"
+			"MetadataBundle(uint256 tokenId,address payout,string arweaveTxId)"
 		);
 		return
 			keccak256(
@@ -44,7 +44,6 @@ abstract contract AuctionSigner is SonaReserveAuction {
 					_METADATABUNDLE_TYPEHASH,
 					bundle.tokenId,
 					bundle.payout,
-					bundle.rewardsPayout,
 					keccak256(bytes(bundle.arweaveTxId))
 				)
 			);

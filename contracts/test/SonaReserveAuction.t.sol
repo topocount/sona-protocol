@@ -150,14 +150,14 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		returns (MetadataBundle[2] memory bundles, Signature[2] memory signatures)
 	{
 		Signature memory artistSignature = Signature(
-			27,
-			0xc52d5322b2123504e8fa2d4f4201864a8963f1cee34089ef658178ee98a2931c,
-			0x5f78ab90cb573c3150b5828a36abee18447db2a918723948a9bef235d6dec314
+			28,
+			0xffc0fb30061f17a53c5c2467f59a3eb97e8ec4b5b0c06fa52142daf608d12d8b,
+			0x66f4b7b6d74b4c84f92f2bae1661bb6000a0d8b5806bb1862368e39b35bb8183
 		);
 		Signature memory collectorSignature = Signature(
 			27,
-			0x15208b7948eca71121fcdee28001f81036ca7331f48f474be538f0d80c719863,
-			0x7f9a2d05566a9c9eb52b21a7159c61dd8fc650fec20df551a3024eeafd72c2d1
+			0x54826a459211de0cc74e8ee384b1c7d051b8ba6eb89d2e8b337ce6e8e3d0fe26,
+			0x5217cb99f9f960c6bfb2ada761d0a7da7473468e4a4ff75c0effac2897d21cf2
 		);
 
 		bundles = _createBundles();
@@ -172,14 +172,12 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		MetadataBundle memory artistBundle = MetadataBundle({
 			arweaveTxId: "Hello World!",
 			tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000044,
-			payout: artistPayout,
-			rewardsPayout: zeroPayout
+			payout: artistPayout
 		});
 		MetadataBundle memory collectorBundle = MetadataBundle({
 			arweaveTxId: "Hello World",
 			tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000045,
-			payout: payable(address(0)),
-			rewardsPayout: zeroPayout
+			payout: payable(address(0))
 		});
 
 		bundles = [artistBundle, collectorBundle];
@@ -541,16 +539,15 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
 	}
 
-	function test_SettleReserveAuctionWithRewardsPayoutSet() public {
-		address payable rewardsPayout = payable(makeAddr("rewardsPayout"));
+	function test_SettleReserveAuctionWithNoRewardsPayoutSet() public {
 		MetadataBundle[2] memory bundles = _createBundles();
-		bundles[0].rewardsPayout = rewardsPayout;
+		bundles[0].payout = payable(address(0));
 		Signature[2] memory signatures = _getBundleSignatures(bundles);
 		vm.expectEmit(true, false, false, true, address(auction.rewardToken()));
 		emit RewardTokenMetadataUpdated(
 			tokenId - 1,
 			bundles[0].arweaveTxId,
-			bundles[0].rewardsPayout
+			bundles[0].payout
 		);
 		vm.prank(trackMinter);
 		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
@@ -564,7 +561,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		emit RewardTokenMetadataUpdated(
 			tokenId,
 			bundles[1].arweaveTxId,
-			bundles[1].rewardsPayout
+			payable(address(0))
 		);
 		vm.expectEmit(true, false, false, false, address(auction));
 		emit ReserveAuctionSettled(tokenId);
@@ -590,7 +587,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		ISonaRewardToken.RewardToken memory metadata = token.getRewardTokenMetadata(
 			tokenId - 1
 		);
-		assertEq(metadata.payout, rewardsPayout);
+		assertEq(metadata.payout, address(0));
 
 		metadata = token.getRewardTokenMetadata(tokenId);
 		assertEq(metadata.payout, address(0));
@@ -633,7 +630,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		ISonaRewardToken.RewardToken memory metadata = token.getRewardTokenMetadata(
 			tokenId - 1
 		);
-		assertEq(metadata.payout, address(0));
+		assertEq(metadata.payout, artistPayout);
 		metadata = token.getRewardTokenMetadata(tokenId);
 		assertEq(metadata.payout, address(0));
 	}
@@ -642,7 +639,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		ERC20ReturnTrueMock mockERC20 = new ERC20ReturnTrueMock();
 		(address[] memory accounts, uint32[] memory amounts) = _createSimpleSplit();
 		MetadataBundle[2] memory bundles = _createBundles();
-		bundles[0].payout = split;
+		bundles[1].payout = split;
 		Signature[2] memory signatures = _getBundleSignatures(bundles);
 		vm.prank(trackMinter);
 		auction.createReserveAuction(
@@ -684,7 +681,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 	function test_DistributeETHToSplit() public {
 		(address[] memory accounts, uint32[] memory amounts) = _createSimpleSplit();
 		MetadataBundle[2] memory bundles = _createBundles();
-		bundles[0].payout = split;
+		bundles[1].payout = split;
 		Signature[2] memory signatures = _getBundleSignatures(bundles);
 		vm.prank(trackMinter);
 		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
@@ -1124,10 +1121,9 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		vm.assume(_reservePrice > 0);
 		vm.assume(_bidAmount >= _reservePrice);
 		vm.assume(_bidAmount < type(uint256).max / 5000);
-		(
-			MetadataBundle[2] memory bundles,
-			Signature[2] memory signatures
-		) = _createSignedBundles();
+		MetadataBundle[2] memory bundles = _createBundles();
+		bundles[1].payout = artistPayout;
+		Signature[2] memory signatures = _getBundleSignatures(bundles);
 		vm.prank(trackMinter);
 		auction.createReserveAuction(
 			bundles,
@@ -1177,10 +1173,9 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		vm.assume(_bidAmount >= _reservePrice);
 		vm.assume(_bidAmount < type(uint256).max / 5000);
 		ERC20ReturnTrueMock mockERC20 = new ERC20ReturnTrueMock();
-		(
-			MetadataBundle[2] memory bundles,
-			Signature[2] memory signatures
-		) = _createSignedBundles();
+		MetadataBundle[2] memory bundles = _createBundles();
+		bundles[1].payout = artistPayout;
+		Signature[2] memory signatures = _getBundleSignatures(bundles);
 		vm.prank(trackMinter);
 		auction.createReserveAuction(
 			bundles,

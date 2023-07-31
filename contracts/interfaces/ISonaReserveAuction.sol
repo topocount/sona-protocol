@@ -79,7 +79,6 @@ interface ISonaReserveAuction is ISonaAuthorizer {
 	struct MetadataBundle {
 		uint256 tokenId;
 		address payable payout;
-		address payable rewardsPayout;
 		string arweaveTxId;
 	}
 

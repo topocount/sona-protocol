@@ -46,7 +46,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	// @dev The signature of the type that is hashed and prefixed to the TypedData payload
 	bytes32 private constant _METADATABUNDLE_TYPEHASH =
 		keccak256(
-			"MetadataBundle(uint256 tokenId,address payout,address rewardsPayout,string arweaveTxId)"
+			"MetadataBundle(uint256 tokenId,address payout,string arweaveTxId)"
 		);
 
 	/*//////////////////////////////////////////////////////////////
@@ -208,7 +208,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 			_bundles[0].tokenId.getAddress(),
 			_bundles[0].tokenId,
 			_bundles[0].arweaveTxId,
-			_bundles[0].rewardsPayout
+			_bundles[0].payout
 		);
 
 		emit ReserveAuctionCreated({ tokenId: _bundles[1].tokenId });
@@ -233,7 +233,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		address[] calldata _accounts,
 		uint32[] calldata _percentAllocations
 	) external onlySonaAdminOrApprovedTokenOperator(_tokenId) {
-		address payout = auctions[_tokenId].bundles[0].payout;
+		address payout = auctions[_tokenId].bundles[1].payout;
 		address currency = auctions[_tokenId].currency;
 		_settleReserveAuction(_tokenId);
 		if (currency.isZero()) {
@@ -490,7 +490,6 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 					_METADATABUNDLE_TYPEHASH,
 					bundle.tokenId,
 					bundle.payout,
-					bundle.rewardsPayout,
 					keccak256(bytes(bundle.arweaveTxId))
 				)
 			);
@@ -564,7 +563,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		);
 
 		// Send the currency to the seller or the seller's delegated address
-		address payable payoutAddress = _getPayoutAddress(auction.bundles[0]);
+		address payable payoutAddress = _getPayoutAddress(auction.bundles[1]);
 		_sendCurrencyToParticipant(payoutAddress, sellerProceedsAmount, currency);
 
 		// Remove from map

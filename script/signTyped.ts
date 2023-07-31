@@ -39,7 +39,6 @@ const types = {
 	MetadataBundle: [
 		{ name: "tokenId", type: "uint256" },
 		{ name: "payout", type: "address" },
-		{ name: "rewardsPayout", type: "address" },
 		{ name: "arweaveTxId", type: "string" },
 	],
 }
@@ -50,7 +49,6 @@ const artistBundle = {
 		numberToHex(68, { size: 12 }),
 	]),
 	payout: numberToHex(25, { size: 20 }),
-	rewardsPayout: numberToHex(0, { size: 20 }),
 	arweaveTxId: "Hello World!",
 } as const
 
@@ -60,7 +58,6 @@ const collectorBundle = {
 		numberToHex(69, { size: 12 }),
 	]),
 	payout: numberToHex(0, { size: 20 }),
-	rewardsPayout: numberToHex(0, { size: 20 }),
 	arweaveTxId: "Hello World",
 } as const
 
