@@ -12,7 +12,6 @@ import { IWETH } from "../../contracts/interfaces/IWETH.sol";
 import { Weth9Mock } from "../../contracts/test/mock/Weth9Mock.sol";
 
 contract Deployer is Script {
-
 	function setUp() public {}
 
 	function run() external {

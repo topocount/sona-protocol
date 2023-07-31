@@ -95,10 +95,8 @@ interface ISonaReserveAuction is ISonaAuthorizer {
 		address payable currentBidder;
 		// @dev Currency for the auction
 		address currency;
-		// @dev Arweave Bundle info
-		MetadataBundle[2] bundles;
-		// 0: artist bundle
-		// 1: collector bundle
+		// @dev Arweave Bundle info containing collector token metadata and auction payout address
+		MetadataBundle tokenMetadata;
 	}
 
 	/*//////////////////////////////////////////////////////////////

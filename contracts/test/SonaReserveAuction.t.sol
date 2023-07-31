@@ -201,10 +201,8 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		assertEq(auctionData.currentBidAmount, 0);
 		assertEq(auctionData.currentBidder, address(0));
 		assertEq(auctionData.currency, address(0));
-		assertEq(auctionData.bundles[0].arweaveTxId, bundles[0].arweaveTxId);
-		assertEq(auctionData.bundles[0].tokenId, bundles[0].tokenId);
-		assertEq(auctionData.bundles[1].arweaveTxId, bundles[1].arweaveTxId);
-		assertEq(auctionData.bundles[1].tokenId, bundles[1].tokenId);
+		assertEq(auctionData.tokenMetadata.arweaveTxId, bundles[1].arweaveTxId);
+		assertEq(auctionData.tokenMetadata.tokenId, bundles[1].tokenId);
 	}
 
 	function test_CreateReserveAuctionMultipleReverts() public {
@@ -955,7 +953,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 			tokenId
 		);
 
-		assertEq(auctionData.bundles[0].payout, artistPayout);
+		assertEq(auctionData.tokenMetadata.payout, address(0));
 
 		address payable newPayout = payable(address(26));
 
@@ -966,7 +964,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 			tokenId
 		);
 
-		assertEq(newAuctionData.bundles[0].payout, newPayout);
+		assertEq(newAuctionData.tokenMetadata.payout, newPayout);
 
 		hoax(bidder);
 		auction.createBid{ value: 1.1 ether }(tokenId, 0);
@@ -980,16 +978,16 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 		newAuctionData = auction.getAuction(tokenId);
 
-		assertEq(newAuctionData.bundles[0].payout, newPayout);
+		assertEq(newAuctionData.tokenMetadata.payout, newPayout);
 	}
 
 	function test_InvalidUpdateReserveAuctionPayoutAddress() public {
 		address payable newPayout = payable(address(26));
 		// cannot be updated before auction is created
-		vm.prank(trackMinter);
 		vm.expectRevert(
 			ISonaReserveAuction.SonaReserveAuction_InvalidAuction.selector
 		);
+		vm.prank(trackMinter);
 		auction.updateArtistPayoutAddress(tokenId, newPayout);
 
 		(
@@ -1003,7 +1001,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 			tokenId
 		);
 
-		assertEq(auctionData.bundles[0].payout, artistPayout);
+		assertEq(auctionData.tokenMetadata.payout, address(0));
 
 		// cannot be updated by non-minter
 		vm.expectRevert(

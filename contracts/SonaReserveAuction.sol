@@ -201,8 +201,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 
 		// Note: If the currency address is 0x0/address(0), bids are made in ETH
 		auctions[_bundles[1].tokenId].currency = _currencyAddress;
-		auctions[_bundles[1].tokenId].bundles[0] = _bundles[0];
-		auctions[_bundles[1].tokenId].bundles[1] = _bundles[1];
+		auctions[_bundles[1].tokenId].tokenMetadata = _bundles[1];
 
 		rewardToken.mint(
 			_bundles[0].tokenId.getAddress(),
@@ -233,7 +232,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		address[] calldata _accounts,
 		uint32[] calldata _percentAllocations
 	) external onlySonaAdminOrApprovedTokenOperator(_tokenId) {
-		address payout = auctions[_tokenId].bundles[1].payout;
+		address payout = auctions[_tokenId].tokenMetadata.payout;
 		address currency = auctions[_tokenId].currency;
 		_settleReserveAuction(_tokenId);
 		if (currency.isZero()) {
@@ -337,7 +336,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 			revert SonaReserveAuction_InvalidAuction();
 		}
 
-		auction.bundles[0].payout = _payout;
+		auction.tokenMetadata.payout = _payout;
 
 		emit PayoutAddressUpdated(_tokenId, _payout);
 	}
@@ -512,7 +511,9 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		rewardToken.mint(
 			auction.currentBidder,
 			_tokenId,
-			auction.bundles[1].arweaveTxId,
+			auction.tokenMetadata.arweaveTxId,
+			// the tokenMetadata payout address is set for auction proceeds, not for the collector.
+			// Therefore, this address is set as zero.
 			payable(address(0))
 		);
 
@@ -563,7 +564,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		);
 
 		// Send the currency to the seller or the seller's delegated address
-		address payable payoutAddress = _getPayoutAddress(auction.bundles[1]);
+		address payable payoutAddress = _getPayoutAddress(auction.tokenMetadata);
 		_sendCurrencyToParticipant(payoutAddress, sellerProceedsAmount, currency);
 
 		// Remove from map
