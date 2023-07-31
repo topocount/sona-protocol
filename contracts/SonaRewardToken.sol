@@ -103,6 +103,16 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 		_setTokenMetadata(_tokenId, _collectorTxId, payable(address(0)));
 	}
 
+	function mint(
+		address _owner,
+		uint256 _tokenId,
+		string calldata _arweaveTxId,
+		address payable _payout
+	) external onlySonaMinter {
+		_mint(_owner, _tokenId);
+		_setTokenMetadata(_tokenId, _arweaveTxId, _payout);
+	}
+
 	/// @dev Updates the IPFS CID for the metadata for a given RewardToken
 	/// @param _tokenId The ID of the token that will be updated
 	/// @param _txId The metadata's IPFS CID

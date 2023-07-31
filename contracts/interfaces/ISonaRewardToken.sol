@@ -82,6 +82,13 @@ interface ISonaRewardToken {
 		address payable _payout
 	) external;
 
+	function mint(
+		address _owner,
+		uint256 _tokenId,
+		string calldata _arweaveTxId,
+		address payable _payout
+	) external;
+
 	function updateArweaveTxId(uint256 _tokenId, string calldata _TxId) external;
 
 	function burnRewardToken(uint256 _tokenId) external;

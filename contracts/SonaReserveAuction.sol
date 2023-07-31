@@ -204,6 +204,13 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		auctions[_bundles[1].tokenId].bundles[0] = _bundles[0];
 		auctions[_bundles[1].tokenId].bundles[1] = _bundles[1];
 
+		rewardToken.mint(
+			_bundles[0].tokenId.getAddress(),
+			_bundles[0].tokenId,
+			_bundles[0].arweaveTxId,
+			_bundles[0].rewardsPayout
+		);
+
 		emit ReserveAuctionCreated({ tokenId: _bundles[1].tokenId });
 	}
 
@@ -502,14 +509,12 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		// reduce sloads
 		address currency = auction.currency;
 
-		// Mint reward token to seller and buyer
-		rewardToken.mintFromAuction(
-			_tokenId,
-			auction.trackSeller,
+		// Mint reward token to buyer
+		rewardToken.mint(
 			auction.currentBidder,
-			auction.bundles[0].arweaveTxId,
+			_tokenId,
 			auction.bundles[1].arweaveTxId,
-			auction.bundles[0].rewardsPayout
+			payable(address(0))
 		);
 
 		// Send redistribution fee to the redistribution fee recipient

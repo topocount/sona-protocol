@@ -546,6 +546,12 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		MetadataBundle[2] memory bundles = _createBundles();
 		bundles[0].rewardsPayout = rewardsPayout;
 		Signature[2] memory signatures = _getBundleSignatures(bundles);
+		vm.expectEmit(true, false, false, true, address(auction.rewardToken()));
+		emit RewardTokenMetadataUpdated(
+			tokenId - 1,
+			bundles[0].arweaveTxId,
+			bundles[0].rewardsPayout
+		);
 		vm.prank(trackMinter);
 		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
 
@@ -554,12 +560,6 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 		vm.warp(2 days);
 
-		vm.expectEmit(true, false, false, true, address(auction.rewardToken()));
-		emit RewardTokenMetadataUpdated(
-			tokenId - 1,
-			bundles[0].arweaveTxId,
-			bundles[0].rewardsPayout
-		);
 		vm.expectEmit(true, false, false, true, address(auction.rewardToken()));
 		emit RewardTokenMetadataUpdated(
 			tokenId,
