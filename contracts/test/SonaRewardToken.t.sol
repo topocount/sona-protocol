@@ -55,11 +55,9 @@ contract SonaRewardTokenTest is Util, ERC721Holder, SonaRewardToken {
 
 		vm.prank(badMinter);
 		vm.expectRevert();
-		rewardToken.mintFromAuction(
-			_tokenId,
-			address(this),
+		rewardToken.mint(
 			rewardTokenRecipient,
-			"",
+			_tokenId,
 			"",
 			zeroSplitsAddr
 		);
@@ -81,14 +79,11 @@ contract SonaRewardTokenTest is Util, ERC721Holder, SonaRewardToken {
 
 	function test_UpdateRewardTokenMetadata() public {
 		string memory cid = "Qmabcdefghijklmnopqrstuv";
-		string memory cid2 = "Qmabcdefghijklmnopqrstuvx";
 
-		rewardToken.mintFromAuction(
-			_tokenId,
-			address(this),
+		rewardToken.mint(
 			rewardTokenRecipient,
+			_tokenId,
 			cid,
-			cid2,
 			zeroSplitsAddr
 		);
 		rewardToken.updateArweaveTxId(_tokenId, "Qmabcdefghijklmnopqrstud");
@@ -96,35 +91,13 @@ contract SonaRewardTokenTest is Util, ERC721Holder, SonaRewardToken {
 		assertEq(rewardToken.tokenURI(_tokenId), "ar://Qmabcdefghijklmnopqrstud");
 	}
 
-	function test_BurnCreatorRewardToken() public {
+	function test_BurnRewardToken() public {
 		string memory cid = "Qmabcdefghijklmnopqrstuv";
-		string memory cid2 = "Qmabcdefghijklmnopqrstuvx";
 
-		rewardToken.mintFromAuction(
-			_tokenId,
-			address(this),
+		rewardToken.mint(
 			rewardTokenRecipient,
-			cid,
-			cid2,
-			zeroSplitsAddr
-		);
-
-		rewardToken.burnRewardToken(_artistTokenId);
-
-		vm.expectRevert("NOT_MINTED");
-		rewardToken.ownerOf(_artistTokenId);
-	}
-
-	function test_BurnCollectorRewardToken() public {
-		string memory cid = "Qmabcdefghijklmnopqrstuv";
-		string memory cid2 = "Qmabcdefghijklmnopqrstuvx";
-
-		rewardToken.mintFromAuction(
 			_tokenId,
-			address(this),
-			rewardTokenRecipient,
 			cid,
-			cid2,
 			zeroSplitsAddr
 		);
 
@@ -137,14 +110,11 @@ contract SonaRewardTokenTest is Util, ERC721Holder, SonaRewardToken {
 
 	function test_CreatorBurnCollectorTokenFails() public {
 		string memory cid = "Qmabcdefghijklmnopqrstuv";
-		string memory cid2 = "Qmabcdefghijklmnopqrstuvx";
 
-		rewardToken.mintFromAuction(
-			_tokenId,
-			address(this),
+		rewardToken.mint(
 			rewardTokenRecipient,
+			_tokenId,
 			cid,
-			cid2,
 			zeroSplitsAddr
 		);
 
@@ -153,27 +123,18 @@ contract SonaRewardTokenTest is Util, ERC721Holder, SonaRewardToken {
 	}
 
 	function testFuzz_randomBurnerFails(
-		address _artistBurner,
 		address _collectorBurner
 	) public {
-		vm.assume(_artistBurner != address(this));
 		vm.assume(_collectorBurner != rewardTokenRecipient);
 
 		string memory cid = "Qmabcdefghijklmnopqrstuv";
-		string memory cid2 = "Qmabcdefghijklmnopqrstuvx";
 
-		rewardToken.mintFromAuction(
-			_tokenId,
-			address(this),
+		rewardToken.mint(
 			rewardTokenRecipient,
+			_tokenId,
 			cid,
-			cid2,
 			zeroSplitsAddr
 		);
-
-		vm.prank(_artistBurner);
-		vm.expectRevert(ISonaRewardToken.SonaRewardToken_Unauthorized.selector);
-		rewardToken.burnRewardToken(_artistTokenId);
 
 		vm.prank(_collectorBurner);
 		vm.expectRevert(ISonaRewardToken.SonaRewardToken_Unauthorized.selector);
@@ -182,90 +143,51 @@ contract SonaRewardTokenTest is Util, ERC721Holder, SonaRewardToken {
 
 	function test_MintSucceeds() public {
 		string memory cid = "Qmabcdefghijklmnopqrstuv";
-		string memory cid2 = "Qmabcdefghijklmnopqrstuvx";
 
 		vm.expectEmit(true, false, false, true, address(rewardToken));
-		emit RewardTokenMetadataUpdated(_tokenId - 1, cid, payoutAddr);
-		rewardToken.mintFromAuction(
-			_tokenId,
-			address(this),
+		emit RewardTokenMetadataUpdated(_tokenId, cid, payoutAddr);
+
+		rewardToken.mint(
 			rewardTokenRecipient,
+			_tokenId,
 			cid,
-			cid2,
 			payoutAddr
 		);
+
 		ISonaRewardToken.RewardToken memory collectorData = rewardToken
 			.getRewardTokenMetadata(_tokenId);
-		assertEq(collectorData.arTxId, cid2);
-		assertEq(collectorData.payout, address(0));
-		ISonaRewardToken.RewardToken memory artistData = rewardToken
-			.getRewardTokenMetadata(_artistTokenId);
-		assertEq(artistData.arTxId, cid);
-		assertEq(artistData.payout, payoutAddr);
+		assertEq(collectorData.arTxId, cid);
+		assertEq(collectorData.payout, payoutAddr);
 
 		vm.expectRevert("TokenId: Already Artist Edition");
 		_artistTokenId.getArtistEdition();
 	}
 
-	function test_MintFails() public {
-		vm.expectRevert(
-			ISonaRewardToken.SonaRewardToken_ArtistEditionEven.selector
-		);
-		rewardToken.mintFromAuction(
-			_artistTokenId,
-			address(this),
-			rewardTokenRecipient,
-			"",
-			"",
-			zeroSplitsAddr
-		);
-
-		uint256 bad_artistTokenId = (uint256(uint160(makeAddr("badMinter"))) <<
-			96) | 3;
-		vm.expectRevert(
-			ISonaRewardToken.SonaRewardToken_NoArtistInTokenId.selector
-		);
-		rewardToken.mintFromAuction(
-			bad_artistTokenId,
-			address(this),
-			rewardTokenRecipient,
-			"",
-			"",
-			zeroSplitsAddr
-		);
-	}
 
 	function test_updatePayoutAddress() public {
 		string memory cid = "Qmabcdefghijklmnopqrstuv";
-		string memory cid2 = "Qmabcdefghijklmnopqrstuvx";
 
-		rewardToken.mintFromAuction(
-			_tokenId,
-			address(this),
+		rewardToken.mint(
 			rewardTokenRecipient,
+			_tokenId,
 			cid,
-			cid2,
-			payoutAddr
+			zeroSplitsAddr
 		);
 
 		vm.expectEmit(true, false, false, true, address(rewardToken));
-		emit PayoutAddressUpdated(_artistTokenId, address(1));
-		rewardToken.updatePayoutAddress(_artistTokenId, payable(address(1)));
+		emit PayoutAddressUpdated(_tokenId, payable(address(1)));
+		vm.prank(rewardTokenRecipient);
+		rewardToken.updatePayoutAddress(_tokenId, payable(address(1)));
 
 		address payable result = rewardToken.getRewardTokenPayoutAddr(
-			_artistTokenId
+			_tokenId
 		);
 		assertEq(result, payable(address(1)));
 
-		vm.prank(rewardTokenRecipient);
 		vm.expectRevert(ISonaRewardToken.SonaRewardToken_Unauthorized.selector);
 		rewardToken.updatePayoutAddress(
-			_artistTokenId,
+			_tokenId,
 			payable(rewardTokenRecipient)
 		);
-
-		vm.prank(rewardTokenRecipient);
-		vm.expectRevert(ISonaRewardToken.SonaRewardToken_ArtistEditionOdd.selector);
-		rewardToken.updatePayoutAddress(_tokenId, payable(address(1)));
 	}
 }

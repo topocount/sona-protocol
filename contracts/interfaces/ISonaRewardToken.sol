@@ -73,15 +73,6 @@ interface ISonaRewardToken {
 	/                            FUNCTIONS
 	//////////////////////////////////////////////////////////////*/
 
-	function mintFromAuction(
-		uint256 _tokenId,
-		address _artist,
-		address _collector,
-		string memory _artistCid,
-		string memory _collectorCid,
-		address payable _payout
-	) external;
-
 	function mint(
 		address _owner,
 		uint256 _tokenId,

@@ -76,33 +76,13 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 		symbol = _symbol;
 	}
 
-	/// @notice this mint function is called by an auction contract
-	/// @dev only an account with the SonaMinter role can call this function
+	/// @notice auth-guarded mint function
+	/// @dev This is meant to be pluggable and allow for the evolution of mint
+	///  			logic as the protocol evolves
+	/// @param _owner The address the token will me minted to
 	/// @param _tokenId The ID of the token that will be minted
-	/// @param _artist The address contained in the tokenId
-	/// @param _collector The address that won the auction
-	/// @param _artistTxId the arweave txId of the artist edition bundle contained on arweave
-	/// @param _collectorTxId the arweave txId of the collector edition bundle contained on arweave
+	/// @param _arweaveTxId the arweave txId of the token metadata stored on arweave
 	/// @param _payout the address to distribute funds to, potentially to split them with collaborators
-	function mintFromAuction(
-		uint256 _tokenId,
-		address _artist,
-		address _collector,
-		string calldata _artistTxId,
-		string calldata _collectorTxId,
-		address payable _payout
-	) external onlySonaMinter {
-		if (_tokenId % 2 == 0) revert SonaRewardToken_ArtistEditionEven();
-		if (AddressableTokenId.getAddress(_tokenId) != _artist)
-			revert SonaRewardToken_NoArtistInTokenId();
-		uint256 artistTokenId = _tokenId.getArtistEdition();
-		_mint(_artist, artistTokenId);
-		_setTokenMetadata(artistTokenId, _artistTxId, _payout);
-
-		_mint(_collector, _tokenId);
-		_setTokenMetadata(_tokenId, _collectorTxId, payable(address(0)));
-	}
-
 	function mint(
 		address _owner,
 		uint256 _tokenId,
@@ -123,14 +103,13 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 		_updateArweaveTxId(_tokenId, _txId);
 	}
 
-	/// @dev Updates the Payout address for artist editions
+	/// @dev Updates the Payout address for a token
 	/// @param _tokenId The ID of the token that will be updated
 	/// @param _payout The new payout address to be used. Set to address(0) if funds should be sent directly to the claimant
 	function updatePayoutAddress(
 		uint256 _tokenId,
 		address payable _payout
 	) external checkExists(_tokenId) onlyTokenHolder(_tokenId) {
-		if (_tokenId % 2 != 0) revert SonaRewardToken_ArtistEditionOdd();
 		rewardTokens[_tokenId].payout = _payout;
 
 		emit PayoutAddressUpdated(_tokenId, _payout);
