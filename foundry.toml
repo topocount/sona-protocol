@@ -1,31 +1,39 @@
 [profile.default]
-    src = 'contracts'
-    out = 'dist/artifacts'
-    libs = ['lib']
-    solc-version = "0.8.18"
-    optimizer = true
-    bytecode_hash = "none"
-    verbosity = 3
-    gas_reports = ["*"]
+	src = 'contracts'
+	test = 'contracts/test'
+	out = 'dist/artifacts'
+	libs = ['lib']
+	solc-version = "0.8.18"
+	optimizer = true
+	bytecode_hash = "none"
+	verbosity = 3
+	gas_reports = ["*"]
 
 [profile.optimized]
-    via_ir = true
-    optimizer_runs = 1000000
-    out = 'out-via-ir'
+	via_ir = true
+	optimizer_runs = 1000000
+	out = 'out-via-ir'
+
+[profile.swap]
+	src = 'contracts_swap'
+	test = 'contracts_swap/test'
+	script = 'script_v7'
+	solc_version = "0.7.6"
+	remappings = ["@openzeppelin/=lib/v3-periphery/node_modules/@openzeppelin"]
 
 [fuzz]
-runs = 1024
+	runs = 1024
 
 [fmt]
-    indent = 4
-    line_length = 80
-    tab_width = 4
-    bracket_spacing = true
-    func_attrs_with_params_multiline = false
-    quote_style = "double"
+	indent = 4
+	line_length = 80
+	tab_width = 4
+	bracket_spacing = true
+	func_attrs_with_params_multiline = false
+	quote_style = "double"
 
 [doc]
-    out = 'docs'
-    title = 'Sona Protocol'
+	out = 'docs'
+	title = 'Sona Protocol'
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
