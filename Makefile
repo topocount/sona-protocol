@@ -8,7 +8,7 @@ all: clean install update build analyze
 clean  :; forge clean && rm -rf node_modules
 
 # Install the Modules
-install :; forge install; pnpm install; pip3 install pipx; pipx install slither-analyzer --pip-args '-r requirements.txt'
+install :; forge install; yarn --cwd lib/v3-periphery install; pnpm install; pip3 install pipx; pipx install slither-analyzer --pip-args '-r requirements.txt'
 
 # Update Dependencies
 update :; forge update
@@ -70,9 +70,15 @@ deploy_mainnet :; forge script ./script/solidity/Deploy.s.sol \
   --verify
 
 # Tests
-test :; forge clean && forge test -vvv # --ffi # enable if you need the `ffi` cheat code on HEVM
+test : build_swap test_swap; doppler run -- forge test -vvv # --ffi # enable if you need the `ffi` cheat code on HEVM
 
-test_watch :; forge clean && forge test -w -vvv # --ffi # enable if you need the `ffi` cheat code on HEVM
+# build SonaSwap
+build_swap :; FOUNDRY_PROFILE=swap forge build
+
+# test SonaSwap
+test_swap :; FOUNDRY_PROFILE=swap doppler run -- forge test
+
+test_watch : build_swap test_swap; doppler run -- forge test -w -vvv # --ffi # enable if you need the `ffi` cheat code on HEVM
 
 # Docs buld
 docs_build :; rm -rf docs && forge doc --build

@@ -7,8 +7,9 @@ import { TransferHelper } from "v3-periphery/libraries/TransferHelper.sol";
 
 import { AggregatorV3Interface } from "chainlink/contracts/src/v0.7/interfaces/AggregatorV3Interface.sol";
 import { IWETH } from "./interfaces/IWETH.sol";
+import {ISonaSwap} from "lib/common/ISonaSwap.sol";
 
-contract SonaSwap {
+contract SonaSwap is ISonaSwap {
 	uint8 constant USDC_DECIMALS = 6;
 
 	AggregatorV3Interface internal dataFeed;
@@ -28,7 +29,7 @@ contract SonaSwap {
 		WEth = _weth;
 	}
 
-	function getUsdEthPrice() public view returns (uint256 price) {
+	function getUsdEthPrice() public view override returns (uint256 price) {
 		// prettier-ignore
 		(       /*uint80 roundID*/,
 						int signedPrice,
@@ -40,10 +41,17 @@ contract SonaSwap {
 		if (signedPrice < 0) revert("SonaSwap: InvalidPrice");
 		// TODO check that timestamp is no more than 1 hour old
 
-		price = uint256(signedPrice) / (10 ** (dataFeed.decimals() - USDC_DECIMALS));
+		price =
+			uint256(signedPrice) /
+			(10 ** (dataFeed.decimals() - USDC_DECIMALS));
 	}
 
-	function swapWEthForUSDC(uint256 _amount) public returns (uint256 amountOut) {
+	function swapWEthForUSDC(uint256 _amount) external override returns (uint256 amountOut) {
+		TransferHelper.safeTransferFrom(address(WEth), msg.sender, address(this), _amount);
+		return _swapWEthForUSDC(_amount);
+	}
+
+	function _swapWEthForUSDC(uint256 _amount) internal returns (uint256 amountOut) {
 		TransferHelper.safeApprove(address(WEth), address(router), _amount);
 
 		uint256 quote = getQuote(_amount);
@@ -61,22 +69,22 @@ contract SonaSwap {
 		amountOut = router.exactInputSingle(params);
 	}
 
-	function swapEthForUSDC() public payable returns (uint256 amountOut) {
+	function swapEthForUSDC() public payable override returns (uint256 amountOut) {
 		WEth.deposit{ value: msg.value }();
-		return swapWEthForUSDC(msg.value);
+		return _swapWEthForUSDC(msg.value);
 	}
 
 	function getQuote(
 		uint256 _amount,
 		uint256 _rate
-	) public pure returns (uint256 minimumAmount) {
+	) public pure override returns (uint256 minimumAmount) {
 		// allow for 3% slippage
 		return ((_rate) * _amount) / 1 ether;
 	}
 
 	function getQuote(
 		uint256 _amount
-	) public view returns (uint256 minimumAmount) {
+	) public view override returns (uint256 minimumAmount) {
 		return getQuote(_amount, getUsdEthPrice());
 	}
 

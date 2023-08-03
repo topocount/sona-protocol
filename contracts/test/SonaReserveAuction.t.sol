@@ -11,11 +11,12 @@ import { Util } from "./Util.sol";
 import { SplitHelpers } from "./util/SplitHelpers.t.sol";
 import { ERC1967Proxy } from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 import { Weth9Mock, IWETH } from "./mock/Weth9Mock.sol";
-import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IERC20Upgradeable as IERC20 } from "openzeppelin-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import { MockERC20 } from "../../lib/solady/test/utils/mocks/MockERC20.sol";
 import { ERC20ReturnTrueMock, ERC20NoReturnMock, ERC20ReturnFalseMock } from "./mock/ERC20Mock.sol";
 import { ContractBidderMock } from "./mock/ContractBidderMock.sol";
-import { Weth9Mock, IWETH } from "./mock/Weth9Mock.sol";
 import { ISplitMain, SplitMain } from "../payout/SplitMain.sol";
+import { ISonaSwap } from "lib/common/ISonaSwap.sol";
 
 /* solhint-disable max-states-count */
 contract SonaReserveAuctionTest is SplitHelpers {
@@ -24,6 +25,19 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		string txId,
 		address payout
 	);
+
+	address public swapAddr;
+	SonaReserveAuction public auctionBase;
+	SonaRewardToken public rewardTokenBase;
+
+	uint256 mainnetFork;
+	string MAINNET_RPC_URL = vm.envString("MAINNET_FORK_RPC_URL");
+
+	address public constant dataFeed = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
+	IWETH public constant WETH9 =
+		IWETH(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+	address public constant router = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
+	address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
 
 	// treasury address getting the fees
 	address public treasuryRecipient = makeAddr("treasuryRecipient");
@@ -46,16 +60,26 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	// Weth
 	Weth9Mock public mockWeth = new Weth9Mock();
+	// mockUSDC
+	MockERC20 public mockUSDC = new MockERC20("Mock Token", "USDC", 6);
 
 	// Contract bidder
 	ContractBidderMock public contractBidder;
 
 	function setUp() public {
-		splitMainImpl = new SplitMain();
+		swapAddr = deployCode(
+			"SonaSwap.sol",
+			abi.encode(address(0), address(0), mockUSDC, mockWeth)
+		);
+		splitMainImpl = new SplitMain(
+			mockWeth,
+			IERC20(address(mockUSDC)),
+			ISonaSwap(swapAddr)
+		);
 		vm.startPrank(rootOwner);
 		// WARNING: deployment order matters for the signatures below
-		SonaRewardToken rewardTokenBase = new SonaRewardToken();
-		SonaReserveAuction auctionBase = new SonaReserveAuction();
+		rewardTokenBase = new SonaRewardToken();
+		auctionBase = new SonaReserveAuction();
 		ERC1967Proxy proxy = new ERC1967Proxy(
 			address(auctionBase),
 			abi.encodeWithSelector(
@@ -75,8 +99,8 @@ contract SonaReserveAuctionTest is SplitHelpers {
 	}
 
 	function test_revertsWithInvalidAddress() public {
-		SonaRewardToken rewardTokenBase = new SonaRewardToken();
-		SonaReserveAuction auctionBase = new SonaReserveAuction();
+		rewardTokenBase = new SonaRewardToken();
+		auctionBase = new SonaReserveAuction();
 		vm.expectRevert(
 			ISonaReserveAuction.SonaReserveAuction_InvalidAddress.selector
 		);
@@ -634,7 +658,6 @@ contract SonaReserveAuctionTest is SplitHelpers {
 	}
 
 	function test_DistributeERC20ToSplit() public {
-		ERC20ReturnTrueMock mockERC20 = new ERC20ReturnTrueMock();
 		(address[] memory accounts, uint32[] memory amounts) = _createSimpleSplit();
 		MetadataBundle[2] memory bundles = _createBundles();
 		bundles[1].payout = split;
@@ -643,25 +666,28 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		auction.createReserveAuction(
 			bundles,
 			signatures,
-			address(mockERC20),
+			address(mockUSDC),
 			1 ether
 		);
 
 		uint256 bidAmount = 1.1 ether;
+		mockUSDC.mint(bidder, bidAmount);
+		hoax(bidder);
+		mockUSDC.approve(address(auction), bidAmount);
 
 		hoax(bidder);
 		auction.createBid(tokenId, bidAmount);
 
 		vm.warp(2 days);
 
-		uint initialBalance0 = mockERC20.balanceOf(accounts[0]);
-		uint initialBalance1 = mockERC20.balanceOf(accounts[1]);
+		uint initialBalance0 = mockUSDC.balanceOf(accounts[0]);
+		uint initialBalance1 = mockUSDC.balanceOf(accounts[1]);
 
 		vm.prank(trackMinter);
 		auction.settleReserveAuctionAndDistributePayout(tokenId, accounts, amounts);
 
-		uint finalBalance0 = mockERC20.balanceOf(accounts[0]);
-		uint finalBalance1 = mockERC20.balanceOf(accounts[1]);
+		uint finalBalance0 = mockUSDC.balanceOf(accounts[0]);
+		uint finalBalance1 = mockUSDC.balanceOf(accounts[1]);
 
 		assertEq(finalBalance0 - initialBalance0, 511500000000000000 - 1);
 		assertEq(finalBalance1 - initialBalance1, 511500000000000000 - 1);
@@ -677,20 +703,45 @@ contract SonaReserveAuctionTest is SplitHelpers {
 	}
 
 	function test_DistributeETHToSplit() public {
+		uint256 twoDays = 15_000;
+		uint256 forkBlock = 17828120 - twoDays;
+		mainnetFork = vm.createSelectFork(MAINNET_RPC_URL, forkBlock);
+		swapAddr = deployCode(
+			"SonaSwap.sol",
+			abi.encode(dataFeed, router, USDC, WETH9)
+		);
+		splitMainImpl = new SplitMain(WETH9, IERC20(USDC), ISonaSwap(swapAddr));
+		rewardTokenBase = new SonaRewardToken();
+		auctionBase = new SonaReserveAuction();
+		ERC1967Proxy proxy = new ERC1967Proxy(
+			address(auctionBase),
+			abi.encodeWithSelector(
+				SonaReserveAuction.initialize.selector,
+				treasuryRecipient,
+				redistributionRecipient,
+				authorizer,
+				rewardTokenBase,
+				splitMainImpl,
+				address(0),
+				WETH9
+			)
+		);
+		auction = SonaReserveAuction(address(proxy));
 		(address[] memory accounts, uint32[] memory amounts) = _createSimpleSplit();
 		MetadataBundle[2] memory bundles = _createBundles();
 		bundles[1].payout = split;
 		Signature[2] memory signatures = _getBundleSignatures(bundles);
+
 		vm.prank(trackMinter);
 		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
 
 		hoax(bidder);
 		auction.createBid{ value: 1.1 ether }(tokenId, 0);
 
-		vm.warp(2 days);
+		vm.rollFork(forkBlock + twoDays);
 
-		uint initialBalance0 = accounts[0].balance;
-		uint initialBalance1 = accounts[1].balance;
+		uint initialBalance0 = IERC20(USDC).balanceOf(accounts[0]);
+		uint initialBalance1 = IERC20(USDC).balanceOf(accounts[1]);
 
 		vm.prank(trackMinter);
 		auction.settleReserveAuctionAndDistributePayout(tokenId, accounts, amounts);
@@ -699,11 +750,23 @@ contract SonaReserveAuctionTest is SplitHelpers {
 			tokenId
 		);
 
-		uint finalBalance0 = accounts[0].balance;
-		uint finalBalance1 = accounts[1].balance;
+		uint256 quote = ISonaSwap(swapAddr).getQuote(1.1 ether);
+		uint256 expectedBalance = ((quote * 93) / 100 / 2);
+		uint finalBalance0 = IERC20(USDC).balanceOf(accounts[0]);
+		uint finalBalance1 = IERC20(USDC).balanceOf(accounts[1]);
 
-		assertEq(finalBalance0 - initialBalance0, 511500000000000000);
-		assertEq(finalBalance1 - initialBalance1, 511500000000000000);
+		assertApproxEqRelDecimal(
+			finalBalance0 - initialBalance0,
+			expectedBalance,
+			5e15,
+			6
+		); // 0.5% = 5e15
+		assertApproxEqRelDecimal(
+			finalBalance1 - initialBalance1,
+			expectedBalance,
+			5e15,
+			6
+		); // 0.5% = 5e15
 
 		assertEq(auctionData.trackSeller, address(0));
 		assertEq(auctionData.reservePrice, 0);

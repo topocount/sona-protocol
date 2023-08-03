@@ -8,14 +8,36 @@ import { Util } from "../Util.sol";
 import { IERC20Upgradeable as IERC20 } from "openzeppelin-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import { SplitHelpers } from "../util/SplitHelpers.t.sol";
 import { MockERC20 } from "../../../lib/solady/test/utils/mocks/MockERC20.sol";
+import { Weth9Mock, IWETH } from "../mock/Weth9Mock.sol";
+import { ISonaSwap } from "lib/common/ISonaSwap.sol";
 
 contract SonaTestSplits is SplitHelpers {
 	MockERC20 public mockERC20 = new MockERC20("Mock Token", "USDC", 6);
+	Weth9Mock public mockWeth = new Weth9Mock();
+
+	address public swapAddr;
+
+	uint256 mainnetFork;
+	string MAINNET_RPC_URL = vm.envString("MAINNET_FORK_RPC_URL");
+
+	address public constant dataFeed = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
+	IWETH public constant WETH9 =
+		IWETH(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+	address public constant router = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
+	address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
 
 	event UpdateSplit(address indexed split);
 
 	function setUp() public {
-		splitMainImpl = new SplitMain();
+		swapAddr = deployCode(
+			"SonaSwap.sol",
+			abi.encode(dataFeed, router, USDC, WETH9)
+		);
+		splitMainImpl = new SplitMain(
+			mockWeth,
+			IERC20(address(mockERC20)),
+			ISonaSwap(swapAddr)
+		);
 	}
 
 	function test_UpdateSplit() public {
@@ -79,38 +101,105 @@ contract SonaTestSplits is SplitHelpers {
 		assertEq(finalBalance1 - initialBalance1, 1e8 / 2 - 1);
 	}
 
-	function test_distributeETHToEOA() public {
+	function test_distrbuteNonUSDCToController() public {
+		uint256 amount = 1e20;
 		(address[] memory accounts, uint32[] memory amounts) = _createSimpleSplit();
 		hoax(address(0));
-		payable(split).transfer(10 ether);
 
-		uint initialBalance2 = account2.balance;
-		uint initialBalance1 = account1.balance;
+		address controller = splitMainImpl.getController(split);
 
-		splitMainImpl.distributeETH(split, accounts, amounts);
+		MockERC20 notUSDC = new MockERC20("Mock Tether Token", "USDT", 18);
+		notUSDC.mint(split, amount);
 
-		uint finalBalance2 = account2.balance;
-		uint finalBalance1 = account1.balance;
-		assertEq(finalBalance2 - initialBalance2, 10 ether / 2);
-		assertEq(finalBalance1 - initialBalance1, 10 ether / 2);
-	}
+		uint initialBalance2 = notUSDC.balanceOf(account2);
+		uint initialBalance1 = notUSDC.balanceOf(account1);
 
-	function test_distributeETHToNonReceivingContracts() public {
-		(
-			address[] memory accounts,
-			uint32[] memory amounts
-		) = _createSimpleNonReceiverSplit();
-		hoax(address(0));
-		payable(split).transfer(10 ether);
+		splitMainImpl.distributeERC20(
+			split,
+			IERC20(address(notUSDC)),
+			accounts,
+			amounts
+		);
 
-		uint initialBalance2 = accounts[0].balance;
-		uint initialBalance1 = accounts[1].balance;
+		uint finalBalance2 = notUSDC.balanceOf(account2);
+		uint finalBalance1 = notUSDC.balanceOf(account1);
 
-		splitMainImpl.distributeETH(split, accounts, amounts);
-
-		uint finalBalance2 = accounts[0].balance;
-		uint finalBalance1 = accounts[1].balance;
 		assertEq(finalBalance2 - initialBalance2, 0);
 		assertEq(finalBalance1 - initialBalance1, 0);
+		assertEq(
+			splitMainImpl.getERC20Balance(
+				splitMainImpl.getController(split),
+				IERC20(address(notUSDC))
+			),
+			amount
+		);
+
+		IERC20[] memory tokens = new IERC20[](1);
+		tokens[0] = IERC20(address(notUSDC));
+		splitMainImpl.withdraw(controller, 0, tokens);
+
+		uint finalBalanceController = notUSDC.balanceOf(controller);
+
+		assertEq(finalBalanceController, amount - 1);
+	}
+
+	function test_SwapETHAndDistributeUSDC() public {
+		uint256 amount = 10 ether;
+		mainnetFork = vm.createSelectFork(MAINNET_RPC_URL, 17828120);
+		swapAddr = deployCode(
+			"SonaSwap.sol",
+			abi.encode(dataFeed, router, USDC, WETH9)
+		);
+		splitMainImpl = new SplitMain(WETH9, IERC20(USDC), ISonaSwap(swapAddr));
+		(address[] memory accounts, uint32[] memory amounts) = _createSimpleSplit();
+		hoax(address(0));
+		payable(split).transfer(amount);
+
+		uint initialBalance2 = IERC20(USDC).balanceOf(accounts[0]);
+		uint initialBalance1 = IERC20(USDC).balanceOf(accounts[1]);
+
+		uint256 expectedPrice = ISonaSwap(swapAddr).getQuote(amount);
+		splitMainImpl.distributeETH(split, accounts, amounts);
+
+		uint finalBalance2 = IERC20(USDC).balanceOf(accounts[0]);
+		uint finalBalance1 = IERC20(USDC).balanceOf(accounts[1]);
+		uint dist2 = (finalBalance2 - initialBalance2);
+		uint dist1 = (finalBalance1 - initialBalance1);
+		assertApproxEqRelDecimal(dist2, expectedPrice / 2, 5e15, 6); // 0.5% = 5e15
+		assertApproxEqRelDecimal(dist1, expectedPrice / 2, 5e15, 6); // 0.5% = 5e15
+		assertEq(dist1, dist2, "unequal distribution");
+	}
+
+	function test_distributeWETHAndETHToEOA() public {
+		uint256 ETHAmount = 5 ether;
+		uint256 WETHAmount = 5 ether;
+		uint256 amount = ETHAmount + WETHAmount;
+		mainnetFork = vm.createSelectFork(MAINNET_RPC_URL, 17828120);
+		swapAddr = deployCode(
+			"SonaSwap.sol",
+			abi.encode(dataFeed, router, USDC, WETH9)
+		);
+		splitMainImpl = new SplitMain(WETH9, IERC20(USDC), ISonaSwap(swapAddr));
+		(address[] memory accounts, uint32[] memory amounts) = _createSimpleSplit();
+		hoax(address(0));
+		WETH9.deposit{ value: WETHAmount }();
+		hoax(address(0));
+		WETH9.transfer(address(split), WETHAmount);
+		hoax(address(0));
+		payable(split).transfer(ETHAmount);
+
+		uint initialBalance2 = IERC20(USDC).balanceOf(accounts[0]);
+		uint initialBalance1 = IERC20(USDC).balanceOf(accounts[1]);
+
+		uint256 expectedPrice = ISonaSwap(swapAddr).getQuote(amount);
+		splitMainImpl.distributeETH(split, accounts, amounts);
+
+		uint finalBalance2 = IERC20(USDC).balanceOf(accounts[0]);
+		uint finalBalance1 = IERC20(USDC).balanceOf(accounts[1]);
+		uint dist2 = (finalBalance2 - initialBalance2);
+		uint dist1 = (finalBalance1 - initialBalance1);
+		assertApproxEqRelDecimal(dist2, expectedPrice / 2, 5e15, 6); // 0.5% = 5e15
+		assertApproxEqRelDecimal(dist1, expectedPrice / 2, 5e15, 6); // 0.5% = 5e15
+		assertEq(dist1, dist2, "unequal distribution");
 	}
 }

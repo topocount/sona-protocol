@@ -6,6 +6,8 @@ import { SplitWallet } from "./SplitWallet.sol";
 import { Clones } from "../utils/Clones.sol";
 import { IERC20Upgradeable as IERC20 } from "openzeppelin-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import { SafeTransferLib } from "solady/utils/SafeTransferLib.sol";
+import { IWETH } from "../interfaces/IWETH.sol";
+import { ISonaSwap } from "lib/common/ISonaSwap.sol";
 
 /// @title SplitMain
 /// @author 0xSplits <will@0xSplits.xyz>
@@ -77,6 +79,12 @@ contract SplitMain is ISplitMain {
 	uint256 internal constant _MAX_DISTRIBUTOR_FEE = 1e5;
 	/// @notice address of wallet implementation for split proxies
 	address public immutable override walletImplementation;
+	/// @notice address of the WETH token
+	IWETH public immutable WETH9;
+	/// @notice address of the USDC token
+	IERC20 public immutable USDC;
+	/// @notice address of the swapper contract that converts (W)ETH to USDC
+	ISonaSwap public swap;
 
 	//
 	// STORAGE - VARIABLES - PRIVATE & INTERNAL
@@ -129,8 +137,11 @@ contract SplitMain is ISplitMain {
 
 	// CONSTRUCTOR
 
-	constructor() {
+	constructor(IWETH _weth, IERC20 _usdc, ISonaSwap _swap) {
 		walletImplementation = address(new SplitWallet());
+		WETH9 = _weth;
+		USDC = _usdc;
+		swap = _swap;
 	}
 
 	// FUNCTIONS
@@ -194,7 +205,7 @@ contract SplitMain is ISplitMain {
 	) external override validSplit(accounts, percentAllocations) {
 		// use internal fn instead of modifier to avoid stack depth compiler errors
 		_validSplitHash(split, accounts, percentAllocations);
-		_distributeETH(split, accounts, percentAllocations);
+		_convertWETHToUSDCAndDistribute(split, accounts, percentAllocations);
 	}
 
 	/// @notice Updates & distributes the ETH balance for split `split`
@@ -214,7 +225,7 @@ contract SplitMain is ISplitMain {
 	{
 		_updateSplit(split, accounts, percentAllocations);
 		// know splitHash is valid immediately after updating; only accessible via controller
-		_distributeETH(split, accounts, percentAllocations);
+		_convertWETHToUSDCAndDistribute(split, accounts, percentAllocations);
 	}
 
 	/// @notice Distributes the ERC20 `token` balance for split `split`
@@ -234,7 +245,16 @@ contract SplitMain is ISplitMain {
 	) external override validSplit(accounts, percentAllocations) {
 		// use internal fn instead of modifier to avoid stack depth compiler errors
 		_validSplitHash(split, accounts, percentAllocations);
-		_distributeERC20(split, token, accounts, percentAllocations);
+
+		if (address(token) == address(USDC)) {
+			_distributeERC20(split, token, accounts, percentAllocations);
+		} else if (address(token) == address(WETH9)) {
+			_convertWETHToUSDCAndDistribute(split, accounts, percentAllocations);
+		} else {
+			uint256 proxyBalance = token.balanceOf(split);
+			SplitWallet(split).sendERC20ToMain(token, proxyBalance);
+			_erc20Balances[token][_splits[split].controller] += proxyBalance;
+		}
 	}
 
 	/// @notice Updates & distributes the ERC20 `token` balance for split `split`
@@ -462,6 +482,68 @@ contract SplitMain is ISplitMain {
 					// overflow should be impossible with validated allocations
 					_ethBalances[accounts[i]] += balance;
 				}
+			}
+		}
+	}
+
+	function _convertWETHToUSDCAndDistribute(
+		address split,
+		address[] memory accounts,
+		uint32[] memory percentAllocations
+	) internal returns (uint256 usdcToSplit) {
+		uint256 wethToSwap;
+		uint256 mainBalance = _erc20Balances[WETH9][split];
+		uint256 mainETHBalance = _ethBalances[split];
+		uint256 proxyBalance = WETH9.balanceOf(split);
+		uint256 proxyETHBalance = split.balance;
+		unchecked {
+			// if mainBalance &/ proxyBalance are positive, leave 1 for gas efficiency
+			// underflow should be impossible
+			if (proxyBalance > 0) proxyBalance -= 1;
+			// underflow should be impossible
+			if (mainBalance > 0) {
+				mainBalance -= 1;
+			}
+			if (mainETHBalance > 0) {
+				mainETHBalance -= 1;
+			}
+			// overflow should be impossible
+			wethToSwap =
+				mainBalance +
+				mainETHBalance +
+				proxyBalance +
+				proxyETHBalance;
+			// split proxy should be guaranteed to exist at this address after validating splitHash
+			// (attacker can't deploy own contract to address with high ERC20 balance & empty
+			// sendERC20ToMain to drain ERC20 from SplitMain)
+			// doesn't support rebasing or fee-on-transfer tokens
+			// flush extra proxy ERC20 balance to SplitMain
+			if (proxyBalance > 0)
+				SplitWallet(split).sendERC20ToMain(WETH9, proxyBalance);
+
+			if (proxyETHBalance > 0) {
+				SplitWallet(split).sendETHToMain(proxyETHBalance);
+				WETH9.deposit{ value: proxyETHBalance }();
+			}
+
+			if (mainETHBalance > 0) {
+				WETH9.deposit{ value: mainETHBalance }();
+			}
+		}
+
+		WETH9.approve(address(swap), wethToSwap);
+		usdcToSplit = swap.swapWEthForUSDC(wethToSwap);
+		unchecked {
+			// cache accounts length to save gas
+			uint256 accountsLength = accounts.length;
+			for (uint256 i = 0; i < accountsLength; ++i) {
+				uint256 balance = _scaleAmountByPercentage(
+					usdcToSplit,
+					percentAllocations[i]
+				);
+
+				if (!_trySendingERC20(USDC, accounts[i], balance))
+					_erc20Balances[USDC][accounts[i]] += balance;
 			}
 		}
 	}

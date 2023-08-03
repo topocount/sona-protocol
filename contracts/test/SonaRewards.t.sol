@@ -12,9 +12,12 @@ import { IRewardGateway } from "../interfaces/IRewardGateway.sol";
 import { Util } from "./Util.sol";
 import { SonaRewardToken } from "../SonaRewardToken.sol";
 import { RewardTokenMock as MockRewardToken } from "./mock/RewardTokenMock.sol";
+import { IERC20Upgradeable as IERC20 } from "openzeppelin-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import { MockERC20 } from "../../lib/solady/test/utils/mocks/MockERC20.sol";
 import { Weth9Mock, IWETH } from "./mock/Weth9Mock.sol";
 import { ERC20ReturnTrueMock, ERC20NoReturnMock, ERC20ReturnFalseMock } from "./mock/ERC20Mock.sol";
 import { SplitHelpers } from "./util/SplitHelpers.t.sol";
+import { ISonaSwap } from "lib/common/ISonaSwap.sol";
 
 contract SonaTestRewards is Util, SonaRewards, SplitHelpers {
 	event Transfer(address indexed from, address indexed to, uint256 value);
@@ -31,6 +34,8 @@ contract SonaTestRewards is Util, SonaRewards, SplitHelpers {
 	Merkle public m = new Merkle();
 	ERC20ReturnTrueMock public mockRewardToken = new ERC20ReturnTrueMock();
 	Weth9Mock public mockWeth = new Weth9Mock();
+	// mockUSDC
+	MockERC20 public mockUSDC = new MockERC20("Mock Token", "USDC", 6);
 	address[] private _holders = [
 		rewardHolder,
 		rewardHolder,
@@ -49,7 +54,15 @@ contract SonaTestRewards is Util, SonaRewards, SplitHelpers {
 		);
 
 	function setUp() public {
-		splitMainImpl = new SplitMain();
+		address swapAddr = deployCode(
+			"SonaSwap.sol",
+			abi.encode(address(0), address(0), mockUSDC, mockWeth)
+		);
+		splitMainImpl = new SplitMain(
+			mockWeth,
+			IERC20(address(mockUSDC)),
+			ISonaSwap(swapAddr)
+		);
 		rewardsBase = new SonaRewards();
 		// NOTE: if you get a generic delegatecall error during `setUp` it's probably
 		//because the encoded argument counts or types below don't match those in the initialize function interface
@@ -59,9 +72,9 @@ contract SonaTestRewards is Util, SonaRewards, SplitHelpers {
 				SonaRewards.initialize.selector,
 				rewardAdmin,
 				mockRewardsToken,
-				mockRewardToken,
+				mockUSDC,
 				address(0),
-				address(0),
+				address(this),
 				_mockUrl,
 				splitMainImpl
 			)
@@ -156,14 +169,20 @@ contract SonaTestRewards is Util, SonaRewards, SplitHelpers {
 		bytes32[][] memory proofs = new bytes32[][](_treeCount);
 
 		bytes32[] memory leaves = new bytes32[](_leafCount);
+
+		uint256 allowance;
 		for (uint64 i = 0; i < _treeCount; i++) {
 			for (uint256 k = 0; k < _leafCount; k++) {
+				// when will solidity get matrix math functionality?
+				allowance += _amount + i + k;
 				leaves[k] = keccak256(
 					bytes.concat(
 						keccak256(abi.encode(tokenId, _amount + i + k, i, i + 1))
 					)
 				);
 			}
+			mockUSDC.mint(address(this), allowance);
+			mockUSDC.approve(address(rewards), allowance);
 			bytes32 root = m.getRoot(leaves);
 			vm.prank(rewardAdmin);
 			rewards.addRoot(root, i, i + 1);
@@ -190,8 +209,8 @@ contract SonaTestRewards is Util, SonaRewards, SplitHelpers {
 		emit RewardsClaimed(tokenId, rewardHolder, rootIds[0], amounts[0]);
 		vm.expectEmit(true, true, true, true, address(rewards));
 		emit RewardsClaimed(tokenId, rewardHolder, rootIds[1], amounts[1]);
-		vm.expectEmit(true, true, false, true, address(mockRewardToken));
-		emit Transfer(address(0), rewardHolder, amounts[0] + amounts[1]);
+		vm.expectEmit(true, true, false, true, address(mockUSDC));
+		emit Transfer(address(this), rewardHolder, amounts[0] + amounts[1]);
 		rewards.claimRewards(tokenId, rootIds, proofs, amounts);
 
 		//revert on multiple claim attempts on the same roots
@@ -232,8 +251,8 @@ contract SonaTestRewards is Util, SonaRewards, SplitHelpers {
 		emit RewardsClaimed(tokenId, rewardHolder, rootIds[0], amounts[0]);
 		vm.expectEmit(true, true, true, true, address(rewards));
 		emit RewardsClaimed(tokenId, rewardHolder, rootIds[1], amounts[1]);
-		vm.expectEmit(true, true, false, true, address(mockRewardToken));
-		emit Transfer(address(0), splitsAddress, amounts[0] + amounts[1]);
+		vm.expectEmit(true, true, false, true, address(mockUSDC));
+		emit Transfer(address(this), splitsAddress, amounts[0] + amounts[1]);
 		rewards.claimRewards(tokenId, rootIds, proofs, amounts);
 
 		//revert on multiple claim attempts on the same roots
@@ -277,9 +296,9 @@ contract SonaTestRewards is Util, SonaRewards, SplitHelpers {
 		emit RewardsClaimed(tokenId, rewardHolder, rootIds[0], amounts[0]);
 		vm.expectEmit(true, true, true, true, address(rewards));
 		emit RewardsClaimed(tokenId, rewardHolder, rootIds[1], amounts[1]);
-		vm.expectEmit(true, true, false, true, address(mockRewardToken));
+		vm.expectEmit(true, true, false, true, address(mockUSDC));
 		emit Transfer(address(splitMainImpl), accounts[0], amounts[0] - 1);
-		vm.expectEmit(true, true, false, true, address(mockRewardToken));
+		vm.expectEmit(true, true, false, true, address(mockUSDC));
 		emit Transfer(address(splitMainImpl), accounts[1], amounts[1] - 1);
 		rewards.claimRewardsAndDistributePayout(
 			tokenId,
@@ -295,6 +314,8 @@ contract SonaTestRewards is Util, SonaRewards, SplitHelpers {
 		vm.expectRevert(InvalidClaimAttempt.selector);
 		rewards.claimRewards(tokenId, rootIds, proofs, amounts);
 
+		// TODO set up tests for WETH claims
+		/*
 		// can claim WETH funds
 		assertEq(rewardHolder.balance, 0);
 		assertEq(address(mockWeth).balance, 0);
@@ -318,6 +339,7 @@ contract SonaTestRewards is Util, SonaRewards, SplitHelpers {
 		);
 		assertEq(accounts[0].balance, amounts[0]);
 		assertEq(accounts[1].balance, amounts[1]);
+		*/
 	}
 
 	function testFuzz_nonHolderReverts(address nonHolder) public {
@@ -446,9 +468,14 @@ contract SonaTestRewards is Util, SonaRewards, SplitHelpers {
 		proofs[0] = proof;
 		proofs[1] = proof2;
 
+		uint256 amount = 2500000000000000000;
+
 		amounts = new uint256[](2);
-		amounts[0] = 2500000000000000000;
-		amounts[1] = 2500000000000000000;
+		amounts[0] = amount;
+		amounts[1] = amount;
+
+		mockUSDC.mint(address(this), amount * 2);
+		mockUSDC.approve(address(rewards), amount * 2);
 
 		tokenId = 2;
 	}

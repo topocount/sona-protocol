@@ -34,8 +34,8 @@ contract SplitHelpers is Util, AuctionSigner {
 		returns (address[] memory accounts, uint32[] memory amounts)
 	{
 		accounts = new address[](2);
-		accounts[1] = address(new NonReceiver());
 		accounts[0] = address(new NonReceiver());
+		accounts[1] = address(new NonReceiver());
 
 		amounts = new uint32[](2);
 		amounts[0] = 5e5;

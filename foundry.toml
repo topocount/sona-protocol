@@ -8,6 +8,7 @@
 	bytecode_hash = "none"
 	verbosity = 3
 	gas_reports = ["*"]
+	fs_permissions = [{ access = "read", path = "./dist"}]
 
 [profile.optimized]
 	via_ir = true
