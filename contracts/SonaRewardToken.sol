@@ -93,6 +93,22 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 		_setTokenMetadata(_tokenId, _arweaveTxId, _payout);
 	}
 
+	/// @notice auth-guarded mint function
+	/// @dev This is for artists to batch mint existing library to the protocol
+	/// @param _bundles The array tokens to be minted
+	function mintMulipleToArtist(
+		MetadataBundle[] calldata _bundles
+	) external onlySonaMinter {
+		for (uint i = 0; i < _bundles.length; i++) {
+			_mint(_bundles[i].tokenId.getAddress(), _bundles[i].tokenId);
+			_setTokenMetadata(
+				_bundles[i].tokenId,
+				_bundles[i].arweaveTxId,
+				_bundles[i].payout
+			);
+		}
+	}
+
 	/// @dev Updates the IPFS CID for the metadata for a given RewardToken
 	/// @param _tokenId The ID of the token that will be updated
 	/// @param _txId The metadata's IPFS CID

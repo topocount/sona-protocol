@@ -69,6 +69,13 @@ interface ISonaRewardToken {
 		address payable payout;
 	}
 
+	// @dev the information composing the NFT for use onchain and offchain
+	struct MetadataBundle {
+		uint256 tokenId;
+		address payable payout;
+		string arweaveTxId;
+	}
+
 	/*//////////////////////////////////////////////////////////////
 	/                            FUNCTIONS
 	//////////////////////////////////////////////////////////////*/
@@ -79,6 +86,8 @@ interface ISonaRewardToken {
 		string calldata _arweaveTxId,
 		address payable _payout
 	) external;
+
+	function mintMulipleToArtist(MetadataBundle[] calldata _bundles) external;
 
 	function updateArweaveTxId(uint256 _tokenId, string calldata _TxId) external;
 

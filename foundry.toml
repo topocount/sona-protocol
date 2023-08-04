@@ -21,7 +21,6 @@
 	test = 'contracts_swap/test'
 	script = 'script_v7'
 	solc_version = "0.7.6"
-	remappings = ["@openzeppelin/=lib/v3-periphery/node_modules/@openzeppelin"]
 
 [fuzz]
 	runs = 1024

@@ -56,6 +56,19 @@ contract SonaRewardTokenTest is Util, ERC721Holder, SonaRewardToken {
 		vm.prank(badMinter);
 		vm.expectRevert();
 		rewardToken.mint(rewardTokenRecipient, _tokenId, "", zeroSplitsAddr);
+
+		ISonaRewardToken.MetadataBundle memory bundle = ISonaRewardToken
+			.MetadataBundle({
+				tokenId: 12345,
+				payout: payable(address(0)),
+				arweaveTxId: "cool NFT"
+			});
+		ISonaRewardToken.MetadataBundle[]
+			memory bundles = new ISonaRewardToken.MetadataBundle[](1);
+		bundles[0] = bundle;
+		vm.prank(badMinter);
+		vm.expectRevert();
+		rewardToken.mintMulipleToArtist(bundles);
 	}
 
 	function test_initializedParams() public {
@@ -129,6 +142,36 @@ contract SonaRewardTokenTest is Util, ERC721Holder, SonaRewardToken {
 
 		vm.expectRevert("TokenId: Already Artist Edition");
 		_artistTokenId.getArtistEdition();
+	}
+
+	function test_MintMultipleToArtistSucceeds() public {
+		ISonaRewardToken.MetadataBundle memory bundle0 = ISonaRewardToken
+			.MetadataBundle({
+				tokenId: (0x25 << 96) | 1,
+				payout: payable(address(0)),
+				arweaveTxId: "cool NFT"
+			});
+		ISonaRewardToken.MetadataBundle memory bundle1 = ISonaRewardToken
+			.MetadataBundle({
+				tokenId: (0x25 << 96) | 2,
+				payout: payable(address(0)),
+				arweaveTxId: "cool NFTs"
+			});
+		ISonaRewardToken.MetadataBundle[]
+			memory bundles = new ISonaRewardToken.MetadataBundle[](2);
+		bundles[0] = bundle0;
+		bundles[1] = bundle1;
+
+		rewardToken.mintMulipleToArtist(bundles);
+
+		ISonaRewardToken.RewardToken memory collectorData = rewardToken
+			.getRewardTokenMetadata((0x25 << 96) | 1);
+		assertEq(collectorData.arTxId, bundle0.arweaveTxId);
+		assertEq(collectorData.payout, bundle0.payout);
+
+		collectorData = rewardToken.getRewardTokenMetadata((0x25 << 96) | 2);
+		assertEq(collectorData.arTxId, bundle1.arweaveTxId);
+		assertEq(collectorData.payout, bundle1.payout);
 	}
 
 	function test_updatePayoutAddress() public {
