@@ -21,6 +21,9 @@ contract Deployer is Script {
 		address _AUTHORIZER = vm.addr(vm.deriveKey(mnemonic, 2));
 		address _TREASURY_RECIPIENT = vm.addr(vm.deriveKey(mnemonic, 3));
 		address _REDISTRIBUTION_RECIPIENT = vm.addr(vm.deriveKey(mnemonic, 3));
+
+		console.log("deployer: ", vm.addr(key));
+
 		vm.startBroadcast(key);
 
 		// Deploy Mocks for PoC Tests

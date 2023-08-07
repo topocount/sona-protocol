@@ -59,6 +59,14 @@ deploy_goerli :; FOUNDRY_PROFILE=optimized forge script script/solidity/Deploy.s
 	--broadcast \
 	--chain-id 5
 
+deploy_sepolia :; FOUNDRY_PROFILE=optimized forge script script/solidity/Deploy.s.sol:Deployer \
+	--rpc-url ${RPC_URL} \
+	-vvv \
+	--slow \
+	--skip-simulation \
+	--broadcast \
+	--chain-id 11155111
+
 deploy_mainnet :; forge script ./script/solidity/Deploy.s.sol \
 	--optimizer-runs 10000 \
 	--rpc-url ${RPC_URL} \
