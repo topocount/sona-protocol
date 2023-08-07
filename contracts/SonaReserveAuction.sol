@@ -215,9 +215,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 
 	/// @dev Public function to settle the reseerve auction
 	/// @param _tokenId The ID of the token.
-	function settleReserveAuction(
-		uint256 _tokenId
-	) external onlySonaAdminOrApprovedTokenOperator(_tokenId) {
+	function settleReserveAuction(uint256 _tokenId) external {
 		_settleReserveAuction(_tokenId);
 	}
 
@@ -231,7 +229,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		uint256 _tokenId,
 		address[] calldata _accounts,
 		uint32[] calldata _percentAllocations
-	) external onlySonaAdminOrApprovedTokenOperator(_tokenId) {
+	) external {
 		address payout = auctions[_tokenId].tokenMetadata.payout;
 		address currency = auctions[_tokenId].currency;
 		_settleReserveAuction(_tokenId);
@@ -498,6 +496,10 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	/// @param _tokenId The ID of the token.
 	function _settleReserveAuction(uint256 _tokenId) private {
 		Auction storage auction = auctions[_tokenId];
+
+		if (auction.reservePrice == 0) {
+			revert SonaReserveAuction_InvalidAuction();
+		}
 
 		// Can't settle an auction that can still be bidded on
 		if (auction.endingTime > block.timestamp) {

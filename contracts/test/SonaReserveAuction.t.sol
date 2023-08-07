@@ -792,25 +792,6 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		auction.settleReserveAuction(tokenId);
 	}
 
-	function test_SettleReserveAuctionInvalidCallerReverts() public {
-		(
-			MetadataBundle[2] memory bundles,
-			Signature[2] memory signatures
-		) = _createSignedBundles();
-		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
-
-		hoax(bidder);
-		auction.createBid{ value: 1.1 ether }(tokenId, 0);
-
-		vm.warp(2 days);
-
-		vm.expectRevert(
-			ISonaReserveAuction.SonaReserveAuction_NotAuthorized.selector
-		);
-		auction.settleReserveAuction(tokenId);
-	}
-
 	function test_CancelInvalidReserveAuctionReverts() public {
 		vm.startPrank(trackMinter);
 
