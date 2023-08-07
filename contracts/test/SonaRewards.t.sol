@@ -19,6 +19,7 @@ import { ERC20ReturnTrueMock, ERC20NoReturnMock, ERC20ReturnFalseMock } from "./
 import { SplitHelpers } from "./util/SplitHelpers.t.sol";
 import { ISonaSwap } from "lib/common/ISonaSwap.sol";
 
+/* solhint-disable max-states-count */
 contract SonaTestRewards is Util, SonaRewards, SplitHelpers {
 	event Transfer(address indexed from, address indexed to, uint256 value);
 

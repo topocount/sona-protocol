@@ -17,8 +17,8 @@ contract SonaTestSplits is SplitHelpers {
 
 	address public swapAddr;
 
-	uint256 mainnetFork;
-	string MAINNET_RPC_URL = vm.envString("MAINNET_FORK_RPC_URL");
+	uint256 public mainnetFork;
+	string public MAINNET_RPC_URL = vm.envString("MAINNET_FORK_RPC_URL");
 
 	address public constant dataFeed = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
 	IWETH public constant WETH9 =
