@@ -37,10 +37,13 @@ jobs:
       - name: Run Forge build
         run: |
           forge --version
-          forge build --sizes
+          make build
         id: build
 
       - name: Run Forge tests
+        env:
+          MAINNET_FORK_RPC_URL: ${{secrets.MAINNET_FORK_RPC_URL}}
         run: |
+          FOUNDRY_PROFILE=swap forge test -vvv
           forge test -vvv
         id: test

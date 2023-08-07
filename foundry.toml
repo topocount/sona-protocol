@@ -8,12 +8,13 @@
 	bytecode_hash = "none"
 	verbosity = 3
 	gas_reports = ["*"]
-	fs_permissions = [{ access = "read", path = "./dist"}]
+	fs_permissions = [
+    { access = "read", path = "./dist"}
+  ]
 
 [profile.optimized]
 	via_ir = true
 	optimizer_runs = 1000000
-	out = 'out-via-ir'
 
 [profile.swap]
 	src = 'contracts_swap'

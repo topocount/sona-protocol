@@ -14,7 +14,7 @@ install :; forge install; yarn --cwd lib/v3-periphery install; pnpm install; pip
 update :; forge update
 
 # Builds
-build :; forge build --extra-output-files abi
+build : build_swap; forge build --sizes --extra-output-files abi
 
 # Optimized build
 build_optimized :; FOUNDRY_PROFILE=optimized forge build --extra-output-files abi
