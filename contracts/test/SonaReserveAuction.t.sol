@@ -171,7 +171,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 	function _createSignedBundles()
 		private
 		view
-		returns (MetadataBundle[2] memory bundles, Signature[2] memory signatures)
+		returns (ISonaRewardToken.MetadataBundle[2] memory bundles, Signature[2] memory signatures)
 	{
 		Signature memory artistSignature = Signature(
 			28,
@@ -191,14 +191,14 @@ contract SonaReserveAuctionTest is SplitHelpers {
 	function _createBundles()
 		private
 		view
-		returns (MetadataBundle[2] memory bundles)
+		returns (ISonaRewardToken.MetadataBundle[2] memory bundles)
 	{
-		MetadataBundle memory artistBundle = MetadataBundle({
+		ISonaRewardToken.MetadataBundle memory artistBundle = ISonaRewardToken.MetadataBundle({
 			arweaveTxId: "Hello World!",
 			tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000044,
 			payout: artistPayout
 		});
-		MetadataBundle memory collectorBundle = MetadataBundle({
+		ISonaRewardToken.MetadataBundle memory collectorBundle = ISonaRewardToken.MetadataBundle({
 			arweaveTxId: "Hello World",
 			tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000045,
 			payout: payable(address(0))
@@ -209,7 +209,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_CreateReserveAuction() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.startPrank(trackMinter);
@@ -231,7 +231,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_CreateReserveAuctionMultipleReverts() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.startPrank(trackMinter);
@@ -245,7 +245,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_CreateReserveAuctionZeroReserveReverts() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.startPrank(trackMinter);
@@ -258,7 +258,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_CreateReserveAuctionWithInvalidArtistBundleReverts() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		signatures[0].v = 69;
@@ -270,7 +270,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_CreateReserveAuctionWithInvalidCollectorBundleReverts() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		signatures[1].v = 69;
@@ -282,7 +282,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_CreateReserveAuctionWithInvalidArtistTokenIdReverts() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		bundles[0].tokenId = (uint256(uint160(trackMinter)) << 96) | 69;
@@ -300,7 +300,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		public
 	{
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		bundles[1].tokenId = (uint256(uint160(trackMinter)) << 96) | 70;
@@ -316,7 +316,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_CreateReserveAuctionWithInvalidCallerReverts() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.startPrank(address(0xcccccc));
@@ -328,7 +328,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 	}
 
 	function test_CreateBid() public {
-		MetadataBundle[2] memory bundles = _createBundles();
+		ISonaRewardToken.MetadataBundle[2] memory bundles = _createBundles();
 		Signature[2] memory signatures = _getBundleSignatures(bundles);
 		vm.prank(trackMinter);
 		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
@@ -354,7 +354,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_CreateBidWithZeroBidReverts() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -366,7 +366,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_CreateBidWithLowBidReverts() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -378,7 +378,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_CreateBidWithSameBidder() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -391,7 +391,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_CreateLowBidWithSameBidderReverts() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -406,7 +406,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 	function test_CreateMultipleBidsReturnsOriginalERC20BidderFunds() public {
 		ERC20ReturnTrueMock mockERC20 = new ERC20ReturnTrueMock();
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -426,7 +426,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		public
 	{
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -443,7 +443,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_CreateBidWithOnExpiredAuctionReverts() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -462,7 +462,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		vm.startPrank(trackMinter);
 
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
@@ -476,7 +476,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_UpdateReserveAuctionPriceWithZeroReverts() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.startPrank(trackMinter);
@@ -490,7 +490,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_UpdateReserveAuctionPrice() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.startPrank(trackMinter);
@@ -507,7 +507,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_UpdateReserveAuctionPriceAuctionAlreadyLive() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -526,7 +526,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_UpdateReserveAuctionPriceWithInvalidCallerReverts() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -542,7 +542,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_CreateDuplicateFailsAfterSettlement() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -562,7 +562,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 	}
 
 	function test_SettleReserveAuctionWithNoRewardsPayoutSet() public {
-		MetadataBundle[2] memory bundles = _createBundles();
+		ISonaRewardToken.MetadataBundle[2] memory bundles = _createBundles();
 		bundles[0].payout = payable(address(0));
 		Signature[2] memory signatures = _getBundleSignatures(bundles);
 		vm.expectEmit(true, false, false, true, address(auction.rewardToken()));
@@ -617,7 +617,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_SettleReserveAuction() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -659,7 +659,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_DistributeERC20ToSplit() public {
 		(address[] memory accounts, uint32[] memory amounts) = _createSimpleSplit();
-		MetadataBundle[2] memory bundles = _createBundles();
+		ISonaRewardToken.MetadataBundle[2] memory bundles = _createBundles();
 		bundles[1].payout = split;
 		Signature[2] memory signatures = _getBundleSignatures(bundles);
 		vm.prank(trackMinter);
@@ -728,7 +728,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		);
 		auction = SonaReserveAuction(address(proxy));
 		(address[] memory accounts, uint32[] memory amounts) = _createSimpleSplit();
-		MetadataBundle[2] memory bundles = _createBundles();
+		ISonaRewardToken.MetadataBundle[2] memory bundles = _createBundles();
 		bundles[1].payout = split;
 		Signature[2] memory signatures = _getBundleSignatures(bundles);
 
@@ -776,7 +776,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_SettleReserveAuctionWhileLiveReverts() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -803,7 +803,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_CancelReserveAuctionInvalidCallerReverts() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -819,7 +819,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_CancelReserveAuctionStillLiveReverts() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -837,7 +837,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_CreateReserveAuctionWithERC20Currency() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.startPrank(trackMinter);
@@ -857,7 +857,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 	function test_CreateBidERC20() public {
 		ERC20ReturnTrueMock mockRewardToken = new ERC20ReturnTrueMock();
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -890,7 +890,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 	function test_CreateBidWithBrokenERC20Reverts() public {
 		ERC20NoReturnMock brokenMockRewardToken = new ERC20NoReturnMock();
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -916,7 +916,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 	function test_CreateBidWithInvalidERC20PermissionsReverts() public {
 		ERC20ReturnFalseMock mockRewardToken = new ERC20ReturnFalseMock();
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -943,7 +943,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_CreateBidERC20WithEthReverts() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -965,7 +965,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_CreateBidEthWithERC20Reverts() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -987,7 +987,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_UpdateReserveAuctionPayoutAddress() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -1035,7 +1035,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		auction.updateArtistPayoutAddress(tokenId, newPayout);
 
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -1071,7 +1071,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_UpdateReserveAuctionPriceAndCurrency() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -1101,7 +1101,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		public
 	{
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -1119,7 +1119,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		public
 	{
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -1140,7 +1140,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		public
 	{
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -1163,7 +1163,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		vm.assume(_reservePrice > 0);
 		vm.assume(_bidAmount >= _reservePrice);
 		vm.assume(_bidAmount < type(uint256).max / 5000);
-		MetadataBundle[2] memory bundles = _createBundles();
+		ISonaRewardToken.MetadataBundle[2] memory bundles = _createBundles();
 		bundles[1].payout = artistPayout;
 		Signature[2] memory signatures = _getBundleSignatures(bundles);
 		vm.prank(trackMinter);
@@ -1215,7 +1215,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		vm.assume(_bidAmount >= _reservePrice);
 		vm.assume(_bidAmount < type(uint256).max / 5000);
 		ERC20ReturnTrueMock mockERC20 = new ERC20ReturnTrueMock();
-		MetadataBundle[2] memory bundles = _createBundles();
+		ISonaRewardToken.MetadataBundle[2] memory bundles = _createBundles();
 		bundles[1].payout = artistPayout;
 		Signature[2] memory signatures = _getBundleSignatures(bundles);
 		vm.prank(trackMinter);
@@ -1271,7 +1271,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 		vm.assume(_bidAmount >= _reservePrice);
 		vm.assume(_bidAmount < type(uint256).max / 5000);
 
-		MetadataBundle[2] memory bundles = _createBundles();
+		ISonaRewardToken.MetadataBundle[2] memory bundles = _createBundles();
 		bundles[0].payout = payable(address(0));
 		Signature[2] memory sigs = _getBundleSignatures(bundles);
 
@@ -1321,7 +1321,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 		ERC20ReturnTrueMock mockERC20 = new ERC20ReturnTrueMock();
 
-		MetadataBundle[2] memory bundles = _createBundles();
+		ISonaRewardToken.MetadataBundle[2] memory bundles = _createBundles();
 		bundles[0].payout = payable(address(0));
 		Signature[2] memory sigs = _getBundleSignatures(bundles);
 
@@ -1367,7 +1367,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_ContractBidderAcceptsEthRefunds() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -1393,7 +1393,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_ContractBidderRejectsEthRefunds() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
@@ -1422,7 +1422,7 @@ contract SonaReserveAuctionTest is SplitHelpers {
 
 	function test_CancelAuctionThatsEndedReverts() public {
 		(
-			MetadataBundle[2] memory bundles,
+			ISonaRewardToken.MetadataBundle[2] memory bundles,
 			Signature[2] memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);

@@ -8,6 +8,7 @@ pragma solidity ^0.8.16;
 // (___/(_____)(_)\_)(__)(__)  (___/ (__) (_)\_)(____)(__)(__)(_/\/\_)
 
 import { ISonaAuthorizer } from "./ISonaAuthorizer.sol";
+import { ISonaRewardToken } from "./ISonaRewardToken.sol";
 
 interface ISonaReserveAuction is ISonaAuthorizer {
 	/*//////////////////////////////////////////////////////////////
@@ -75,13 +76,6 @@ interface ISonaReserveAuction is ISonaAuthorizer {
 	/                        STRUCTS
 	//////////////////////////////////////////////////////////////*/
 
-	// @dev the information composing the NFT for use onchain and offchain
-	struct MetadataBundle {
-		uint256 tokenId;
-		address payable payout;
-		string arweaveTxId;
-	}
-
 	struct Auction {
 		// @dev The minimum reserve price to be met
 		uint256 reservePrice;
@@ -96,7 +90,7 @@ interface ISonaReserveAuction is ISonaAuthorizer {
 		// @dev Currency for the auction
 		address currency;
 		// @dev Arweave Bundle info containing collector token metadata and auction payout address
-		MetadataBundle tokenMetadata;
+		ISonaRewardToken.MetadataBundle tokenMetadata;
 	}
 
 	/*//////////////////////////////////////////////////////////////
@@ -104,7 +98,7 @@ interface ISonaReserveAuction is ISonaAuthorizer {
 	//////////////////////////////////////////////////////////////*/
 
 	function createReserveAuction(
-		MetadataBundle[2] calldata _bundles,
+		ISonaRewardToken.MetadataBundle[2] calldata _bundles,
 		Signature[2] calldata _signatures,
 		address _currencyAddress,
 		uint256 _reservePrice

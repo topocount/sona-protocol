@@ -5,6 +5,7 @@ pragma solidity ^0.8.16;
 import "forge-std/Script.sol";
 import { AuctionSigner } from "../../contracts/test/utils/AuctionSigner.sol";
 import { SonaReserveAuction } from "../../contracts/SonaReserveAuction.sol";
+import { ISonaRewardToken } from "../../contracts/interfaces/ISonaRewardToken.sol";
 
 contract PopulateAuction is Script, AuctionSigner {
 	uint256 artistKey =
@@ -14,7 +15,7 @@ contract PopulateAuction is Script, AuctionSigner {
 		require(block.chainid == 999, "chain ID must be 999");
 
 		auction = SonaReserveAuction(vm.envAddress("SONA_AUCTION"));
-		MetadataBundle[2] memory bundles = _createBundles();
+		ISonaRewardToken.MetadataBundle[2] memory bundles = _createBundles();
 		Signature[2] memory sigs = _getBundleSignatures(bundles);
 
 		vm.broadcast(artistKey);
@@ -24,14 +25,14 @@ contract PopulateAuction is Script, AuctionSigner {
 	function _createBundles()
 		private
 		pure
-		returns (MetadataBundle[2] memory bundles)
+		returns (ISonaRewardToken.MetadataBundle[2] memory bundles)
 	{
-		MetadataBundle memory artistBundle = MetadataBundle({
+		ISonaRewardToken.MetadataBundle memory artistBundle = ISonaRewardToken.MetadataBundle({
 			arweaveTxId: "Hello World4!",
 			tokenId: 0x70997970C51812dc3A010C7d01b50e0d17dc79C800000000000000000000004a,
 			payout: payable(address(0))
 		});
-		MetadataBundle memory collectorBundle = MetadataBundle({
+		ISonaRewardToken.MetadataBundle memory collectorBundle = ISonaRewardToken.MetadataBundle({
 			arweaveTxId: "Hello World4",
 			tokenId: 0x70997970C51812dc3A010C7d01b50e0d17dc79C800000000000000000000004b,
 			payout: payable(address(0))

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.16;
 
+import { ISonaRewardToken } from "../../interfaces/ISonaRewardToken.sol";
 import { SonaReserveAuction } from "../../SonaReserveAuction.sol";
 import { VmSafe } from "forge-std/Vm.sol";
 
@@ -33,7 +34,7 @@ abstract contract AuctionSigner is SonaReserveAuction {
 	}
 
 	function _hashFromMemory(
-		MetadataBundle memory bundle
+		ISonaRewardToken.MetadataBundle memory bundle
 	) internal pure returns (bytes32) {
 		bytes32 _METADATABUNDLE_TYPEHASH = keccak256(
 			"MetadataBundle(uint256 tokenId,address payout,string arweaveTxId)"
@@ -50,7 +51,7 @@ abstract contract AuctionSigner is SonaReserveAuction {
 	}
 
 	function _getBundleHash(
-		MetadataBundle memory _bundle
+		ISonaRewardToken.MetadataBundle memory _bundle
 	) internal view returns (bytes32) {
 		bytes32 domainSeparator = _makeDomainHash();
 		return
@@ -60,7 +61,7 @@ abstract contract AuctionSigner is SonaReserveAuction {
 	}
 
 	function _signBundle(
-		MetadataBundle memory _bundle
+		ISonaRewardToken.MetadataBundle memory _bundle
 	) internal view returns (Signature memory signature) {
 		bytes32 bundleHash = _getBundleHash(_bundle);
 		(uint8 v, bytes32 r, bytes32 s) = _vmLocal.sign(authorizerKey, bundleHash);
@@ -69,7 +70,7 @@ abstract contract AuctionSigner is SonaReserveAuction {
 	}
 
 	function _getBundleSignatures(
-		MetadataBundle[2] memory _bundles
+		ISonaRewardToken.MetadataBundle[2] memory _bundles
 	) internal view returns (Signature[2] memory signatures) {
 		signatures[0] = _signBundle(_bundles[0]);
 		signatures[1] = _signBundle(_bundles[1]);

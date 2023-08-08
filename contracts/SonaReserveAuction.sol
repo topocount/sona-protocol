@@ -87,7 +87,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	}
 
 	modifier bundlesAuthorized(
-		MetadataBundle[2] calldata bundles,
+		ISonaRewardToken.MetadataBundle[2] calldata bundles,
 		Signature[2] calldata signatures
 	) {
 		if (
@@ -171,7 +171,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	/// @param _currencyAddress The address of the currency bids will be in.
 	/// @param _reservePrice The reserve price of the auction.
 	function createReserveAuction(
-		MetadataBundle[2] calldata _bundles,
+		ISonaRewardToken.MetadataBundle[2] calldata _bundles,
 		Signature[2] calldata _signatures,
 		address _currencyAddress,
 		uint256 _reservePrice
@@ -457,7 +457,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	//////////////////////////////////////////////////////////////*/
 
 	function _verify(
-		MetadataBundle calldata _bundle,
+		ISonaRewardToken.MetadataBundle calldata _bundle,
 		uint8 v,
 		bytes32 r,
 		bytes32 s
@@ -466,7 +466,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	}
 
 	function _recoverAddress(
-		MetadataBundle calldata _bundle,
+		ISonaRewardToken.MetadataBundle calldata _bundle,
 		uint8 v,
 		bytes32 r,
 		bytes32 s
@@ -479,7 +479,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	}
 
 	function _hash(
-		MetadataBundle calldata bundle
+		ISonaRewardToken.MetadataBundle calldata bundle
 	) internal pure returns (bytes32) {
 		return
 			keccak256(
@@ -575,7 +575,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		emit ReserveAuctionSettled({ tokenId: _tokenId });
 	}
 
-	function _ensureBundleIsUnique(MetadataBundle calldata _bundle) internal {
+	function _ensureBundleIsUnique(ISonaRewardToken.MetadataBundle calldata _bundle) internal {
 		if (
 			_uriExists[keccak256(bytes(_bundle.arweaveTxId))] ||
 			rewardToken.tokenIdExists(_bundle.tokenId)
@@ -628,7 +628,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	}
 
 	function _getPayoutAddress(
-		MetadataBundle storage _bundle
+		ISonaRewardToken.MetadataBundle storage _bundle
 	) internal view returns (address payable payoutAddress) {
 		address payable payout = _bundle.payout;
 		return payout.isNotZero() ? payout : payable(_bundle.tokenId.getAddress());
