@@ -15,7 +15,7 @@ contract PopulateAuction is Script, AuctionSigner {
 		require(block.chainid == 999, "chain ID must be 999");
 
 		auction = SonaReserveAuction(vm.envAddress("SONA_AUCTION"));
-		ISonaRewardToken.MetadataBundle[2] memory bundles = _createBundles();
+		ISonaRewardToken.TokenMetadata[2] memory bundles = _createBundles();
 		Signature[2] memory sigs = _getBundleSignatures(bundles);
 
 		vm.broadcast(artistKey);
@@ -25,14 +25,14 @@ contract PopulateAuction is Script, AuctionSigner {
 	function _createBundles()
 		private
 		pure
-		returns (ISonaRewardToken.MetadataBundle[2] memory bundles)
+		returns (ISonaRewardToken.TokenMetadata[2] memory bundles)
 	{
-		ISonaRewardToken.MetadataBundle memory artistBundle = ISonaRewardToken.MetadataBundle({
+		ISonaRewardToken.TokenMetadata memory artistBundle = ISonaRewardToken.TokenMetadata({
 			arweaveTxId: "Hello World4!",
 			tokenId: 0x70997970C51812dc3A010C7d01b50e0d17dc79C800000000000000000000004a,
 			payout: payable(address(0))
 		});
-		ISonaRewardToken.MetadataBundle memory collectorBundle = ISonaRewardToken.MetadataBundle({
+		ISonaRewardToken.TokenMetadata memory collectorBundle = ISonaRewardToken.TokenMetadata({
 			arweaveTxId: "Hello World4",
 			tokenId: 0x70997970C51812dc3A010C7d01b50e0d17dc79C800000000000000000000004b,
 			payout: payable(address(0))

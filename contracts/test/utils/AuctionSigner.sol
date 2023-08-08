@@ -34,10 +34,10 @@ abstract contract AuctionSigner is SonaReserveAuction {
 	}
 
 	function _hashFromMemory(
-		ISonaRewardToken.MetadataBundle memory bundle
+		ISonaRewardToken.TokenMetadata memory bundle
 	) internal pure returns (bytes32) {
 		bytes32 _METADATABUNDLE_TYPEHASH = keccak256(
-			"MetadataBundle(uint256 tokenId,address payout,string arweaveTxId)"
+			"TokenMetadata(uint256 tokenId,address payout,string arweaveTxId)"
 		);
 		return
 			keccak256(
@@ -51,7 +51,7 @@ abstract contract AuctionSigner is SonaReserveAuction {
 	}
 
 	function _getBundleHash(
-		ISonaRewardToken.MetadataBundle memory _bundle
+		ISonaRewardToken.TokenMetadata memory _bundle
 	) internal view returns (bytes32) {
 		bytes32 domainSeparator = _makeDomainHash();
 		return
@@ -61,7 +61,7 @@ abstract contract AuctionSigner is SonaReserveAuction {
 	}
 
 	function _signBundle(
-		ISonaRewardToken.MetadataBundle memory _bundle
+		ISonaRewardToken.TokenMetadata memory _bundle
 	) internal view returns (Signature memory signature) {
 		bytes32 bundleHash = _getBundleHash(_bundle);
 		(uint8 v, bytes32 r, bytes32 s) = _vmLocal.sign(authorizerKey, bundleHash);
@@ -70,7 +70,7 @@ abstract contract AuctionSigner is SonaReserveAuction {
 	}
 
 	function _getBundleSignatures(
-		ISonaRewardToken.MetadataBundle[2] memory _bundles
+		ISonaRewardToken.TokenMetadata[2] memory _bundles
 	) internal view returns (Signature[2] memory signatures) {
 		signatures[0] = _signBundle(_bundles[0]);
 		signatures[1] = _signBundle(_bundles[1]);

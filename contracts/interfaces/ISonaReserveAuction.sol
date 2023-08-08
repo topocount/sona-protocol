@@ -90,7 +90,7 @@ interface ISonaReserveAuction is ISonaAuthorizer {
 		// @dev Currency for the auction
 		address currency;
 		// @dev Arweave Bundle info containing collector token metadata and auction payout address
-		ISonaRewardToken.MetadataBundle tokenMetadata;
+		ISonaRewardToken.TokenMetadata tokenMetadata;
 	}
 
 	/*//////////////////////////////////////////////////////////////
@@ -98,7 +98,7 @@ interface ISonaReserveAuction is ISonaAuthorizer {
 	//////////////////////////////////////////////////////////////*/
 
 	function createReserveAuction(
-		ISonaRewardToken.MetadataBundle[2] calldata _bundles,
+		ISonaRewardToken.TokenMetadata[2] calldata _bundles,
 		Signature[2] calldata _signatures,
 		address _currencyAddress,
 		uint256 _reservePrice

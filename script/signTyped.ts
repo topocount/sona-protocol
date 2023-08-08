@@ -45,12 +45,12 @@ const directMintDomain = {
 } as const
 
 const types = {
-  MetadataBundle: [
+  TokenMetadata: [
     { name: "tokenId", type: "uint256" },
     { name: "payout", type: "address" },
     { name: "arweaveTxId", type: "string" },
   ],
-  MetadataBundles: [{ name: "bundles", type: "MetadataBundle[]" }],
+  TokenMetadatas: [{ name: "bundles", type: "TokenMetadata[]" }],
 }
 
 const artistBundle = {
@@ -89,7 +89,7 @@ async function main() {
 	const hash = hashTypedData({
 		domain: directMintDomain,
 		types,
-    primaryType: "MetadataBundles",
+    primaryType: "TokenMetadatas",
 		message: arrayBundle,
 	})
 
@@ -108,7 +108,7 @@ async function signArrayMessage(msg: {
   return walletClient.signTypedData({
     domain: directMintDomain,
     types,
-    primaryType: "MetadataBundles",
+    primaryType: "TokenMetadatas",
     message: msg,
   })
 }
@@ -119,7 +119,7 @@ async function signMessage(msg: {
   return walletClient.signTypedData({
     domain,
     types,
-    primaryType: "MetadataBundle",
+    primaryType: "TokenMetadata",
     message: msg,
   })
 }

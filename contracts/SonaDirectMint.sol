@@ -18,8 +18,8 @@ contract SonaDirectMint is ISonaAuthorizer {
 	/                        STRUCTS
 	//////////////////////////////////////////////////////////////*/
 
-	struct MetadataBundles {
-		ISonaRewardToken.MetadataBundle[] bundles;
+	struct TokenMetadatas {
+		ISonaRewardToken.TokenMetadata[] bundles;
 	}
 
 	/*//////////////////////////////////////////////////////////////
@@ -34,12 +34,12 @@ contract SonaDirectMint is ISonaAuthorizer {
 	// @dev The signature of the type that is hashed and prefixed to the TypedData payload
 	bytes32 internal constant _METADATABUNDLE_TYPEHASH =
 		keccak256(
-			"MetadataBundle(uint256 tokenId,address payout,string arweaveTxId)"
+			"TokenMetadata(uint256 tokenId,address payout,string arweaveTxId)"
 		);
 	// @dev The signature of the type that is hashed and prefixed to the TypedData payload
 	bytes32 internal constant _METADATABUNDLES_TYPEHASH =
 		keccak256(
-			"MetadataBundles(MetadataBundle[] bundles)MetadataBundle(uint256 tokenId,address payout,string arweaveTxId)"
+			"TokenMetadatas(TokenMetadata[] bundles)TokenMetadata(uint256 tokenId,address payout,string arweaveTxId)"
 		);
 
 	/*//////////////////////////////////////////////////////////////
@@ -58,7 +58,7 @@ contract SonaDirectMint is ISonaAuthorizer {
 	//////////////////////////////////////////////////////////////*/
 
 	modifier bundlesAuthorized(
-		MetadataBundles calldata _bundles,
+		TokenMetadatas calldata _bundles,
 		Signature calldata _signature
 	) {
 		if (!_verify(_bundles, _signature.v, _signature.r, _signature.s))
@@ -89,7 +89,7 @@ contract SonaDirectMint is ISonaAuthorizer {
 	//////////////////////////////////////////////////////////////*/
 
 	function mint(
-		MetadataBundles calldata _bundles,
+		TokenMetadatas calldata _bundles,
 		Signature calldata _signature
 	) external bundlesAuthorized(_bundles, _signature) {
 		token.mintMulipleToArtist(_bundles.bundles);
@@ -100,7 +100,7 @@ contract SonaDirectMint is ISonaAuthorizer {
 	//////////////////////////////////////////////////////////////*/
 
 	function _verify(
-		MetadataBundles calldata _bundles,
+		TokenMetadatas calldata _bundles,
 		uint8 v,
 		bytes32 r,
 		bytes32 s
@@ -109,7 +109,7 @@ contract SonaDirectMint is ISonaAuthorizer {
 	}
 
 	function _recoverAddress(
-		MetadataBundles calldata _bundles,
+		TokenMetadatas calldata _bundles,
 		uint8 v,
 		bytes32 r,
 		bytes32 s
@@ -122,7 +122,7 @@ contract SonaDirectMint is ISonaAuthorizer {
 	}
 
 	function _hash(
-		ISonaRewardToken.MetadataBundle calldata _bundle
+		ISonaRewardToken.TokenMetadata calldata _bundle
 	) internal pure returns (bytes32) {
 		return
 			keccak256(
@@ -136,7 +136,7 @@ contract SonaDirectMint is ISonaAuthorizer {
 	}
 
 	function _hash(
-		MetadataBundles calldata _mdb
+		TokenMetadatas calldata _mdb
 	) internal pure returns (bytes32) {
 		bytes32[] memory hashedBundles = new bytes32[](_mdb.bundles.length);
 

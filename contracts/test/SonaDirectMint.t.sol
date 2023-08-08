@@ -39,7 +39,7 @@ abstract contract MinterSigner is
 	}
 
 	function _hashFromMemory(
-		ISonaRewardToken.MetadataBundle memory bundle
+		ISonaRewardToken.TokenMetadata memory bundle
 	) internal pure returns (bytes32) {
 		return
 			keccak256(
@@ -53,7 +53,7 @@ abstract contract MinterSigner is
 	}
 
 	function _hashFromMemory(
-		MetadataBundles memory _md
+		TokenMetadatas memory _md
 	) internal pure returns (bytes32) {
 		bytes32[] memory hashedBundles = new bytes32[](_md.bundles.length);
 
@@ -70,7 +70,7 @@ abstract contract MinterSigner is
 	}
 
 	function _getBundlesHash(
-		MetadataBundles memory _bundles
+		TokenMetadatas memory _bundles
 	) internal view returns (bytes32) {
 		bytes32 domainSeparator = _makeDomainHash();
 		return
@@ -80,7 +80,7 @@ abstract contract MinterSigner is
 	}
 
 	function _signBundles(
-		MetadataBundles memory _bundles
+		TokenMetadatas memory _bundles
 	) internal view returns (Signature memory signature) {
 		bytes32 bundleHash = _getBundlesHash(_bundles);
 		(uint8 v, bytes32 r, bytes32 s) = _vmLocal.sign(authorizerKey, bundleHash);
@@ -122,7 +122,7 @@ contract SonaDirectMintTest is Util, MinterSigner {
 	}
 
 	function test_HashAndSignature() public {
-		MetadataBundles memory bundles = _createBundles();
+		TokenMetadatas memory bundles = _createBundles();
 
 		// ensure our hashing sequence conforms to the standard
 		// as implemented by viem in script/signTyped.ts
@@ -132,19 +132,19 @@ contract SonaDirectMintTest is Util, MinterSigner {
 
 		assertEq(
 			digest,
-			0xb20accba34cde2c2aa8220486e0131357eaaefec29cca46612fe64c3db9b81ac,
+			0xf15fbb19967880136d947923bfdbf5b9d629c662a171bb36d18d0a8b65949106,
 			"Digest Incorrect"
 		);
 	}
 
 	function test_AuthorizedSignaturesAllowMint() public {
-		MetadataBundles memory bundles = _createBundles();
+		TokenMetadatas memory bundles = _createBundles();
 		Signature memory signature = _signBundles(bundles);
 		directMint.mint(bundles, signature);
 	}
 
 	function test_UnauthorizedSignaturesRevertMint() public {
-		MetadataBundles memory bundles = _createBundles();
+		TokenMetadatas memory bundles = _createBundles();
 		Signature memory signature = _signBundles(bundles);
 		signature.v = 99;
 		vm.expectRevert(SonaAuthorizer_InvalidSignature.selector);
@@ -154,38 +154,38 @@ contract SonaDirectMintTest is Util, MinterSigner {
 	function _createBundles()
 		private
 		view
-		returns (MetadataBundles memory bundles)
+		returns (TokenMetadatas memory bundles)
 	{
-		ISonaRewardToken.MetadataBundle memory bundle0 = ISonaRewardToken
-			.MetadataBundle({
+		ISonaRewardToken.TokenMetadata memory bundle0 = ISonaRewardToken
+			.TokenMetadata({
 				arweaveTxId: "Hello World!",
 				tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000044,
 				payout: artistPayout
 			});
-		ISonaRewardToken.MetadataBundle memory bundle1 = ISonaRewardToken
-			.MetadataBundle({
+		ISonaRewardToken.TokenMetadata memory bundle1 = ISonaRewardToken
+			.TokenMetadata({
 				arweaveTxId: "Hello World",
 				tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000045,
 				payout: payable(address(0))
 			});
 
-		ISonaRewardToken.MetadataBundle[]
-			memory bundleArray = new ISonaRewardToken.MetadataBundle[](2);
+		ISonaRewardToken.TokenMetadata[]
+			memory bundleArray = new ISonaRewardToken.TokenMetadata[](2);
 		bundleArray[0] = bundle0;
 		bundleArray[1] = bundle1;
 
-		bundles = MetadataBundles({ bundles: bundleArray });
+		bundles = TokenMetadatas({ bundles: bundleArray });
 	}
 
 	function _createSignedBundles()
 		private
 		view
-		returns (MetadataBundles memory bundles, Signature memory signature)
+		returns (TokenMetadatas memory bundles, Signature memory signature)
 	{
 		signature = Signature(
-			28,
-			0x82f8cd9d3e37122608a7bbdc411dbb930996862d1cefe7473ec8f93033d7ff41,
-			0x644373e39d14f756dd9e2a81e41a1ca6c969951cf34e3972552e106e29f2137a
+			27,
+			0x43ac7cd7fd5970c3926addaac069cc20764ec1461b786bdb87184109fc481ae4,
+			0x269e17a9d13bfd1a68af563aa3b732cd1776bcd0dbc2904d0f3a3829d24caf95
 		);
 
 		bundles = _createBundles();

@@ -46,7 +46,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	// @dev The signature of the type that is hashed and prefixed to the TypedData payload
 	bytes32 private constant _METADATABUNDLE_TYPEHASH =
 		keccak256(
-			"MetadataBundle(uint256 tokenId,address payout,string arweaveTxId)"
+			"TokenMetadata(uint256 tokenId,address payout,string arweaveTxId)"
 		);
 
 	/*//////////////////////////////////////////////////////////////
@@ -87,7 +87,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	}
 
 	modifier bundlesAuthorized(
-		ISonaRewardToken.MetadataBundle[2] calldata bundles,
+		ISonaRewardToken.TokenMetadata[2] calldata bundles,
 		Signature[2] calldata signatures
 	) {
 		if (
@@ -171,7 +171,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	/// @param _currencyAddress The address of the currency bids will be in.
 	/// @param _reservePrice The reserve price of the auction.
 	function createReserveAuction(
-		ISonaRewardToken.MetadataBundle[2] calldata _bundles,
+		ISonaRewardToken.TokenMetadata[2] calldata _bundles,
 		Signature[2] calldata _signatures,
 		address _currencyAddress,
 		uint256 _reservePrice
@@ -197,18 +197,21 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		) revert SonaReserveAuction_InvalidTokenIds();
 
 		auctions[_bundles[1].tokenId].reservePrice = _reservePrice;
-		auctions[_bundles[1].tokenId].trackSeller = payable(msg.sender);
+		auctions[_bundles[1].tokenId].trackSeller = payable(
+			_bundles[0].tokenId.getAddress()
+		);
 
 		// Note: If the currency address is 0x0/address(0), bids are made in ETH
 		auctions[_bundles[1].tokenId].currency = _currencyAddress;
 		auctions[_bundles[1].tokenId].tokenMetadata = _bundles[1];
 
-		rewardToken.mint(
-			_bundles[0].tokenId.getAddress(),
-			_bundles[0].tokenId,
-			_bundles[0].arweaveTxId,
-			_bundles[0].payout
-		);
+		if (!rewardToken.tokenIdExists(_bundles[0].tokenId))
+			rewardToken.mint(
+				_bundles[0].tokenId.getAddress(),
+				_bundles[0].tokenId,
+				_bundles[0].arweaveTxId,
+				_bundles[0].payout
+			);
 
 		emit ReserveAuctionCreated({ tokenId: _bundles[1].tokenId });
 	}
@@ -457,7 +460,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	//////////////////////////////////////////////////////////////*/
 
 	function _verify(
-		ISonaRewardToken.MetadataBundle calldata _bundle,
+		ISonaRewardToken.TokenMetadata calldata _bundle,
 		uint8 v,
 		bytes32 r,
 		bytes32 s
@@ -466,7 +469,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	}
 
 	function _recoverAddress(
-		ISonaRewardToken.MetadataBundle calldata _bundle,
+		ISonaRewardToken.TokenMetadata calldata _bundle,
 		uint8 v,
 		bytes32 r,
 		bytes32 s
@@ -479,7 +482,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	}
 
 	function _hash(
-		ISonaRewardToken.MetadataBundle calldata bundle
+		ISonaRewardToken.TokenMetadata calldata bundle
 	) internal pure returns (bytes32) {
 		return
 			keccak256(
@@ -575,7 +578,9 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 		emit ReserveAuctionSettled({ tokenId: _tokenId });
 	}
 
-	function _ensureBundleIsUnique(ISonaRewardToken.MetadataBundle calldata _bundle) internal {
+	function _ensureBundleIsUnique(
+		ISonaRewardToken.TokenMetadata calldata _bundle
+	) internal {
 		if (
 			_uriExists[keccak256(bytes(_bundle.arweaveTxId))] ||
 			rewardToken.tokenIdExists(_bundle.tokenId)
@@ -628,7 +633,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	}
 
 	function _getPayoutAddress(
-		ISonaRewardToken.MetadataBundle storage _bundle
+		ISonaRewardToken.TokenMetadata storage _bundle
 	) internal view returns (address payable payoutAddress) {
 		address payable payout = _bundle.payout;
 		return payout.isNotZero() ? payout : payable(_bundle.tokenId.getAddress());
