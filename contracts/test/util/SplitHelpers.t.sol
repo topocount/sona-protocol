@@ -4,11 +4,12 @@ pragma solidity ^0.8.16;
 import { ISplitMain } from "../../payout/interfaces/ISplitMain.sol";
 import { SplitMain } from "../../payout/SplitMain.sol";
 import { SplitWallet } from "../../payout/SplitWallet.sol";
-import { AuctionSigner } from "../utils/AuctionSigner.sol";
+import { MinterSigner } from "./MinterSigner.sol";
+import { SonaReserveAuction } from "../../SonaReserveAuction.sol";
 import { Util } from "../Util.sol";
 import { MockERC20 } from "../../../lib/solady/test/utils/mocks/MockERC20.sol";
 
-contract SplitHelpers is Util, AuctionSigner {
+contract SplitHelpers is Util, SonaReserveAuction {
 	SplitMain public splitMainImpl;
 	address payable public split;
 

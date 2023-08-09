@@ -8,6 +8,7 @@ pragma solidity ^0.8.16;
 // (___/(_____)(_)\_)(__)(__)  (___/ (__) (_)\_)(____)(__)(__)(_/\/\_)
 
 import { ISonaReserveAuction } from "./interfaces/ISonaReserveAuction.sol";
+import { SonaTokenAuthorizer } from "./SonaTokenAuthorizer.sol";
 import { ISplitMain } from "./payout/interfaces/ISplitMain.sol";
 import { Initializable } from "openzeppelin-upgradeable/proxy/utils/Initializable.sol";
 import { SonaAdmin } from "./access/SonaAdmin.sol";
@@ -19,7 +20,12 @@ import { ERC1967Proxy } from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 import { IWETH } from "./interfaces/IWETH.sol";
 import { ZeroCheck } from "./utils/ZeroCheck.sol";
 
-contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
+contract SonaReserveAuction is
+	ISonaReserveAuction,
+	Initializable,
+	SonaAdmin,
+	SonaTokenAuthorizer
+{
 	using AddressableTokenId for uint256;
 	using ZeroCheck for address;
 	using ZeroCheck for address payable;
@@ -38,16 +44,6 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	uint256 private constant _AUCTION_REDISTRIBUTION_FEE_BPS = 500;
 	// @dev The treasury fee charged to the seller (2%)
 	uint256 private constant _AUCTION_TREASURY_FEE_BPS = 200;
-	// @dev The signature of the Domain separator typehash
-	bytes32 private constant _EIP712DOMAIN_TYPEHASH =
-		keccak256(
-			"EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
-		);
-	// @dev The signature of the type that is hashed and prefixed to the TypedData payload
-	bytes32 private constant _METADATABUNDLE_TYPEHASH =
-		keccak256(
-			"TokenMetadata(uint256 tokenId,address payout,string arweaveTxId)"
-		);
 
 	/*//////////////////////////////////////////////////////////////
 	/                         STATE
@@ -61,10 +57,6 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	ISonaRewardToken public rewardToken;
 	/// @dev splits contract to execute distributions on
 	ISplitMain public splitMain;
-	// @dev part of the EIP-712 standard for structured data hashes
-	bytes32 private _DOMAIN_SEPARATOR;
-	// @dev the address of the authorizing signer
-	address private _authorizer;
 	// @dev Weth
 	IWETH private _weth;
 
@@ -87,13 +79,11 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	}
 
 	modifier bundlesAuthorized(
-		ISonaRewardToken.TokenMetadata[2] calldata bundles,
-		Signature[2] calldata signatures
+		ISonaRewardToken.TokenMetadatas calldata bundles,
+		Signature calldata signature
 	) {
-		if (
-			!_verify(bundles[0], signatures[0].v, signatures[0].r, signatures[0].s) ||
-			!_verify(bundles[1], signatures[1].v, signatures[1].r, signatures[1].s)
-		) revert SonaAuthorizer_InvalidSignature();
+		if (!_verify(bundles, signature.v, signature.r, signature.s))
+			revert SonaAuthorizer_InvalidSignature();
 		_;
 	}
 
@@ -171,49 +161,44 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	/// @param _currencyAddress The address of the currency bids will be in.
 	/// @param _reservePrice The reserve price of the auction.
 	function createReserveAuction(
-		ISonaRewardToken.TokenMetadata[2] calldata _bundles,
-		Signature[2] calldata _signatures,
+		ISonaRewardToken.TokenMetadatas calldata _metadata,
+		Signature calldata _signature,
 		address _currencyAddress,
 		uint256 _reservePrice
-	)
-		external
-		bundlesAuthorized(_bundles, _signatures)
-		onlySonaAdminOrApprovedTokenOperator(_bundles[0].tokenId)
-		onlySonaAdminOrApprovedTokenOperator(_bundles[1].tokenId)
-	{
+	) external bundlesAuthorized(_metadata, _signature) {
 		// Check that the reserve price is not zero. No free auctions
 		if (_reservePrice == 0) {
 			revert SonaReserveAuction_ReservePriceCannotBeZero();
 		}
-		if (auctions[_bundles[1].tokenId].reservePrice > 0)
+		if (auctions[_metadata.bundles[1].tokenId].reservePrice > 0)
 			revert SonaReserveAuction_AlreadyListed();
 
-		_ensureBundleIsUnique(_bundles[0]);
-		_ensureBundleIsUnique(_bundles[1]);
+		_ensureBundleIsUnique(_metadata.bundles[0]);
+		_ensureBundleIsUnique(_metadata.bundles[1]);
 
 		if (
-			_bundles[0].tokenId % 2 != 0 ||
-			_bundles[0].tokenId + 1 != _bundles[1].tokenId
+			_metadata.bundles[0].tokenId % 2 != 0 ||
+			_metadata.bundles[0].tokenId + 1 != _metadata.bundles[1].tokenId
 		) revert SonaReserveAuction_InvalidTokenIds();
 
-		auctions[_bundles[1].tokenId].reservePrice = _reservePrice;
-		auctions[_bundles[1].tokenId].trackSeller = payable(
-			_bundles[0].tokenId.getAddress()
+		auctions[_metadata.bundles[1].tokenId].reservePrice = _reservePrice;
+		auctions[_metadata.bundles[1].tokenId].trackSeller = payable(
+			_metadata.bundles[0].tokenId.getAddress()
 		);
 
 		// Note: If the currency address is 0x0/address(0), bids are made in ETH
-		auctions[_bundles[1].tokenId].currency = _currencyAddress;
-		auctions[_bundles[1].tokenId].tokenMetadata = _bundles[1];
+		auctions[_metadata.bundles[1].tokenId].currency = _currencyAddress;
+		auctions[_metadata.bundles[1].tokenId].tokenMetadata = _metadata.bundles[1];
 
-		if (!rewardToken.tokenIdExists(_bundles[0].tokenId))
+		if (!rewardToken.tokenIdExists(_metadata.bundles[0].tokenId))
 			rewardToken.mint(
-				_bundles[0].tokenId.getAddress(),
-				_bundles[0].tokenId,
-				_bundles[0].arweaveTxId,
-				_bundles[0].payout
+				_metadata.bundles[0].tokenId.getAddress(),
+				_metadata.bundles[0].tokenId,
+				_metadata.bundles[0].arweaveTxId,
+				_metadata.bundles[0].payout
 			);
 
-		emit ReserveAuctionCreated({ tokenId: _bundles[1].tokenId });
+		emit ReserveAuctionCreated({ tokenId: _metadata.bundles[1].tokenId });
 	}
 
 	/// @dev Public function to settle the reseerve auction
@@ -459,6 +444,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 	/                    PRIVATE FUNCTIONS
 	//////////////////////////////////////////////////////////////*/
 
+	/*
 	function _verify(
 		ISonaRewardToken.TokenMetadata calldata _bundle,
 		uint8 v,
@@ -494,6 +480,7 @@ contract SonaReserveAuction is ISonaReserveAuction, Initializable, SonaAdmin {
 				)
 			);
 	}
+	*/
 
 	/// @dev Internal function to settle the reserve auction
 	/// @param _tokenId The ID of the token.

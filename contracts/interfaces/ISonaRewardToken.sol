@@ -76,6 +76,10 @@ interface ISonaRewardToken {
 		string arweaveTxId;
 	}
 
+	struct TokenMetadatas {
+		TokenMetadata[] bundles;
+	}
+
 	/*//////////////////////////////////////////////////////////////
 	/                            FUNCTIONS
 	//////////////////////////////////////////////////////////////*/

@@ -81,10 +81,14 @@ async function main() {
   console.log(types)
   console.log(artistBundle)
   console.log(collectorBundle)
+	/*
   let sig = await signMessage(artistBundle)
   console.log("artistBundle signature: ", split(sig))
   sig = await signMessage(collectorBundle)
   console.log("collectorBundle signature: ", split(sig))
+	*/
+	const sig = await signMessage(arrayBundle)
+	console.log("auction signature: ", split(sig))
 
 	const hash = hashTypedData({
 		domain: directMintDomain,
@@ -119,7 +123,7 @@ async function signMessage(msg: {
   return walletClient.signTypedData({
     domain,
     types,
-    primaryType: "TokenMetadata",
+    primaryType: "TokenMetadatas",
     message: msg,
   })
 }

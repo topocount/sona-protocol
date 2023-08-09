@@ -7,10 +7,10 @@ pragma solidity ^0.8.16;
 // \__ \ )(_)(  )  (  /(__)\   \__ \  )(   )   / )__)  /(__)\  )    (
 // (___/(_____)(_)\_)(__)(__)  (___/ (__) (_)\_)(____)(__)(__)(_/\/\_)
 
-import { ISonaAuthorizer } from "./ISonaAuthorizer.sol";
+import { SonaTokenAuthorizer, ISonaTokenAuthorizer } from "../SonaTokenAuthorizer.sol";
 import { ISonaRewardToken } from "./ISonaRewardToken.sol";
 
-interface ISonaReserveAuction is ISonaAuthorizer {
+interface ISonaReserveAuction is ISonaTokenAuthorizer {
 	/*//////////////////////////////////////////////////////////////
 	/                       ERRORS
 	//////////////////////////////////////////////////////////////*/
@@ -98,8 +98,8 @@ interface ISonaReserveAuction is ISonaAuthorizer {
 	//////////////////////////////////////////////////////////////*/
 
 	function createReserveAuction(
-		ISonaRewardToken.TokenMetadata[2] calldata _bundles,
-		Signature[2] calldata _signatures,
+		ISonaRewardToken.TokenMetadatas calldata _bundles,
+		Signature calldata _signature,
 		address _currencyAddress,
 		uint256 _reservePrice
 	) external;

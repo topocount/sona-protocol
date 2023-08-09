@@ -9,38 +9,10 @@ pragma solidity ^0.8.16;
 
 import { ISonaRewardToken } from "./interfaces/ISonaRewardToken.sol";
 import { AddressableTokenId } from "./utils/AddressableTokenId.sol";
-import { ISonaAuthorizer } from "./interfaces/ISonaAuthorizer.sol";
+import { SonaTokenAuthorizer } from "./SonaTokenAuthorizer.sol";
 
-contract SonaDirectMint is ISonaAuthorizer {
+contract SonaDirectMint is SonaTokenAuthorizer {
 	using AddressableTokenId for uint256;
-
-	/*//////////////////////////////////////////////////////////////
-	/                        STRUCTS
-	//////////////////////////////////////////////////////////////*/
-
-	struct TokenMetadatas {
-		ISonaRewardToken.TokenMetadata[] bundles;
-	}
-
-	/*//////////////////////////////////////////////////////////////
-	/                         CONSTANTS
-	//////////////////////////////////////////////////////////////*/
-
-	// @dev The signature of the Domain separator typehash
-	bytes32 internal constant _EIP712DOMAIN_TYPEHASH =
-		keccak256(
-			"EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
-		);
-	// @dev The signature of the type that is hashed and prefixed to the TypedData payload
-	bytes32 internal constant _METADATABUNDLE_TYPEHASH =
-		keccak256(
-			"TokenMetadata(uint256 tokenId,address payout,string arweaveTxId)"
-		);
-	// @dev The signature of the type that is hashed and prefixed to the TypedData payload
-	bytes32 internal constant _METADATABUNDLES_TYPEHASH =
-		keccak256(
-			"TokenMetadatas(TokenMetadata[] bundles)TokenMetadata(uint256 tokenId,address payout,string arweaveTxId)"
-		);
 
 	/*//////////////////////////////////////////////////////////////
 	/                         STATE
@@ -48,17 +20,13 @@ contract SonaDirectMint is ISonaAuthorizer {
 
 	// @dev The instance of the rewardToken contract
 	ISonaRewardToken public token;
-	// @dev part of the EIP-712 standard for structured data hashes
-	bytes32 internal _DOMAIN_SEPARATOR;
-	// @dev the address of the authorizing signer
-	address internal _authorizer;
 
 	/*//////////////////////////////////////////////////////////////
 	/                         MODIFIERS
 	//////////////////////////////////////////////////////////////*/
 
 	modifier bundlesAuthorized(
-		TokenMetadatas calldata _bundles,
+		ISonaRewardToken.TokenMetadatas calldata _bundles,
 		Signature calldata _signature
 	) {
 		if (!_verify(_bundles, _signature.v, _signature.r, _signature.s))
@@ -89,66 +57,9 @@ contract SonaDirectMint is ISonaAuthorizer {
 	//////////////////////////////////////////////////////////////*/
 
 	function mint(
-		TokenMetadatas calldata _bundles,
+		ISonaRewardToken.TokenMetadatas calldata _bundles,
 		Signature calldata _signature
 	) external bundlesAuthorized(_bundles, _signature) {
 		token.mintMulipleToArtist(_bundles.bundles);
-	}
-
-	/*//////////////////////////////////////////////////////////////
-	/                    PRIVATE FUNCTIONS
-	//////////////////////////////////////////////////////////////*/
-
-	function _verify(
-		TokenMetadatas calldata _bundles,
-		uint8 v,
-		bytes32 r,
-		bytes32 s
-	) internal view returns (bool valid) {
-		return _recoverAddress(_bundles, v, r, s) == _authorizer;
-	}
-
-	function _recoverAddress(
-		TokenMetadatas calldata _bundles,
-		uint8 v,
-		bytes32 r,
-		bytes32 s
-	) internal view returns (address recovered) {
-		// Note: we need to use `encodePacked` here instead of `encode`.
-		bytes32 digest = keccak256(
-			abi.encodePacked("\x19\x01", _DOMAIN_SEPARATOR, _hash(_bundles))
-		);
-		recovered = ecrecover(digest, v, r, s);
-	}
-
-	function _hash(
-		ISonaRewardToken.TokenMetadata calldata _bundle
-	) internal pure returns (bytes32) {
-		return
-			keccak256(
-				abi.encode(
-					_METADATABUNDLE_TYPEHASH,
-					_bundle.tokenId,
-					_bundle.payout,
-					keccak256(bytes(_bundle.arweaveTxId))
-				)
-			);
-	}
-
-	function _hash(
-		TokenMetadatas calldata _mdb
-	) internal pure returns (bytes32) {
-		bytes32[] memory hashedBundles = new bytes32[](_mdb.bundles.length);
-
-		for (uint i = 0; i < _mdb.bundles.length; i++) {
-			hashedBundles[i] = _hash(_mdb.bundles[i]);
-		}
-		return
-			keccak256(
-				abi.encode(
-					_METADATABUNDLES_TYPEHASH,
-					keccak256(abi.encodePacked(hashedBundles))
-				)
-			);
 	}
 }
