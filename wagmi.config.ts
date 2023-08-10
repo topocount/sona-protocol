@@ -19,8 +19,8 @@ export default defineConfig({
 					11155111: "0x670478ED5a94A81C5295731Edf5D6A3AFa41fb71",
 				},
 			},
-			artifacts: "out-via-ir/",
-			include: ["Sona*.sol/Sona*.json", "IERC*.sol/*.json"],
+			artifacts: "dist/artifacts",
+			include: ["Sona*.sol/Sona*.json"],
 			forge: {
 				build: false,
 			},
