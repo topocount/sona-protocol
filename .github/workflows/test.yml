@@ -44,6 +44,6 @@ jobs:
         env:
           MAINNET_FORK_RPC_URL: ${{secrets.MAINNET_FORK_RPC_URL}}
         run: |
-          FOUNDRY_PROFILE=swap forge test -vvv
           forge test -vvv
+          FOUNDRY_PROFILE=swap forge test -vvv
         id: test
