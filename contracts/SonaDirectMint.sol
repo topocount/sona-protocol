@@ -26,10 +26,10 @@ contract SonaDirectMint is SonaTokenAuthorizer {
 	//////////////////////////////////////////////////////////////*/
 
 	modifier bundlesAuthorized(
-		ISonaRewardToken.TokenMetadatas calldata _bundles,
+		ISonaRewardToken.TokenMetadata[] calldata _metadatas,
 		Signature calldata _signature
 	) {
-		if (!_verify(_bundles, _signature.v, _signature.r, _signature.s))
+		if (!_verify(_metadatas, _signature.v, _signature.r, _signature.s))
 			revert SonaAuthorizer_InvalidSignature();
 		_;
 	}
@@ -57,9 +57,9 @@ contract SonaDirectMint is SonaTokenAuthorizer {
 	//////////////////////////////////////////////////////////////*/
 
 	function mint(
-		ISonaRewardToken.TokenMetadatas calldata _bundles,
+		ISonaRewardToken.TokenMetadata[] calldata _metadatas,
 		Signature calldata _signature
-	) external bundlesAuthorized(_bundles, _signature) {
-		token.mintMulipleToArtist(_bundles.bundles);
+	) external bundlesAuthorized(_metadatas, _signature) {
+		token.mintMulipleToArtist(_metadatas);
 	}
 }

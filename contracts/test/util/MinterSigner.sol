@@ -48,12 +48,12 @@ abstract contract MinterSigner is SonaTokenAuthorizer {
 	}
 
 	function _hashFromMemory(
-		ISonaRewardToken.TokenMetadatas memory _md
+		ISonaRewardToken.TokenMetadata[] memory _metadatas
 	) internal pure returns (bytes32) {
-		bytes32[] memory hashedBundles = new bytes32[](_md.bundles.length);
+		bytes32[] memory hashedBundles = new bytes32[](_metadatas.length);
 
-		for (uint i = 0; i < _md.bundles.length; i++) {
-			hashedBundles[i] = _hashFromMemory(_md.bundles[i]);
+		for (uint i = 0; i < _metadatas.length; i++) {
+			hashedBundles[i] = _hashFromMemory(_metadatas[i]);
 		}
 		return
 			keccak256(
@@ -65,18 +65,22 @@ abstract contract MinterSigner is SonaTokenAuthorizer {
 	}
 
 	function _getBundlesHash(
-		ISonaRewardToken.TokenMetadatas memory _bundles
+		ISonaRewardToken.TokenMetadata[] memory _metadatas
 	) internal view returns (bytes32) {
 		return
 			keccak256(
-				abi.encodePacked("\x19\x01", domainSeparator, _hashFromMemory(_bundles))
+				abi.encodePacked(
+					"\x19\x01",
+					domainSeparator,
+					_hashFromMemory(_metadatas)
+				)
 			);
 	}
 
 	function _signBundles(
-		ISonaRewardToken.TokenMetadatas memory _bundles
+		ISonaRewardToken.TokenMetadata[] memory _metadatas
 	) internal view returns (Signature memory signature) {
-		bytes32 bundleHash = _getBundlesHash(_bundles);
+		bytes32 bundleHash = _getBundlesHash(_metadatas);
 		(uint8 v, bytes32 r, bytes32 s) = _vmLocal.sign(authorizerKey, bundleHash);
 
 		return Signature({ v: v, r: r, s: s });

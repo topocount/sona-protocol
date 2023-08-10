@@ -30,6 +30,7 @@ interface ISonaReserveAuction is ISonaTokenAuthorizer {
 	error SonaReserveAuction_InvalidAuction();
 	error SonaReserveAuction_AuctionEnded();
 	error SonaReserveAuction_AuctionIsLive();
+	error SonaReserveAuction_NoMetadata();
 
 	/*//////////////////////////////////////////////////////////////
 	/                       EVENTS
@@ -98,7 +99,7 @@ interface ISonaReserveAuction is ISonaTokenAuthorizer {
 	//////////////////////////////////////////////////////////////*/
 
 	function createReserveAuction(
-		ISonaRewardToken.TokenMetadatas calldata _bundles,
+		ISonaRewardToken.TokenMetadata[] calldata _metadatas,
 		Signature calldata _signature,
 		address _currencyAddress,
 		uint256 _reservePrice

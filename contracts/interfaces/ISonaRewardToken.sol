@@ -76,10 +76,6 @@ interface ISonaRewardToken {
 		string arweaveTxId;
 	}
 
-	struct TokenMetadatas {
-		TokenMetadata[] bundles;
-	}
-
 	/*//////////////////////////////////////////////////////////////
 	/                            FUNCTIONS
 	//////////////////////////////////////////////////////////////*/
@@ -91,7 +87,7 @@ interface ISonaRewardToken {
 		address payable _payout
 	) external;
 
-	function mintMulipleToArtist(TokenMetadata[] calldata _bundles) external;
+	function mintMulipleToArtist(TokenMetadata[] calldata _metadatas) external;
 
 	function updateArweaveTxId(uint256 _tokenId, string calldata _TxId) external;
 

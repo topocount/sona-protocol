@@ -79,10 +79,10 @@ contract SonaReserveAuction is
 	}
 
 	modifier bundlesAuthorized(
-		ISonaRewardToken.TokenMetadatas calldata bundles,
-		Signature calldata signature
+		ISonaRewardToken.TokenMetadata[] calldata _metadatas,
+		Signature calldata _signature
 	) {
-		if (!_verify(bundles, signature.v, signature.r, signature.s))
+		if (!_verify(_metadatas, _signature.v, _signature.r, _signature.s))
 			revert SonaAuthorizer_InvalidSignature();
 		_;
 	}
@@ -161,44 +161,37 @@ contract SonaReserveAuction is
 	/// @param _currencyAddress The address of the currency bids will be in.
 	/// @param _reservePrice The reserve price of the auction.
 	function createReserveAuction(
-		ISonaRewardToken.TokenMetadatas calldata _metadata,
+		ISonaRewardToken.TokenMetadata[] calldata _metadatas,
 		Signature calldata _signature,
 		address _currencyAddress,
 		uint256 _reservePrice
-	) external bundlesAuthorized(_metadata, _signature) {
+	) external bundlesAuthorized(_metadatas, _signature) {
 		// Check that the reserve price is not zero. No free auctions
 		if (_reservePrice == 0) {
 			revert SonaReserveAuction_ReservePriceCannotBeZero();
 		}
-		if (auctions[_metadata.bundles[1].tokenId].reservePrice > 0)
-			revert SonaReserveAuction_AlreadyListed();
+		if (_metadatas.length == 2) {
+			if (
+				_metadatas[0].tokenId % 2 != 0 ||
+				_metadatas[0].tokenId + 1 != _metadatas[1].tokenId
+			) revert SonaReserveAuction_InvalidTokenIds();
 
-		_ensureBundleIsUnique(_metadata.bundles[0]);
-		_ensureBundleIsUnique(_metadata.bundles[1]);
+			_createReserveAuction(_metadatas[1], _currencyAddress, _reservePrice);
 
-		if (
-			_metadata.bundles[0].tokenId % 2 != 0 ||
-			_metadata.bundles[0].tokenId + 1 != _metadata.bundles[1].tokenId
-		) revert SonaReserveAuction_InvalidTokenIds();
-
-		auctions[_metadata.bundles[1].tokenId].reservePrice = _reservePrice;
-		auctions[_metadata.bundles[1].tokenId].trackSeller = payable(
-			_metadata.bundles[0].tokenId.getAddress()
-		);
-
-		// Note: If the currency address is 0x0/address(0), bids are made in ETH
-		auctions[_metadata.bundles[1].tokenId].currency = _currencyAddress;
-		auctions[_metadata.bundles[1].tokenId].tokenMetadata = _metadata.bundles[1];
-
-		if (!rewardToken.tokenIdExists(_metadata.bundles[0].tokenId))
-			rewardToken.mint(
-				_metadata.bundles[0].tokenId.getAddress(),
-				_metadata.bundles[0].tokenId,
-				_metadata.bundles[0].arweaveTxId,
-				_metadata.bundles[0].payout
-			);
-
-		emit ReserveAuctionCreated({ tokenId: _metadata.bundles[1].tokenId });
+			if (!rewardToken.tokenIdExists(_metadatas[0].tokenId))
+				rewardToken.mint(
+					_metadatas[0].tokenId.getAddress(),
+					_metadatas[0].tokenId,
+					_metadatas[0].arweaveTxId,
+					_metadatas[0].payout
+				);
+		} else if (_metadatas.length == 1) {
+			if (_metadatas[0].tokenId % 2 != 1)
+				revert SonaReserveAuction_InvalidTokenIds();
+			_createReserveAuction(_metadatas[0], _currencyAddress, _reservePrice);
+		} else {
+			revert SonaReserveAuction_NoMetadata();
+		}
 	}
 
 	/// @dev Public function to settle the reseerve auction
@@ -444,43 +437,27 @@ contract SonaReserveAuction is
 	/                    PRIVATE FUNCTIONS
 	//////////////////////////////////////////////////////////////*/
 
-	/*
-	function _verify(
+	function _createReserveAuction(
 		ISonaRewardToken.TokenMetadata calldata _bundle,
-		uint8 v,
-		bytes32 r,
-		bytes32 s
-	) internal view returns (bool valid) {
-		return _recoverAddress(_bundle, v, r, s) == _authorizer;
-	}
+		address _currencyAddress,
+		uint256 _reservePrice
+	) internal {
+		if (auctions[_bundle.tokenId].reservePrice > 0)
+			revert SonaReserveAuction_AlreadyListed();
 
-	function _recoverAddress(
-		ISonaRewardToken.TokenMetadata calldata _bundle,
-		uint8 v,
-		bytes32 r,
-		bytes32 s
-	) internal view returns (address recovered) {
-		// Note: we need to use `encodePacked` here instead of `encode`.
-		bytes32 digest = keccak256(
-			abi.encodePacked("\x19\x01", _DOMAIN_SEPARATOR, _hash(_bundle))
+		_ensureBundleIsUnique(_bundle);
+
+		auctions[_bundle.tokenId].reservePrice = _reservePrice;
+		auctions[_bundle.tokenId].trackSeller = payable(
+			_bundle.tokenId.getAddress()
 		);
-		recovered = ecrecover(digest, v, r, s);
-	}
 
-	function _hash(
-		ISonaRewardToken.TokenMetadata calldata bundle
-	) internal pure returns (bytes32) {
-		return
-			keccak256(
-				abi.encode(
-					_METADATABUNDLE_TYPEHASH,
-					bundle.tokenId,
-					bundle.payout,
-					keccak256(bytes(bundle.arweaveTxId))
-				)
-			);
+		// Note: If the currency address is 0x0/address(0), bids are made in ETH
+		auctions[_bundle.tokenId].currency = _currencyAddress;
+		auctions[_bundle.tokenId].tokenMetadata = _bundle;
+
+		emit ReserveAuctionCreated({ tokenId: _bundle.tokenId });
 	}
-	*/
 
 	/// @dev Internal function to settle the reserve auction
 	/// @param _tokenId The ID of the token.

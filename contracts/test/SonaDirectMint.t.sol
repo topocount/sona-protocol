@@ -50,7 +50,7 @@ contract SonaDirectMintTest is
 	}
 
 	function test_HashAndSignature() public {
-		ISonaRewardToken.TokenMetadatas memory bundles = _createBundles();
+		ISonaRewardToken.TokenMetadata[] memory bundles = _createBundles();
 
 		// ensure our hashing sequence conforms to the standard
 		// as implemented by viem in script/signTyped.ts
@@ -66,13 +66,13 @@ contract SonaDirectMintTest is
 	}
 
 	function test_AuthorizedSignaturesAllowMint() public {
-		ISonaRewardToken.TokenMetadatas memory bundles = _createBundles();
+		ISonaRewardToken.TokenMetadata[] memory bundles = _createBundles();
 		Signature memory signature = _signBundles(bundles);
 		directMint.mint(bundles, signature);
 	}
 
 	function test_UnauthorizedSignaturesRevertMint() public {
-		ISonaRewardToken.TokenMetadatas memory bundles = _createBundles();
+		ISonaRewardToken.TokenMetadata[] memory bundles = _createBundles();
 		Signature memory signature = _signBundles(bundles);
 		signature.v = 99;
 		vm.expectRevert(SonaAuthorizer_InvalidSignature.selector);
@@ -82,7 +82,7 @@ contract SonaDirectMintTest is
 	function _createBundles()
 		private
 		view
-		returns (ISonaRewardToken.TokenMetadatas memory bundles)
+		returns (ISonaRewardToken.TokenMetadata[] memory bundles)
 	{
 		ISonaRewardToken.TokenMetadata memory bundle0 = ISonaRewardToken
 			.TokenMetadata({
@@ -102,14 +102,14 @@ contract SonaDirectMintTest is
 		bundleArray[0] = bundle0;
 		bundleArray[1] = bundle1;
 
-		bundles = ISonaRewardToken.TokenMetadatas({ bundles: bundleArray });
+		bundles = bundleArray;
 	}
 
 	function _createSignedBundles()
 		private
 		view
 		returns (
-			ISonaRewardToken.TokenMetadatas memory bundles,
+			ISonaRewardToken.TokenMetadata[] memory metadatas,
 			Signature memory signature
 		)
 	{
@@ -119,6 +119,6 @@ contract SonaDirectMintTest is
 			0x269e17a9d13bfd1a68af563aa3b732cd1776bcd0dbc2904d0f3a3829d24caf95
 		);
 
-		bundles = _createBundles();
+		metadatas = _createBundles();
 	}
 }

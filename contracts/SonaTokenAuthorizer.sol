@@ -57,23 +57,23 @@ contract SonaTokenAuthorizer is ISonaTokenAuthorizer {
 	}
 
 	function _verify(
-		ISonaRewardToken.TokenMetadatas calldata _bundles,
+		ISonaRewardToken.TokenMetadata[] calldata _metadatas,
 		uint8 v,
 		bytes32 r,
 		bytes32 s
 	) internal view returns (bool valid) {
-		return _recoverAddress(_bundles, v, r, s) == _authorizer;
+		return _recoverAddress(_metadatas, v, r, s) == _authorizer;
 	}
 
 	function _recoverAddress(
-		ISonaRewardToken.TokenMetadatas calldata _bundles,
+		ISonaRewardToken.TokenMetadata[] calldata _metadatas,
 		uint8 v,
 		bytes32 r,
 		bytes32 s
 	) internal view returns (address recovered) {
 		// Note: we need to use `encodePacked` here instead of `encode`.
 		bytes32 digest = keccak256(
-			abi.encodePacked("\x19\x01", _DOMAIN_SEPARATOR, _hash(_bundles))
+			abi.encodePacked("\x19\x01", _DOMAIN_SEPARATOR, _hash(_metadatas))
 		);
 		recovered = ecrecover(digest, v, r, s);
 	}
@@ -93,12 +93,12 @@ contract SonaTokenAuthorizer is ISonaTokenAuthorizer {
 	}
 
 	function _hash(
-		ISonaRewardToken.TokenMetadatas calldata _tmd
+		ISonaRewardToken.TokenMetadata[] calldata _metadatas
 	) internal pure returns (bytes32) {
-		bytes32[] memory hashedBundles = new bytes32[](_tmd.bundles.length);
+		bytes32[] memory hashedBundles = new bytes32[](_metadatas.length);
 
-		for (uint i = 0; i < _tmd.bundles.length; i++) {
-			hashedBundles[i] = _hash(_tmd.bundles[i]);
+		for (uint i = 0; i < _metadatas.length; i++) {
+			hashedBundles[i] = _hash(_metadatas[i]);
 		}
 		return
 			keccak256(
