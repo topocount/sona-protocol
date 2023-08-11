@@ -23,7 +23,9 @@ build_optimized :; FOUNDRY_PROFILE=optimized forge build --extra-output-files ab
 build_optimized_size :; FOUNDRY_PROFILE=optimized forge build --sizes --extra-output-files abi
 
 # Test Coverage
-coverage :; forge coverage --report summary
+coverage :; doppler run -- forge coverage --report summary
+
+lcov:; doppler run -- forge coverage --report lcov && genhtml lcov.info --output-dir coverage
 
 # Gas report
 gas :; forge clean && forge test --gas-report

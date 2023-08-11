@@ -10,6 +10,7 @@
 | make build_optimized      | Builds repo with forge and IR                                                                                 |
 | make build_optimized_size | Builds repo with forge and IR and calculates contract sizes                                                   |
 | make coverage             | Gets test coverage for the entire repo                                                                        |
+| make lcov                 | Generate LCOV reports to view in the browser                                                                  |
 | make gas                  | Cleans foundry artifacts then generates a gas report to stdout                                                |
 | make gas_snapshot         | Creates a gas snapshot to .gas_snapshot                                                                       |
 | make scripts              | Makes scripts executable                                                                                      |
