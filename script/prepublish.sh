@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+rm -rf abi
 pnpm wagmi generate
 pnpm tsc
 mkdir -p abi/artifacts
