@@ -7,13 +7,13 @@ export default defineConfig({
 		foundry({
 			deployments: {
 				SonaRewardToken: {
-					11155111: "0x017CFf85774064F096a37214A1b3a423732932B3",
+					11155111: "0x92dCAfd7c5C402fb40F1dA12bE2911DF3C0727fd",
 				},
 				SonaReserveAuction: {
-					11155111: "0x9c2ad06D8379eD690bFc5B32DF6c1FF8d20e8f32",
+					11155111: "0x6D61a1EbB21a81EE1b8844Db6C45076aCe378ae0",
 				},
 				SonaRewards: {
-					11155111: "0x670478ED5a94A81C5295731Edf5D6A3AFa41fb71",
+					11155111: "0xD07eE77Aaf92bd070E0718D750E2E9E17ae7163C",
 				},
 			},
 			artifacts: "dist/artifacts",
