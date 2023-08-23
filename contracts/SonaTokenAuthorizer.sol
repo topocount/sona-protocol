@@ -37,8 +37,9 @@ contract SonaTokenAuthorizer is ISonaTokenAuthorizer {
 	/                         STATE
 	//////////////////////////////////////////////////////////////*/
 
-	// @dev the address of the authorizing signer
-	address internal _authorizer;
+	/// @dev the address of the authorizing signer;
+	/// initialized to 0xdead to prevent uninitialized authorization
+	address internal _authorizer = 0xdeaDDeADDEaDdeaDdEAddEADDEAdDeadDEADDEaD;
 
 	/*//////////////////////////////////////////////////////////////
 	/                    PRIVATE FUNCTIONS
