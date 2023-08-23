@@ -114,12 +114,6 @@ interface ISonaReserveAuction is ISonaTokenAuthorizer {
 		uint256 _reservePrice
 	) external;
 
-	function updateReserveAuctionPriceAndCurrency(
-		address _currency,
-		uint256 _tokenId,
-		uint256 _reservePrice
-	) external;
-
 	function createBid(uint256 _tokenId, uint256 _bidAmount) external payable;
 
 	function getAuction(uint256 _tokenId) external view returns (Auction memory);

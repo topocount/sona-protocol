@@ -275,32 +275,6 @@ contract SonaReserveAuction is
 		emit ReserveAuctionPriceUpdated({ tokenId: _tokenId, auction: auction });
 	}
 
-	/// @dev Public function to update the curency and reserve price of the auction
-	/// @param _currency The currency to be updated to
-	/// @param _tokenId The ID of the token.
-	/// @param _reservePrice The reserve price to be updated to
-	function updateReserveAuctionPriceAndCurrency(
-		address _currency,
-		uint256 _tokenId,
-		uint256 _reservePrice
-	) external onlySonaAdminOrApprovedTokenOperator(_tokenId) {
-		Auction storage auction = auctions[_tokenId];
-
-		// Can't settle an auction that can still be bidded on
-		if (auction.endingTime > block.timestamp) {
-			revert SonaReserveAuction_AuctionIsLive();
-		}
-
-		if (_reservePrice == 0) {
-			revert SonaReserveAuction_ReservePriceCannotBeZero();
-		}
-
-		auction.reservePrice = uint256(_reservePrice);
-		auction.currency = _currency;
-
-		emit ReserveAuctionPriceUpdated({ tokenId: _tokenId, auction: auction });
-	}
-
 	/// @notice set the payout address to `_payout` for auction with id `_tokenId`
 	/// @dev setting the address to address(0) resets the payout address to the seller's address
 	/// @param _tokenId The artist tokenId used as the identifier for the auction
