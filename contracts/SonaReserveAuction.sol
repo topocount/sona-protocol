@@ -261,7 +261,7 @@ contract SonaReserveAuction is
 	) external onlySonaAdminOrApprovedTokenOperator(_tokenId) {
 		Auction storage auction = auctions[_tokenId];
 
-		if (_reservePrice == 0) {
+		if (_reservePrice == 0 || auction.reservePrice == 0) {
 			revert SonaReserveAuction_ReservePriceCannotBeZero();
 		}
 
@@ -337,6 +337,11 @@ contract SonaReserveAuction is
 
 		// if current ending time is 0, a bid has not been placed yet
 		if (currentEndingTime == 0) {
+			// save ending time immediately to prevent unintended re-entrancy
+			unchecked {
+				currentEndingTime = block.timestamp + _AUCTION_DURATION;
+			}
+			auction.endingTime = currentEndingTime;
 			auction.currentBidder = payable(msg.sender);
 			auction.currentBidAmount = attemptedBid;
 
@@ -350,13 +355,6 @@ contract SonaReserveAuction is
 					)
 				) revert SonaReserveAuction_TransferFailed();
 			}
-
-			unchecked {
-				currentEndingTime = block.timestamp + _AUCTION_DURATION;
-			}
-			auction.endingTime = currentEndingTime;
-			auction.currentBidder = payable(msg.sender);
-			auction.currentBidAmount = attemptedBid;
 
 			//  else, a bid has been placed
 		} else {
