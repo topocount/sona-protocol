@@ -15,22 +15,22 @@ contract SonaTokenAuthorizer is ISonaTokenAuthorizer {
 	/                         CONSTANTS
 	//////////////////////////////////////////////////////////////*/
 
-	// @dev The signature of the Domain separator typehash
+	/// @dev The signature of the Domain separator typehash
 	bytes32 internal constant _EIP712DOMAIN_TYPEHASH =
 		keccak256(
 			"EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
 		);
-	// @dev The signature of the type that is hashed and prefixed to the TypedData payload
+	/// @dev The signature of the type that is hashed and prefixed to the TypedData payload
 	bytes32 internal constant _METADATABUNDLE_TYPEHASH =
 		keccak256(
 			"TokenMetadata(uint256 tokenId,address payout,string arweaveTxId)"
 		);
-	// @dev The signature of the type that is hashed and prefixed to the TypedData payload
+	/// @dev The signature of the type that is hashed and prefixed to the TypedData payload
 	bytes32 internal constant _METADATABUNDLES_TYPEHASH =
 		keccak256(
 			"TokenMetadatas(TokenMetadata[] bundles)TokenMetadata(uint256 tokenId,address payout,string arweaveTxId)"
 		);
-	// @dev part of the EIP-712 standard for structured data hashes
+	/// @dev part of the EIP-712 standard for structured data hashes
 	bytes32 internal _DOMAIN_SEPARATOR;
 
 	/*//////////////////////////////////////////////////////////////
