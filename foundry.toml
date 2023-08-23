@@ -17,6 +17,7 @@
 	optimizer_runs = 1000000
 
 [profile.swap]
+	libs = ['lib','lib_v7']
 	src = 'contracts_swap'
 	test = 'contracts_swap/test'
 	script = 'script_v7'
