@@ -91,8 +91,6 @@ interface ISonaRewardToken {
 
 	function updateArweaveTxId(uint256 _tokenId, string calldata _TxId) external;
 
-	function burnRewardToken(uint256 _tokenId) external;
-
 	function tokenURI(uint256 _tokenId) external view returns (string memory);
 
 	function getRewardTokenMetadata(

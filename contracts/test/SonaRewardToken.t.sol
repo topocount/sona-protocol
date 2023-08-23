@@ -94,39 +94,6 @@ contract SonaRewardTokenTest is Util, ERC721Holder, SonaRewardToken {
 		assertEq(rewardToken.tokenURI(_tokenId), "ar://Qmabcdefghijklmnopqrstud");
 	}
 
-	function test_BurnRewardToken() public {
-		string memory cid = "Qmabcdefghijklmnopqrstuv";
-
-		rewardToken.mint(rewardTokenRecipient, _tokenId, cid, zeroSplitsAddr);
-
-		vm.prank(rewardTokenRecipient);
-		rewardToken.burnRewardToken(_tokenId);
-
-		vm.expectRevert("NOT_MINTED");
-		rewardToken.ownerOf(_tokenId);
-	}
-
-	function test_CreatorBurnCollectorTokenFails() public {
-		string memory cid = "Qmabcdefghijklmnopqrstuv";
-
-		rewardToken.mint(rewardTokenRecipient, _tokenId, cid, zeroSplitsAddr);
-
-		vm.expectRevert(ISonaRewardToken.SonaRewardToken_Unauthorized.selector);
-		rewardToken.burnRewardToken(_tokenId);
-	}
-
-	function testFuzz_randomBurnerFails(address _collectorBurner) public {
-		vm.assume(_collectorBurner != rewardTokenRecipient);
-
-		string memory cid = "Qmabcdefghijklmnopqrstuv";
-
-		rewardToken.mint(rewardTokenRecipient, _tokenId, cid, zeroSplitsAddr);
-
-		vm.prank(_collectorBurner);
-		vm.expectRevert(ISonaRewardToken.SonaRewardToken_Unauthorized.selector);
-		rewardToken.burnRewardToken(_tokenId);
-	}
-
 	function test_MintSucceeds() public {
 		string memory cid = "Qmabcdefghijklmnopqrstuv";
 

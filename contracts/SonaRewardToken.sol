@@ -39,7 +39,7 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 		_;
 	}
 
-	/// @dev Modifier that ensures the tokenId has been minted and not burned
+	/// @dev Modifier that ensures the tokenId has been minted
 	modifier checkExists(uint256 _tokenId) {
 		if (tokenIdExists(_tokenId)) {
 			_;
@@ -129,18 +129,6 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 		rewardTokens[_tokenId].payout = _payout;
 
 		emit PayoutAddressUpdated(_tokenId, _payout);
-	}
-
-	/// @dev Removes a RewardToken from the protocol, burning the NFT and striking the data from on-chain memory
-	/// @param _tokenId The ID of the token that will be deleted
-	function burnRewardToken(
-		uint256 _tokenId
-	) external onlyTokenHolder(_tokenId) {
-		delete rewardTokens[_tokenId];
-
-		_burn(_tokenId);
-
-		emit RewardTokenRemoved({ tokenId: _tokenId });
 	}
 
 	/// @dev Get a RewardToken's metadata from IPFS
