@@ -153,87 +153,116 @@ contract SonaTestRewards is Util, SonaRewards, SplitHelpers {
 		rewards.invalidateRoot(1);
 	}
 
-	function testFuzz_ClaimManyRewards(uint8 _treeCount, uint256 _amount) public {
-		// things don't really scale well beyond 15k leaves, as far as gas
-		// costs or multiple week claims
-		//uint256 _leafCount = 20_000;
-		uint256 _leafCount = 200;
-		vm.assume(_treeCount < 10);
-		//uint256 _leafCount = 75_000;
-		//vm.assume(_treeCount < 2);
-		vm.assume(_amount < _treeCount + _leafCount);
-		vm.pauseGasMetering();
-		uint256 tokenId = 2;
-		uint256 indexToClaim = 2;
-		uint256[] memory rootIds = new uint256[](_treeCount);
-		uint256[] memory amounts = new uint256[](_treeCount);
-		bytes32[][] memory proofs = new bytes32[][](_treeCount);
-
-		bytes32[] memory leaves = new bytes32[](_leafCount);
-
-		uint256 allowance;
-		for (uint64 i = 0; i < _treeCount; i++) {
-			for (uint256 k = 0; k < _leafCount; k++) {
-				// when will solidity get matrix math functionality?
-				allowance += _amount + i + k;
-				leaves[k] = keccak256(
-					bytes.concat(
-						keccak256(abi.encode(tokenId, _amount + i + k, i, i + 1))
-					)
-				);
-			}
-			mockUSDC.mint(address(this), allowance);
-			mockUSDC.approve(address(rewards), allowance);
-			bytes32 root = m.getRoot(leaves);
-			vm.prank(rewardAdmin);
-			rewards.addRoot(root, i, i + 1);
-			rootIds[i] = rewards.lastRootId();
-			proofs[i] = m.getProof(leaves, indexToClaim);
-			amounts[i] = _amount + i + indexToClaim;
-		}
-
-		vm.resumeGasMetering();
-		vm.prank(rewardHolder);
-		rewards.claimRewards(tokenId, rootIds, proofs, amounts);
-	}
-
 	function test_ClaimRewards() public {
 		// can claim ERC20 funds
 		(
-			uint256 tokenId,
+			uint256[] memory tokenIds,
 			uint256[] memory rootIds,
 			bytes32[][] memory proofs,
 			uint256[] memory amounts
 		) = _setUpClaims(rewards);
 		vm.prank(rewardHolder);
 		vm.expectEmit(true, true, true, true, address(rewards));
-		emit RewardsClaimed(tokenId, rewardHolder, rootIds[0], amounts[0]);
+		emit RewardsClaimed(tokenIds[1], rewardHolder, rootIds[1], amounts[1]);
+		/*
 		vm.expectEmit(true, true, true, true, address(rewards));
-		emit RewardsClaimed(tokenId, rewardHolder, rootIds[1], amounts[1]);
+		emit RewardsClaimed(tokenIds[1], rewardHolder, rootIds[1], amounts[1]);
+		*/
 		vm.expectEmit(true, true, false, true, address(mockUSDC));
-		emit Transfer(address(this), rewardHolder, amounts[0] + amounts[1]);
-		rewards.claimRewards(tokenId, rootIds, proofs, amounts);
+		emit Transfer(address(this), rewardHolder, amounts[1]);
+		rewards.claimRewards(tokenIds[1], rootIds[1], proofs[1], amounts[1]);
 
+		// revert on the attempt to claim a prior distribution
+		vm.prank(rewardHolder);
+		vm.expectRevert(InvalidClaimAttempt.selector);
+		rewards.claimRewards(tokenIds[0], rootIds[0], proofs[0], amounts[0]);
 		//revert on multiple claim attempts on the same roots
 		vm.prank(rewardHolder);
 		vm.expectRevert(InvalidClaimAttempt.selector);
-		rewards.claimRewards(tokenId, rootIds, proofs, amounts);
+		rewards.claimRewards(tokenIds[1], rootIds[1], proofs[1], amounts[1]);
 
 		// can claim WETH funds
 		assertEq(rewardHolder.balance, 0);
 		assertEq(address(mockWeth).balance, 0);
-		(tokenId, rootIds, proofs, amounts) = _setUpClaims(wEthRewards);
-		payable(address(mockWeth)).transfer(amounts[0] + amounts[1]);
-		assertEq(address(mockWeth).balance, amounts[0] + amounts[1]);
+		(tokenIds, rootIds, proofs, amounts) = _setUpClaims(wEthRewards);
+		payable(address(mockWeth)).transfer(amounts[1]);
+		assertEq(address(mockWeth).balance, amounts[1]);
 		vm.expectEmit(true, true, true, true, address(wEthRewards));
-		emit RewardsClaimed(tokenId, rewardHolder, rootIds[0], amounts[0]);
+		emit RewardsClaimed(tokenIds[1], rewardHolder, rootIds[1], amounts[1]);
+		/*
 		vm.expectEmit(true, true, true, true, address(wEthRewards));
-		emit RewardsClaimed(tokenId, rewardHolder, rootIds[1], amounts[1]);
+		emit RewardsClaimed(tokenIds[1], rewardHolder, rootIds[1], amounts[1]);
+		*/
 		vm.expectEmit(true, true, false, true, address(mockWeth));
-		emit Transfer(address(0), address(wEthRewards), amounts[0] + amounts[1]);
+		emit Transfer(address(0), address(wEthRewards), amounts[1]);
 		vm.prank(rewardHolder);
-		wEthRewards.claimRewards(tokenId, rootIds, proofs, amounts);
-		assertEq(rewardHolder.balance, amounts[0] + amounts[1]);
+		wEthRewards.claimRewards(tokenIds[1], rootIds[1], proofs[1], amounts[1]);
+		assertEq(rewardHolder.balance, amounts[1]);
+	}
+
+	function test_ClaimRewardsSequential() public {
+		// can claim ERC20 funds
+		(
+			uint256[] memory tokenIds,
+			uint256[] memory rootIds,
+			bytes32[][] memory proofs,
+			uint256[] memory amounts
+		) = _setUpClaims(rewards);
+		vm.prank(rewardHolder);
+		vm.expectEmit(true, true, true, true, address(rewards));
+		emit RewardsClaimed(tokenIds[0], rewardHolder, rootIds[0], amounts[0]);
+		vm.expectEmit(true, true, false, true, address(mockUSDC));
+		emit Transfer(address(this), rewardHolder, amounts[0]);
+		rewards.claimRewards(tokenIds[0], rootIds[0], proofs[0], amounts[0]);
+
+		// revert on the attempt to claim the same distribution again
+		vm.prank(rewardHolder);
+		vm.expectRevert(InvalidClaimAttempt.selector);
+		rewards.claimRewards(tokenIds[0], rootIds[0], proofs[0], amounts[0]);
+
+		vm.expectEmit(true, true, true, true, address(rewards));
+		emit RewardsClaimed(
+			tokenIds[1],
+			rewardHolder,
+			rootIds[1],
+			amounts[1] - amounts[0]
+		);
+		vm.expectEmit(true, true, false, true, address(mockUSDC));
+		emit Transfer(address(this), rewardHolder, amounts[1] - amounts[0]);
+		vm.prank(rewardHolder);
+		rewards.claimRewards(tokenIds[1], rootIds[1], proofs[1], amounts[1]);
+
+		//revert on multiple claim attempts on the same roots
+		vm.prank(rewardHolder);
+		vm.expectRevert(InvalidClaimAttempt.selector);
+		rewards.claimRewards(tokenIds[1], rootIds[1], proofs[1], amounts[1]);
+
+		// can claim WETH funds
+		assertEq(rewardHolder.balance, 0);
+		assertEq(address(mockWeth).balance, 0);
+		(tokenIds, rootIds, proofs, amounts) = _setUpClaims(wEthRewards);
+		payable(address(mockWeth)).transfer(amounts[1]);
+		assertEq(address(mockWeth).balance, amounts[1]);
+		vm.expectEmit(true, true, true, true, address(wEthRewards));
+		emit RewardsClaimed(tokenIds[0], rewardHolder, rootIds[0], amounts[0]);
+		vm.expectEmit(true, true, false, true, address(mockWeth));
+		emit Transfer(address(0), address(wEthRewards), amounts[0]);
+		vm.prank(rewardHolder);
+		wEthRewards.claimRewards(tokenIds[0], rootIds[0], proofs[0], amounts[0]);
+		assertEq(rewardHolder.balance, amounts[0]);
+
+		vm.expectEmit(true, true, true, true, address(wEthRewards));
+		emit RewardsClaimed(
+			tokenIds[1],
+			rewardHolder,
+			rootIds[1],
+			amounts[1] - amounts[0]
+		);
+		vm.expectEmit(true, true, false, true, address(mockWeth));
+		emit Transfer(address(0), address(wEthRewards), amounts[1] - amounts[0]);
+		vm.prank(rewardHolder);
+		wEthRewards.claimRewards(tokenIds[1], rootIds[1], proofs[1], amounts[1]);
+		assertEq(rewardHolder.balance, amounts[1]);
 	}
 
 	function test_ClaimRewardsToSplit() public {
@@ -242,40 +271,36 @@ contract SonaTestRewards is Util, SonaRewards, SplitHelpers {
 		mockRewardsToken.setSplitAddr(splitsAddress);
 		// can claim ERC20 funds
 		(
-			uint256 tokenId,
+			uint256[] memory tokenIds,
 			uint256[] memory rootIds,
 			bytes32[][] memory proofs,
 			uint256[] memory amounts
 		) = _setUpClaims(rewards);
 		vm.prank(rewardHolder);
 		vm.expectEmit(true, true, true, true, address(rewards));
-		emit RewardsClaimed(tokenId, rewardHolder, rootIds[0], amounts[0]);
-		vm.expectEmit(true, true, true, true, address(rewards));
-		emit RewardsClaimed(tokenId, rewardHolder, rootIds[1], amounts[1]);
+		emit RewardsClaimed(tokenIds[1], rewardHolder, rootIds[1], amounts[1]);
 		vm.expectEmit(true, true, false, true, address(mockUSDC));
-		emit Transfer(address(this), splitsAddress, amounts[0] + amounts[1]);
-		rewards.claimRewards(tokenId, rootIds, proofs, amounts);
+		emit Transfer(address(this), splitsAddress, amounts[1]);
+		rewards.claimRewards(tokenIds[1], rootIds[1], proofs[1], amounts[1]);
 
 		//revert on multiple claim attempts on the same roots
 		vm.prank(rewardHolder);
 		vm.expectRevert(InvalidClaimAttempt.selector);
-		rewards.claimRewards(tokenId, rootIds, proofs, amounts);
+		rewards.claimRewards(tokenIds[1], rootIds[1], proofs[1], amounts[1]);
 
 		// can claim WETH funds
 		assertEq(rewardHolder.balance, 0);
 		assertEq(address(mockWeth).balance, 0);
-		(tokenId, rootIds, proofs, amounts) = _setUpClaims(wEthRewards);
+		(tokenIds, rootIds, proofs, amounts) = _setUpClaims(wEthRewards);
 		payable(address(mockWeth)).transfer(amounts[0] + amounts[1]);
 		assertEq(address(mockWeth).balance, amounts[0] + amounts[1]);
 		vm.expectEmit(true, true, true, true, address(wEthRewards));
-		emit RewardsClaimed(tokenId, rewardHolder, rootIds[0], amounts[0]);
-		vm.expectEmit(true, true, true, true, address(wEthRewards));
-		emit RewardsClaimed(tokenId, rewardHolder, rootIds[1], amounts[1]);
+		emit RewardsClaimed(tokenIds[1], rewardHolder, rootIds[1], amounts[1]);
 		vm.expectEmit(true, true, false, true, address(mockWeth));
-		emit Transfer(address(0), address(wEthRewards), amounts[0] + amounts[1]);
+		emit Transfer(address(0), address(wEthRewards), amounts[1]);
 		vm.prank(rewardHolder);
-		wEthRewards.claimRewards(tokenId, rootIds, proofs, amounts);
-		assertEq(splitsAddress.balance, amounts[0] + amounts[1]);
+		wEthRewards.claimRewards(tokenIds[1], rootIds[1], proofs[1], amounts[1]);
+		assertEq(splitsAddress.balance, amounts[1]);
 	}
 
 	function test_ClaimRewardsAndDistributeToSplit() public {
@@ -287,33 +312,26 @@ contract SonaTestRewards is Util, SonaRewards, SplitHelpers {
 		mockRewardsToken.setSplitAddr(payable(split));
 		// can claim ERC20 funds
 		(
-			uint256 tokenId,
+			uint256[] memory tokenIds,
 			uint256[] memory rootIds,
 			bytes32[][] memory proofs,
 			uint256[] memory amounts
 		) = _setUpClaims(rewards);
 		vm.prank(rewardHolder);
 		vm.expectEmit(true, true, true, true, address(rewards));
-		emit RewardsClaimed(tokenId, rewardHolder, rootIds[0], amounts[0]);
-		vm.expectEmit(true, true, true, true, address(rewards));
-		emit RewardsClaimed(tokenId, rewardHolder, rootIds[1], amounts[1]);
+		emit RewardsClaimed(tokenIds[1], rewardHolder, rootIds[1], amounts[1]);
 		vm.expectEmit(true, true, false, true, address(mockUSDC));
 		emit Transfer(address(splitMainImpl), accounts[0], amounts[0] - 1);
 		vm.expectEmit(true, true, false, true, address(mockUSDC));
-		emit Transfer(address(splitMainImpl), accounts[1], amounts[1] - 1);
+		emit Transfer(address(splitMainImpl), accounts[1], amounts[0] - 1);
 		rewards.claimRewardsAndDistributePayout(
-			tokenId,
-			rootIds,
-			proofs,
-			amounts,
+			tokenIds[1],
+			rootIds[1],
+			proofs[1],
+			amounts[1],
 			accounts,
 			percentAllocations
 		);
-
-		//revert on multiple claim attempts on the same roots
-		vm.prank(rewardHolder);
-		vm.expectRevert(InvalidClaimAttempt.selector);
-		rewards.claimRewards(tokenId, rootIds, proofs, amounts);
 
 		// TODO set up tests for WETH claims
 		/*
@@ -347,23 +365,23 @@ contract SonaTestRewards is Util, SonaRewards, SplitHelpers {
 		vm.assume(nonHolder != rewardHolder);
 		vm.assume(nonHolder != address(0));
 		(
-			uint256 tokenId,
+			uint256[] memory tokenIds,
 			uint256[] memory rootIds,
 			bytes32[][] memory proofs,
 			uint256[] memory amounts
 		) = _setUpClaims(rewards);
 		vm.startPrank(nonHolder);
 		vm.expectRevert(
-			abi.encodeWithSelector(ClaimantNotHolder.selector, nonHolder, tokenId)
+			abi.encodeWithSelector(ClaimantNotHolder.selector, nonHolder, tokenIds[1])
 		);
-		rewards.claimRewards(tokenId, rootIds, proofs, amounts);
+		rewards.claimRewards(tokenIds[1], rootIds[1], proofs[1], amounts[1]);
 	}
 
 	function test_RevertOnTransferError() public {
 		ERC20NoReturnMock mockBadRewardToken = new ERC20NoReturnMock();
 		ERC20ReturnFalseMock mockFalseRewardToken = new ERC20ReturnFalseMock();
 		(
-			uint256 tokenId,
+			uint256[] memory tokenIds,
 			uint256[] memory rootIds,
 			bytes32[][] memory proofs,
 			uint256[] memory amounts
@@ -381,7 +399,7 @@ contract SonaTestRewards is Util, SonaRewards, SplitHelpers {
 		// expect to revert with our error when a transfer returns `false`
 		vm.prank(rewardHolder);
 		vm.expectRevert(RewardTransferFailed.selector);
-		rewards.claimRewards(tokenId, rootIds, proofs, amounts);
+		rewards.claimRewards(tokenIds[1], rootIds[1], proofs[1], amounts[1]);
 
 		vm.prank(rewardAdmin);
 		rewards.updateIntegrations(
@@ -396,7 +414,7 @@ contract SonaTestRewards is Util, SonaRewards, SplitHelpers {
 		// expect to revert without a message when a transfer returns empty
 		vm.prank(rewardHolder);
 		vm.expectRevert();
-		rewards.claimRewards(tokenId, rootIds, proofs, amounts);
+		rewards.claimRewards(tokenIds[1], rootIds[1], proofs[1], amounts[1]);
 	}
 
 	function test_ClaimLookup() public {
@@ -428,7 +446,7 @@ contract SonaTestRewards is Util, SonaRewards, SplitHelpers {
 	)
 		private
 		returns (
-			uint256 tokenId,
+			uint256[] memory tokenIds,
 			uint256[] memory rootIds,
 			bytes32[][] memory proofs,
 			uint256[] memory amounts
@@ -444,7 +462,7 @@ contract SonaTestRewards is Util, SonaRewards, SplitHelpers {
 		);
 		vm.prank(rewardAdmin);
 		_rewards.addRoot(
-			0x24592ad25cf43069048365e7b15d4e82dfd50b2d00fa1efc860068a7b186ec39,
+			0xea89cf769f3d1f4180eb0c0a4d7947e5a9072f0acf2813443258023c88c66b2b,
 			1,
 			2
 		);
@@ -460,11 +478,14 @@ contract SonaTestRewards is Util, SonaRewards, SplitHelpers {
 			0xd6391653482705ca5b84440c9f76de84397f286e8890d865c89ddb518fe0b0a9
 		);
 
-		bytes32[] memory proof2 = new bytes32[](1);
+		bytes32[] memory proof2 = new bytes32[](2);
 		proof2[0] = bytes32(
-			0x5cf095043a988837ac9bb07020ab3ead4c47fcebba11b89e94e57dd8b6af4ce4
+			0x43e2d6de81f917313048be5d70cefd6f944398c97f119427aba9c09f9ef0e566
 		);
 
+		proof2[1] = bytes32(
+			0xd4ab46fb2fcd72329eb48992ccf5cd9fe3c6ad1d4298dc833c896e78dab1af34
+		);
 		proofs = new bytes32[][](2);
 		proofs[0] = proof;
 		proofs[1] = proof2;
@@ -473,11 +494,13 @@ contract SonaTestRewards is Util, SonaRewards, SplitHelpers {
 
 		amounts = new uint256[](2);
 		amounts[0] = amount;
-		amounts[1] = amount;
+		amounts[1] = amount + amount;
 
 		mockUSDC.mint(address(this), amount * 2);
 		mockUSDC.approve(address(rewards), amount * 2);
 
-		tokenId = 2;
+		tokenIds = new uint256[](2);
+		tokenIds[0] = 2;
+		tokenIds[1] = 2;
 	}
 }

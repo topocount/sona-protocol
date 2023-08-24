@@ -1,16 +1,25 @@
 {
   "format": "standard-v1",
   "tree": [
-    "0x24592ad25cf43069048365e7b15d4e82dfd50b2d00fa1efc860068a7b186ec39",
-    "0x5cf095043a988837ac9bb07020ab3ead4c47fcebba11b89e94e57dd8b6af4ce4",
-    "0x887859d01ae4c32c3c28d458a2ce48a137746bb1cde16ffc8de01c31defa34ea",
-    "0x67fc88e4e5d7e97f4a5424e4fb6ae219ff3561d81f35baf522b29cc8ac326b3a",
-    "0x663b878be3a823b71558597c1deacbdef8c0ffcef2a64d6b78ca59c1db8d1c32"
+    "0xea89cf769f3d1f4180eb0c0a4d7947e5a9072f0acf2813443258023c88c66b2b",
+    "0x81fce563822e98d2d091d46b9a254b7af802c246b3581cbe0b24d8562b9c5511",
+    "0xd4ab46fb2fcd72329eb48992ccf5cd9fe3c6ad1d4298dc833c896e78dab1af34",
+    "0xa6bdb555abeb3a83db2a6424807cca62651966d81f4ed645926217f5bc159776",
+    "0x43e2d6de81f917313048be5d70cefd6f944398c97f119427aba9c09f9ef0e566"
   ],
   "values": [
     {
       "value": [
         "0x1",
+        "10000000000000000000",
+        1,
+        2
+      ],
+      "treeIndex": 2
+    },
+    {
+      "value": [
+        "0x2",
         "5000000000000000000",
         1,
         2
@@ -19,17 +28,8 @@
     },
     {
       "value": [
-        "0x2",
-        "2500000000000000000",
-        1,
-        2
-      ],
-      "treeIndex": 2
-    },
-    {
-      "value": [
         "0x3",
-        "1250000000000000000",
+        "2500000000000000000",
         1,
         2
       ],

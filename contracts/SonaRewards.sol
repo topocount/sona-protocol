@@ -43,7 +43,7 @@ contract SonaRewards is Initializable, SonaAdmin {
 
 	/// @notice the unix epoch timestamp representing the end of last period rewards were claimed for a given tokenId
 	/// @dev this value can only monotonically increase, in order to prevent double claims
-	mapping(uint256 => uint64) public dateTimeLastClaimed;
+	mapping(uint256 => uint256) public amountClaimed;
 
 	/*//////////////////////////////////////////////////////////////
 		STATE
@@ -213,29 +213,37 @@ contract SonaRewards is Initializable, SonaAdmin {
 		);
 	}
 
-	/// @notice collect tokens by presenting valid proofs and owning token number `_tokenId`
+	/// @notice collect tokens by presenting valid proofs and owning SONA number `_tokenId`
 	/// @param _tokenId The SonaRewardToken for which rewards are being claimed
-	/// @param _rootIds the index numbers of the roots to prove against
-	/// @param _proofs the proofs for each respective root
-	/// @param _amounts the amounts to be claimed from each respective root
+	/// @param _rootId the index number of the root to prove against
+	/// @param _proofs the proofs to present with the claim
+	/// @param _amount the quantity of tokens to be claimed
 	function claimRewards(
 		uint256 _tokenId,
-		uint256[] calldata _rootIds,
-		bytes32[][] calldata _proofs,
-		uint256[] calldata _amounts
+		uint256 _rootId,
+		bytes32[] calldata _proofs,
+		uint256 _amount
 	) public {
-		_claimRewards(_tokenId, _rootIds, _proofs, _amounts);
+		_claimRewardsOne(_tokenId, _rootId, _proofs, _amount);
 	}
 
+	/// @notice collect rewards for SONA number `_tokenId` and distribute through a split
+	/// @param _tokenId The SonaRewardToken for which rewards are being claimed
+	/// @param _rootId the index number of the root to prove against
+	/// @param _proofs the proofs to present with the claim
+	/// @param _amount the quantity of tokens to be claimed
+	/// @param _accounts the addresses in a split
+	/// @param _percentAllocations the shares each account has in a split
 	function claimRewardsAndDistributePayout(
 		uint256 _tokenId,
-		uint256[] calldata _rootIds,
-		bytes32[][] calldata _proofs,
-		uint256[] calldata _amounts,
+		uint256 _rootId,
+		bytes32[] calldata _proofs,
+		uint256 _amount,
 		address[] calldata _accounts,
 		uint32[] calldata _percentAllocations
 	) public {
-		_claimRewards(_tokenId, _rootIds, _proofs, _amounts);
+		_claimRewardsOne(_tokenId, _rootId, _proofs, _amount);
+
 		address payable payout = _getPayoutAddress(_tokenId, msg.sender);
 
 		if (address(_paymentToken).isZero()) {
@@ -277,50 +285,43 @@ contract SonaRewards is Initializable, SonaAdmin {
 	/*//////////////////////////////////////////////////////////////
 		Internal Functions
 	//////////////////////////////////////////////////////////////*/
-	function _claimRewardsOne(
+	function _verifyClaim(
 		uint256 _tokenId,
 		uint256 _rootId,
 		bytes32[] calldata _proof,
 		uint256 _amount
-	) internal {
+	) internal returns (uint256 transferAmount) {
 		RewardRoot storage root = rewardRoots[_rootId];
-		if (root.start < dateTimeLastClaimed[_tokenId])
-			revert InvalidClaimAttempt();
+		uint256 amountClaimedPrior = amountClaimed[_tokenId];
+		if (_amount <= amountClaimedPrior) revert InvalidClaimAttempt();
 		bytes32 leaf = keccak256(
 			bytes.concat(
 				keccak256(abi.encode(_tokenId, _amount, root.start, root.end))
 			)
 		);
 		if (_proof.verify(root.hash, leaf)) {
-			dateTimeLastClaimed[_tokenId] = root.end; // prevent reentrancy by updating this before transfer
-			emit RewardsClaimed(_tokenId, msg.sender, _rootId, _amount);
-			return;
+			amountClaimed[_tokenId] = _amount; // prevent reentrancy by updating this before transfer
+			transferAmount = _amount - amountClaimedPrior;
+			emit RewardsClaimed(_tokenId, msg.sender, _rootId, transferAmount);
+			return transferAmount;
 		}
 		revert InvalidProof();
 	}
 
 	/// @notice collect tokens by presenting valid proofs and owning token number `_tokenId`
 	/// @param _tokenId The SonaRewardToken for which rewards are being claimed
-	/// @param _rootIds the index numbers of the roots to prove against
+	/// @param _rootId the index numbers of the roots to prove against
 	/// @param _proofs the proofs for each respective root
-	/// @param _amounts the amounts to be claimed from each respective root
-	function _claimRewards(
+	/// @param _amount the amounts to be claimed from each respective root
+	function _claimRewardsOne(
 		uint256 _tokenId,
-		uint256[] calldata _rootIds,
-		bytes32[][] calldata _proofs,
-		uint256[] calldata _amounts
+		uint256 _rootId,
+		bytes32[] calldata _proofs,
+		uint256 _amount
 	) internal {
 		if (_sonaRewardToken.ownerOf(_tokenId) != msg.sender)
 			revert ClaimantNotHolder(msg.sender, _tokenId);
-		if (_rootIds.length != _proofs.length || _rootIds.length != _amounts.length)
-			revert ClaimLengthMismatch();
-
-		uint256 transferAmount;
-		uint256 _rootIdsArrayLength = _rootIds.length;
-		for (uint256 i = 0; i < _rootIdsArrayLength; i++) {
-			_claimRewardsOne(_tokenId, _rootIds[i], _proofs[i], _amounts[i]);
-			transferAmount += _amounts[i];
-		}
+		uint256 transferAmount = _verifyClaim(_tokenId, _rootId, _proofs, _amount);
 		address payoutAddress = _getPayoutAddress(_tokenId, msg.sender);
 		if (address(_paymentToken).isNotZero()) {
 			if (
