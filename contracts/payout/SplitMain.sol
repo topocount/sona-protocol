@@ -8,15 +8,16 @@ import { IERC20Upgradeable as IERC20 } from "openzeppelin-upgradeable/token/ERC2
 import { SafeTransferLib } from "solady/utils/SafeTransferLib.sol";
 import { IWETH } from "../interfaces/IWETH.sol";
 import { ISonaSwap } from "lib/common/ISonaSwap.sol";
+import { Ownable } from "solady/auth/Ownable.sol";
 
 /// @title SplitMain
-/// @author 0xSplits <will@0xSplits.xyz>
+/// @author @SonaEngineering; forked from 0xSplits <will@0xSplits.xyz>
 /// @notice A composable and gas-efficient protocol for deploying splitter contracts.
 /// @dev Split recipients, ownerships, and keeper fees are stored onchain as calldata & re-passed as args / validated
 /// via hashing when needed. Each split gets its own address & proxy for maximum composability with other contracts onchain.
 /// For these proxies, we extended EIP-1167 Minimal Proxy Contract to avoid `DELEGATECALL` inside `receive()` to accept
 /// hard gas-capped `sends` & `transfers`.
-contract SplitMain is ISplitMain {
+contract SplitMain is ISplitMain, Ownable {
 	using SafeTransferLib for address;
 	using SafeTransferLib for IERC20;
 
@@ -24,7 +25,7 @@ contract SplitMain is ISplitMain {
 
 	/// @notice Unauthorized sender `sender`
 	/// @param sender Transaction sender
-	error Unauthorized(address sender);
+	error UnauthorizedController(address sender);
 	/// @notice Invalid number of accounts `accountsLength`, must have at least 2
 	/// @param accountsLength Length of accounts array
 	error InvalidSplit__TooFewAccounts(uint256 accountsLength);
@@ -105,7 +106,7 @@ contract SplitMain is ISplitMain {
 	/// @param split Address to check for control
 	modifier onlySplitController(address split) {
 		if (msg.sender != _splits[split].controller)
-			revert Unauthorized(msg.sender);
+			revert UnauthorizedController(msg.sender);
 		_;
 	}
 
@@ -113,7 +114,7 @@ contract SplitMain is ISplitMain {
 	/// @param split Address to check for new potential control
 	modifier onlySplitNewPotentialController(address split) {
 		if (msg.sender != _splits[split].newPotentialController)
-			revert Unauthorized(msg.sender);
+			revert UnauthorizedController(msg.sender);
 		_;
 	}
 
@@ -142,6 +143,8 @@ contract SplitMain is ISplitMain {
 		WETH9 = _weth;
 		USDC = _usdc;
 		swap = _swap;
+
+		_initializeOwner(msg.sender);
 	}
 
 	// FUNCTIONS
@@ -303,6 +306,12 @@ contract SplitMain is ISplitMain {
 			}
 			emit Withdrawal(account, ethAmount, tokens, tokenAmounts);
 		}
+	}
+
+	/// @notice the owner updates the SonaSwap implementation to `_newSwap`
+	/// @param _newSwap the new ISonaSwapImplementation to be utilized
+	function updateSwap(ISonaSwap _newSwap) external onlyOwner {
+		swap = _newSwap;
 	}
 
 	/// FUNCTIONS - VIEWS

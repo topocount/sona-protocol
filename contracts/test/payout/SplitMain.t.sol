@@ -52,7 +52,10 @@ contract SonaTestSplits is SplitHelpers {
 		splitMainImpl.updateSplit(split, accounts, amounts);
 
 		vm.expectRevert(
-			abi.encodeWithSelector(SplitMain.Unauthorized.selector, accounts[1])
+			abi.encodeWithSelector(
+				SplitMain.UnauthorizedController.selector,
+				accounts[1]
+			)
 		);
 		hoax(accounts[1]);
 		splitMainImpl.updateSplit(split, accounts, amounts);
