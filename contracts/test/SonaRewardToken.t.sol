@@ -68,7 +68,7 @@ contract SonaRewardTokenTest is Util, ERC721Holder, SonaRewardToken {
 		bundles[0] = bundle;
 		vm.prank(badMinter);
 		vm.expectRevert();
-		rewardToken.mintMulipleToArtist(bundles);
+		rewardToken.mintMultipleToArtist(bundles);
 	}
 
 	function test_initializedParams() public {
@@ -129,7 +129,7 @@ contract SonaRewardTokenTest is Util, ERC721Holder, SonaRewardToken {
 		bundles[0] = bundle0;
 		bundles[1] = bundle1;
 
-		rewardToken.mintMulipleToArtist(bundles);
+		rewardToken.mintMultipleToArtist(bundles);
 
 		ISonaRewardToken.RewardToken memory collectorData = rewardToken
 			.getRewardTokenMetadata((0x25 << 96) | 1);

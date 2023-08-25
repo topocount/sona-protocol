@@ -96,7 +96,7 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 	/// @notice auth-guarded mint function
 	/// @dev This is for artists to batch mint existing library to the protocol
 	/// @param _metadatas The array tokens to be minted
-	function mintMulipleToArtist(
+	function mintMultipleToArtist(
 		TokenMetadata[] calldata _metadatas
 	) external onlySonaMinter {
 		for (uint i = 0; i < _metadatas.length; i++) {

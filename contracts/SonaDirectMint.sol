@@ -60,6 +60,6 @@ contract SonaDirectMint is SonaTokenAuthorizer {
 		ISonaRewardToken.TokenMetadata[] calldata _metadatas,
 		Signature calldata _signature
 	) external bundlesAuthorized(_metadatas, _signature) {
-		token.mintMulipleToArtist(_metadatas);
+		token.mintMultipleToArtist(_metadatas);
 	}
 }

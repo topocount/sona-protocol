@@ -87,7 +87,7 @@ interface ISonaRewardToken {
 		address payable _payout
 	) external;
 
-	function mintMulipleToArtist(TokenMetadata[] calldata _metadatas) external;
+	function mintMultipleToArtist(TokenMetadata[] calldata _metadatas) external;
 
 	function updateArweaveTxId(uint256 _tokenId, string calldata _TxId) external;
 
