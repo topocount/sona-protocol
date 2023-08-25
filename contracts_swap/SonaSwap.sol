@@ -7,15 +7,15 @@ import { TransferHelper } from "v3-periphery/libraries/TransferHelper.sol";
 
 import { AggregatorV3Interface } from "chainlink/contracts/src/v0.7/interfaces/AggregatorV3Interface.sol";
 import { IWETH } from "./interfaces/IWETH.sol";
-import {ISonaSwap} from "lib/common/ISonaSwap.sol";
+import { ISonaSwap } from "lib/common/ISonaSwap.sol";
 
 contract SonaSwap is ISonaSwap {
 	uint8 constant USDC_DECIMALS = 6;
 
-	AggregatorV3Interface internal dataFeed;
-	ISwapRouter router;
-	address USDC;
-	IWETH WEth;
+	AggregatorV3Interface public dataFeed;
+	ISwapRouter public router;
+	address public USDC;
+	IWETH public WEth;
 
 	constructor(
 		AggregatorV3Interface _dataFeed,
@@ -27,6 +27,7 @@ contract SonaSwap is ISonaSwap {
 		router = _swapRouter;
 		USDC = _usdc;
 		WEth = _weth;
+		_weth.approve(address(_swapRouter), type(uint256).max);
 	}
 
 	function getUsdEthPrice() public view override returns (uint256 price) {
@@ -34,42 +35,56 @@ contract SonaSwap is ISonaSwap {
 		(       /*uint80 roundID*/,
 						int signedPrice,
 						/*uint startedAt*/,
-						/*uint timeStamp*/,
+						uint priceTimestamp,
 						/*uint80 answeredInRound*/
 		) = dataFeed.latestRoundData();
 
 		if (signedPrice < 0) revert("SonaSwap: InvalidPrice");
-		// TODO check that timestamp is no more than 1 hour old
+		if (block.timestamp - priceTimestamp > 1 hours)
+			revert("SonaSwap: Chainlink Heartbeat");
 
 		price =
-			uint256(signedPrice) /
+			scaleForSlippage(uint256(signedPrice)) /
 			(10 ** (dataFeed.decimals() - USDC_DECIMALS));
 	}
 
-	function swapWEthForUSDC(uint256 _amount) external override returns (uint256 amountOut) {
-		TransferHelper.safeTransferFrom(address(WEth), msg.sender, address(this), _amount);
+	function swapWEthForUSDC(
+		uint256 _amount
+	) external override returns (uint256 amountOut) {
+		TransferHelper.safeTransferFrom(
+			address(WEth),
+			msg.sender,
+			address(this),
+			_amount
+		);
 		return _swapWEthForUSDC(_amount);
 	}
 
-	function _swapWEthForUSDC(uint256 _amount) internal returns (uint256 amountOut) {
-		TransferHelper.safeApprove(address(WEth), address(router), _amount);
+	function _swapWEthForUSDC(
+		uint256 _amount
+	) internal returns (uint256 amountOut) {
 
 		uint256 quote = getQuote(_amount);
 		ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
 			.ExactInputSingleParams({
 				tokenIn: address(WEth),
 				tokenOut: USDC,
-				fee: 500, // 0.5% fee pool
+				fee: 500, // 0.05% fee pool
 				recipient: msg.sender,
 				deadline: block.timestamp,
 				amountIn: _amount,
-				amountOutMinimum: scaleForSlippage(quote),
+				amountOutMinimum: quote,
 				sqrtPriceLimitX96: 0
 			});
 		amountOut = router.exactInputSingle(params);
 	}
 
-	function swapEthForUSDC() public payable override returns (uint256 amountOut) {
+	function swapEthForUSDC()
+		public
+		payable
+		override
+		returns (uint256 amountOut)
+	{
 		WEth.deposit{ value: msg.value }();
 		return _swapWEthForUSDC(msg.value);
 	}
@@ -78,7 +93,6 @@ contract SonaSwap is ISonaSwap {
 		uint256 _amount,
 		uint256 _rate
 	) public pure override returns (uint256 minimumAmount) {
-		// allow for 3% slippage
 		return ((_rate) * _amount) / 1 ether;
 	}
 
@@ -91,7 +105,7 @@ contract SonaSwap is ISonaSwap {
 	function scaleForSlippage(
 		uint256 _amount
 	) public pure returns (uint256 scaledAmount) {
-		// allow for 3% slippage
-		return (_amount * 97) / 100;
+		// allow for 0.5% slippage
+		return (_amount * 995) / 1000;
 	}
 }

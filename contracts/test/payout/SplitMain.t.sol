@@ -12,7 +12,7 @@ import { Weth9Mock, IWETH } from "../mock/Weth9Mock.sol";
 import { ISonaSwap } from "lib/common/ISonaSwap.sol";
 
 contract SonaTestSplits is SplitHelpers {
-	MockERC20 public mockERC20 = new MockERC20("Mock Token", "USDC", 6);
+	MockERC20 public mockERC20;
 	Weth9Mock public mockWeth = new Weth9Mock();
 
 	address public swapAddr;
@@ -29,6 +29,8 @@ contract SonaTestSplits is SplitHelpers {
 	event UpdateSplit(address indexed split);
 
 	function setUp() public {
+		mainnetFork = vm.createSelectFork(MAINNET_RPC_URL, 17828120);
+		mockERC20 = new MockERC20("Mock Token", "USDC", 6);
 		swapAddr = deployCode(
 			"SonaSwap.sol",
 			abi.encode(dataFeed, router, USDC, WETH9)
@@ -145,7 +147,6 @@ contract SonaTestSplits is SplitHelpers {
 
 	function test_SwapETHAndDistributeUSDC() public {
 		uint256 amount = 10 ether;
-		mainnetFork = vm.createSelectFork(MAINNET_RPC_URL, 17828120);
 		swapAddr = deployCode(
 			"SonaSwap.sol",
 			abi.encode(dataFeed, router, USDC, WETH9)
@@ -174,7 +175,6 @@ contract SonaTestSplits is SplitHelpers {
 		uint256 ETHAmount = 5 ether;
 		uint256 WETHAmount = 5 ether;
 		uint256 amount = ETHAmount + WETHAmount;
-		mainnetFork = vm.createSelectFork(MAINNET_RPC_URL, 17828120);
 		swapAddr = deployCode(
 			"SonaSwap.sol",
 			abi.encode(dataFeed, router, USDC, WETH9)
