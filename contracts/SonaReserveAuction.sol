@@ -494,6 +494,12 @@ contract SonaReserveAuction is
 			}
 		}
 
+		// Send the currency to the seller or the seller's delegated address
+		address payable payoutAddress = _getPayoutAddress(auction.tokenMetadata);
+
+		// Remove from map and prevent reentrancy here
+		delete auctions[_tokenId];
+
 		// Send the currency to the treasury fee recipient
 		_handleTokenTransfer(_treasuryFeeRecipient, treasuryFeeAmount, currency);
 
@@ -504,12 +510,7 @@ contract SonaReserveAuction is
 			currency
 		);
 
-		// Send the currency to the seller or the seller's delegated address
-		address payable payoutAddress = _getPayoutAddress(auction.tokenMetadata);
 		_sendCurrencyToParticipant(payoutAddress, sellerProceedsAmount, currency);
-
-		// Remove from map
-		delete auctions[_tokenId];
 
 		emit ReserveAuctionSettled({ tokenId: _tokenId });
 	}
