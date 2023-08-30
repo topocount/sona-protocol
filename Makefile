@@ -79,6 +79,13 @@ deploy_mainnet :; forge script ./script/solidity/Deploy.s.sol \
 	--etherscan-api-key ${ETHERSCAN_API_KEY} \
   --verify
 
+upgrade_sepolia :; FOUNDRY_PROFILE=optimized forge script script/solidity/Upgrade.s.sol:UpgradeAuction \
+	--rpc-url ${RPC_URL_SEPOLIA} \
+	-vvv \
+	--slow \
+	--broadcast \
+	--chain-id 11155111
+
 # Tests
 test : build_swap test_swap; doppler run -- forge test -vvv # --ffi # enable if you need the `ffi` cheat code on HEVM
 
