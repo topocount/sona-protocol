@@ -17,12 +17,8 @@ contract UpgradeAuction is Script {
 
 	function run() external {
 		string memory mnemonic = vm.envString("MNEMONIC");
-		SonaReserveAuction auctionProxy = SonaReserveAuction(vm.envAddress("AUCTION"));
+		SonaReserveAuction auctionProxy = SonaReserveAuction(vm.envAddress("AUCTION_ADDR"));
 		uint256 key = vm.deriveKey(mnemonic, 1);
-		address _SONA_OWNER = vm.addr(vm.deriveKey(mnemonic, 1));
-		address _AUTHORIZER = vm.addr(vm.deriveKey(mnemonic, 2));
-		address _TREASURY_RECIPIENT = vm.addr(vm.deriveKey(mnemonic, 3));
-		address _REDISTRIBUTION_RECIPIENT = vm.addr(vm.deriveKey(mnemonic, 3));
 
 		console.log("deployer: ", vm.addr(key));
 
@@ -32,6 +28,46 @@ contract UpgradeAuction is Script {
 		SonaReserveAuction auctionBase = new SonaReserveAuction();
 
 		auctionProxy.upgradeTo(address(auctionBase));
+
+	}
+}
+
+contract UpgradeRewardToken is Script {
+	function setUp() public {}
+
+	function run() external {
+		string memory mnemonic = vm.envString("MNEMONIC");
+		SonaRewardToken tokenProxy = SonaRewardToken(vm.envAddress("REWARD_TOKEN_ADDR"));
+		uint256 key = vm.deriveKey(mnemonic, 1);
+
+		console.log("deployer: ", vm.addr(key));
+
+		vm.startBroadcast(key);
+
+		// Deploy Reward Token
+		SonaRewardToken tokenBase = new SonaRewardToken();
+
+		tokenProxy.upgradeTo(address(tokenBase));
+
+	}
+}
+
+contract UpgradeRewards is Script {
+	function setUp() public {}
+
+	function run() external {
+		string memory mnemonic = vm.envString("MNEMONIC");
+		SonaRewards rewardsProxy = SonaRewards(payable(vm.envAddress("REWARDS_ADDR")));
+		uint256 key = vm.deriveKey(mnemonic, 1);
+
+		console.log("deployer: ", vm.addr(key));
+
+		vm.startBroadcast(key);
+
+		// Deploy Reward Token
+		SonaRewards rewardsBase = new SonaRewards();
+
+		rewardsProxy.upgradeTo(address(rewardsBase));
 
 	}
 }

@@ -40,11 +40,13 @@ scripts :; chmod +x ./scripts/*
 deploy_private_doppler:; doppler run -- make deploy_private
 
 # deploy local
-deploy_local :; FOUNDRY_PROFILE=optimized forge script ./scripts/solidity/Deploy.s.sol:Deployer \
-	--fork-url "http://localhost:8545" \
-	--private-key ${PRIVATE_KEY} \
-	-vvvv \
-	--broadcast
+deploy_local :; FOUNDRY_PROFILE=optimized forge script ./script/solidity/Deploy.s.sol:Deployer \
+	--rpc-url "http://localhost:8546" \
+	-vvv \
+	--slow \
+	--skip-simulation \
+	--broadcast \
+	--chain-id 31337
 
 deploy_private :; FOUNDRY_PROFILE=optimized forge script script/solidity/Deploy.s.sol:Deployer \
 	--slow \
@@ -79,12 +81,47 @@ deploy_mainnet :; forge script ./script/solidity/Deploy.s.sol \
 	--etherscan-api-key ${ETHERSCAN_API_KEY} \
   --verify
 
-upgrade_sepolia :; FOUNDRY_PROFILE=optimized forge script script/solidity/Upgrade.s.sol:UpgradeAuction \
+upgrade_auction_sepolia :; FOUNDRY_PROFILE=optimized forge script script/solidity/Upgrade.s.sol:UpgradeAuction \
 	--rpc-url ${RPC_URL_SEPOLIA} \
 	-vvv \
 	--slow \
 	--broadcast \
 	--chain-id 11155111
+
+upgrade_reward_token_sepolia :; FOUNDRY_PROFILE=optimized forge script script/solidity/Upgrade.s.sol:UpgradeRewardToken \
+	--rpc-url ${RPC_URL_SEPOLIA} \
+	-vvv \
+	--slow \
+	--broadcast \
+	--chain-id 11155111
+
+upgrade_rewards_sepolia :; FOUNDRY_PROFILE=optimized forge script script/solidity/Upgrade.s.sol:UpgradeRewards \
+	--rpc-url ${RPC_URL_SEPOLIA} \
+	-vvv \
+	--slow \
+	--broadcast \
+	--chain-id 11155111
+
+upgrade_auction_local :; FOUNDRY_PROFILE=optimized forge script script/solidity/Upgrade.s.sol:UpgradeAuction \
+	--rpc-url "http://localhost:8546" \
+	-vvv \
+	--slow \
+	--broadcast \
+	--chain-id 31337
+
+upgrade_reward_token_local :; FOUNDRY_PROFILE=optimized forge script script/solidity/Upgrade.s.sol:UpgradeRewardToken \
+	--rpc-url "http://localhost:8546" \
+	-vvv \
+	--slow \
+	--broadcast \
+	--chain-id 31337
+
+upgrade_rewards_local :; FOUNDRY_PROFILE=optimized forge script script/solidity/Upgrade.s.sol:UpgradeRewards \
+	--rpc-url "http://localhost:8546" \
+	-vvv \
+	--slow \
+	--broadcast \
+	--chain-id 31337
 
 # Tests
 test : build_swap test_swap; doppler run -- forge test -vvv # --ffi # enable if you need the `ffi` cheat code on HEVM
