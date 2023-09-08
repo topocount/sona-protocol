@@ -4,6 +4,9 @@ dist/
 node_modules/
 abi/
 
+# python virtualenv used to manage deps
+venv/
+
 # coverage
 coverage/
 lcov.info

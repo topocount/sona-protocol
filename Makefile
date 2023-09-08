@@ -8,7 +8,11 @@ all: clean install update build analyze
 clean  :; forge clean && rm -rf node_modules
 
 # Install the Modules
-install :; forge install; git submodule update --init --recursive; yarn --cwd lib_v7/v3-periphery install; pnpm install; pip3 install pipx; pipx install slither-analyzer --pip-args '-r requirements.txt'
+install :; forge install; git submodule update --init --recursive; yarn --cwd lib_v7/v3-periphery install; pnpm install;
+
+install_python :; pip3 install pipx; pipx install slither-analyzer --pip-args '-r requirements.txt'
+
+install_dev : install install_python;
 
 # Update Dependencies
 update :; forge update
@@ -39,7 +43,6 @@ scripts :; chmod +x ./scripts/*
 # deploy with doppler env
 deploy_private_doppler:; doppler run -- make deploy_private
 
-# deploy local
 deploy_local :; forge script ./script/solidity/Deploy.s.sol:Deployer \
 	--rpc-url "http://localhost:8546" \
 	-vvv \

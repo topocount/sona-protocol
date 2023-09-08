@@ -1,4 +1,4 @@
-# Sona Protocol ![Solidity Version](https://img.shields.io/badge/solidity-%3E%3D%200.8.16-lime) 
+# Sona Protocol ![Solidity Version](https://img.shields.io/badge/solidity-%3E%3D%200.8.16-lime)
 
 <div align="left">
   <h4>
@@ -6,7 +6,7 @@
       Website
     </a>
     <span> | </span>
-    <a href="https://docs.sona.stream">
+    <a href="https://contracts.sona.stream">
       Documentation
     </a>
     <span> | </span>
@@ -19,10 +19,6 @@
     </a>
   </h4>
 </div>
-
-> **Warning**
->
-> These contracts are **unaudited** and are not recommended for a mainnet deploy unless otherwise stated.
 
 ## Table of Contents
 
@@ -51,7 +47,7 @@
 - git
 - make
 - [Slither](https://github.com/crytic/slither)
-- Solc 0.8.16
+- Solc 0.8.18
 - Rust
 - [Solstat](https://github.com/0xKitsune/solstat#currently-identified-optimizations-vulnerabilities-and-qa)
 
@@ -118,27 +114,21 @@ To get the test coverage, run `make cover`
 Fill in your `.env` at your root with:
 
 ```
-RPC_URL=
-OWNER=
+MNEMONIC=
 ETHERSCAN_KEY=
 TREASURY=
 REDISTRIBUTION=
 AUTHORIZER=
-PRIVATE_KEY=
+RPC_URL_GOERLI=
+RPC_URL_SEPOLIA=
 ```
 
 ### Deploying
 
-| Command            | Environment                         |
-| ------------------ | ----------------------------------- |
-| make deploy_local  | Local anvil (http://localhost:8545) |
-| make deploy_testnet | Testnet |
-| make deploy        | Mainnet                             |
-| make deploy_goerli | Goerli                              |
-
-> **Important**
->
-> To see more `make` command definitions, check out this [document](./Makefile.md)
+| Command             | Environment                         |
+| ------------------- | ----------------------------------- |
+| make deploy_local   | Local anvil (http://localhost:8546) |
+| make deploy_sepolia | Sepolia                             |
 
 ### Foundry and type definitions
 
@@ -151,12 +141,12 @@ When updating foundry modules, commit your changes locally and run `forge instal
 ## Analyzers
 
 The repo comes with two static analyzers for checking for security vulnerabiltiies and gas optimizations
-| Command | Environment |
-|---------|-------------|
+
+| Command      | Environment                                                      |
+| ------------ | ---------------------------------------------------------------- |
 | make analyze | Runs solstat and outputs a report to `reports/solstat_report.md` |
-| make sec | Runs slither and outputs a report to stdout |
+| make sec     | Runs slither and outputs a report to stdout                      |
 
 ## Maintainers
 
-- [@mudrush](https://github.com/mudrush)
 - [@topocount](https://github.com/topocount)
