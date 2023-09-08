@@ -1,4 +1,3 @@
-
 // SPDX-License-Identifier: GPL-3.0
 
 pragma solidity ^0.8.16;
@@ -17,7 +16,9 @@ contract UpgradeAuction is Script {
 
 	function run() external {
 		string memory mnemonic = vm.envString("MNEMONIC");
-		SonaReserveAuction auctionProxy = SonaReserveAuction(vm.envAddress("AUCTION_ADDR"));
+		SonaReserveAuction auctionProxy = SonaReserveAuction(
+			vm.envAddress("AUCTION_ADDR")
+		);
 		uint256 key = vm.deriveKey(mnemonic, 1);
 
 		console.log("deployer: ", vm.addr(key));
@@ -28,7 +29,6 @@ contract UpgradeAuction is Script {
 		SonaReserveAuction auctionBase = new SonaReserveAuction();
 
 		auctionProxy.upgradeTo(address(auctionBase));
-
 	}
 }
 
@@ -37,7 +37,9 @@ contract UpgradeRewardToken is Script {
 
 	function run() external {
 		string memory mnemonic = vm.envString("MNEMONIC");
-		SonaRewardToken tokenProxy = SonaRewardToken(vm.envAddress("REWARD_TOKEN_ADDR"));
+		SonaRewardToken tokenProxy = SonaRewardToken(
+			vm.envAddress("REWARD_TOKEN_ADDR")
+		);
 		uint256 key = vm.deriveKey(mnemonic, 1);
 
 		console.log("deployer: ", vm.addr(key));
@@ -48,7 +50,6 @@ contract UpgradeRewardToken is Script {
 		SonaRewardToken tokenBase = new SonaRewardToken();
 
 		tokenProxy.upgradeTo(address(tokenBase));
-
 	}
 }
 
@@ -57,7 +58,9 @@ contract UpgradeRewards is Script {
 
 	function run() external {
 		string memory mnemonic = vm.envString("MNEMONIC");
-		SonaRewards rewardsProxy = SonaRewards(payable(vm.envAddress("REWARDS_ADDR")));
+		SonaRewards rewardsProxy = SonaRewards(
+			payable(vm.envAddress("REWARDS_ADDR"))
+		);
 		uint256 key = vm.deriveKey(mnemonic, 1);
 
 		console.log("deployer: ", vm.addr(key));
@@ -68,6 +71,5 @@ contract UpgradeRewards is Script {
 		SonaRewards rewardsBase = new SonaRewards();
 
 		rewardsProxy.upgradeTo(address(rewardsBase));
-
 	}
 }

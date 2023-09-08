@@ -104,8 +104,7 @@ interface ISonaRewardToken {
 	function initialize(
 		string memory _name,
 		string memory _symbol,
-		address _eoaAdmin,
-		address _minter
+		address _eoaAdmin
 	) external;
 
 	function tokenIdExists(uint256 _tokenId) external view returns (bool exists);

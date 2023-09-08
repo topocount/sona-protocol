@@ -19,8 +19,7 @@ abstract contract SonaMinter is SonaAdmin, ERC721 {
 	bytes32 internal constant _MINTER_ROLE = keccak256("MINTER_ROLE");
 
 	/// @dev to be called in the child initializer
-	function initialize(address _minter) public onlyInitializing {
-		_setupRole(_MINTER_ROLE, _minter);
+	function initializeMinterRole() public virtual onlyInitializing {
 		_setRoleAdmin(_MINTER_ROLE, _ADMIN_ROLE);
 	}
 

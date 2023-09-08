@@ -45,18 +45,6 @@ contract SonaTokenAuthorizer is ISonaTokenAuthorizer {
 	/                    PRIVATE FUNCTIONS
 	//////////////////////////////////////////////////////////////*/
 
-	function _makeDomainSeparator(string calldata name) internal {
-		_DOMAIN_SEPARATOR = keccak256(
-			abi.encode(
-				_EIP712DOMAIN_TYPEHASH,
-				keccak256(abi.encodePacked(name)), // name
-				keccak256("1"), // version
-				block.chainid, // chain ID
-				address(this) // verifying contract
-			)
-		);
-	}
-
 	function _verify(
 		ISonaRewardToken.TokenMetadata[] calldata _metadatas,
 		uint8 v,

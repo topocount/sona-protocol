@@ -63,13 +63,12 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 	function initialize(
 		string calldata _name,
 		string calldata _symbol,
-		address _eoaAdmin,
-		address _minter
+		address _eoaAdmin
 	) external override initializer {
 		// Setup role for contract creator, otherwise subsequent checks will not work
 		_setupRole(_ADMIN_ROLE, _eoaAdmin);
 		_setRoleAdmin(_ADMIN_ROLE, _ADMIN_ROLE);
-		SonaMinter.initialize(_minter);
+		SonaMinter.initializeMinterRole();
 
 		// Initialize ERC721
 		name = _name;

@@ -23,7 +23,7 @@ contract SonaRewardTokenTest is Util, ERC721Holder, SonaRewardToken {
 	// reward token recipient
 	address public rewardTokenRecipient = makeAddr("rewardTokenRecipient");
 	// auction mock
-	address public auctionInitializer = makeAddr("auctionInitializer");
+	address public tokenAdmin = makeAddr("tokenAdmin");
 
 	address payable public zeroSplitsAddr = payable(address(0));
 	address payable public payoutAddr = payable(makeAddr("splitAddress"));
@@ -35,22 +35,23 @@ contract SonaRewardTokenTest is Util, ERC721Holder, SonaRewardToken {
 
 	function setUp() public {
 		SonaRewardToken rewardTokenBase = new SonaRewardToken();
-		vm.prank(auctionInitializer);
 		ERC1967Proxy proxy = new ERC1967Proxy(
 			address(rewardTokenBase),
 			abi.encodeWithSelector(
 				SonaRewardToken.initialize.selector,
 				"SonaRewardToken",
 				"SRT",
-				address(0),
-				address(this)
+				address(tokenAdmin)
 			)
 		);
+
 		rewardToken = SonaRewardToken(address(proxy));
+		hoax(tokenAdmin);
+		rewardToken.grantRole(keccak256("MINTER_ROLE"), address(this));
 	}
 
 	function test_UnauthorizedMintReverts(address badMinter) public {
-		vm.assume(badMinter != auctionInitializer);
+		vm.assume(badMinter != tokenAdmin);
 		vm.assume(badMinter != address(this));
 
 		vm.prank(badMinter);

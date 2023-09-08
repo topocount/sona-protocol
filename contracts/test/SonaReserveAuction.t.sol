@@ -5,6 +5,8 @@ import { SonaReserveAuction } from "../SonaReserveAuction.sol";
 import { SonaRewardToken, ISonaRewardToken } from "../SonaRewardToken.sol";
 import { ISonaReserveAuction } from "../interfaces/ISonaReserveAuction.sol";
 import { SonaTokenAuthorizer, ISonaTokenAuthorizer } from "../SonaTokenAuthorizer.sol";
+import { SonaMinter } from "../access/SonaMinter.sol";
+import { StdChains } from "forge-std/Test.sol";
 import { MinterSigner } from "./util/MinterSigner.sol";
 import { ERC721 } from "solmate/tokens/ERC721.sol";
 import { Util } from "./Util.sol";
@@ -80,6 +82,19 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		vm.startPrank(rootOwner);
 		// WARNING: deployment order matters for the signatures below
 		rewardTokenBase = new SonaRewardToken();
+		SonaRewardToken tokenProxy = SonaRewardToken(
+			address(
+				new ERC1967Proxy(
+					address(rewardTokenBase),
+					abi.encodeWithSelector(
+						SonaRewardToken.initialize.selector,
+						"Sona Rewards Token",
+						"SONA",
+						address(rootOwner)
+					)
+				)
+			)
+		);
 		auctionBase = new SonaReserveAuction();
 		ERC1967Proxy proxy = new ERC1967Proxy(
 			address(auctionBase),
@@ -88,19 +103,20 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 				treasuryRecipient,
 				redistributionRecipient,
 				authorizer,
-				rewardTokenBase,
+				tokenProxy,
 				splitMainImpl,
 				rootOwner,
 				mockWeth
 			)
 		);
 		auction = SonaReserveAuction(address(proxy));
+		tokenProxy.grantRole(keccak256("MINTER_ROLE"), address(auction));
 		_makeDomainHash("SonaReserveAuction", address(auction));
 		contractBidder = new ContractBidderMock(auction);
 		vm.stopPrank();
 	}
 
-	function test_revertsWithInvalidAddress() public {
+	function test_RevertsWithInvalidAddress() public {
 		rewardTokenBase = new SonaRewardToken();
 		auctionBase = new SonaReserveAuction();
 		vm.expectRevert(
@@ -154,7 +170,9 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			)
 		);
 
-		vm.expectRevert("ERC1967: new implementation is not a contract");
+		vm.expectRevert(
+			ISonaReserveAuction.SonaReserveAuction_InvalidAddress.selector
+		);
 		new ERC1967Proxy(
 			address(auctionBase),
 			abi.encodeWithSelector(
@@ -180,8 +198,8 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 	{
 		signature = Signature(
 			28,
-			0x9d20f758c560e955a6174c3c68e509aebb975039795942284d422509977d1a95,
-			0x79691e8898668acfab8eb25f5dcabf9047b70344a03a6a992e3c78a2be3c97dc
+			0xf1ab62a1ff2d49820dcd5f642952a6623b53532081e7d28aa5b17af423f5258a,
+			0x1d427339e2cf8924badc830a8d750313e1af3482dd0094c479fc69d7c835c89a
 		);
 
 		bundles = _createBundles();
@@ -779,6 +797,19 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		);
 		splitMainImpl = new SplitMain(WETH9, IERC20(USDC), ISonaSwap(swapAddr));
 		rewardTokenBase = new SonaRewardToken();
+		SonaRewardToken tokenProxy = SonaRewardToken(
+			address(
+				new ERC1967Proxy(
+					address(rewardTokenBase),
+					abi.encodeWithSelector(
+						SonaRewardToken.initialize.selector,
+						"Sona Rewards Token",
+						"SONA",
+						address(this)
+					)
+				)
+			)
+		);
 		auctionBase = new SonaReserveAuction();
 		ERC1967Proxy proxy = new ERC1967Proxy(
 			address(auctionBase),
@@ -787,13 +818,14 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 				treasuryRecipient,
 				redistributionRecipient,
 				authorizer,
-				rewardTokenBase,
+				tokenProxy,
 				splitMainImpl,
-				address(0),
+				address(this),
 				WETH9
 			)
 		);
 		auction = SonaReserveAuction(address(proxy));
+		tokenProxy.grantRole(keccak256("MINTER_ROLE"), address(auction));
 		_makeDomainHash("SonaReserveAuction", address(auction));
 		(address[] memory accounts, uint32[] memory amounts) = _createSimpleSplit();
 		ISonaRewardToken.TokenMetadata[] memory bundles = _createBundles();

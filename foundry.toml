@@ -1,16 +1,28 @@
 [profile.default]
 	src = 'contracts'
+	# divert scripts during testing to avoid longer compile times
+	# The deploy script requires `via_ir` to handle stack depth
 	test = 'contracts/test'
 	out = 'dist/artifacts'
 	libs = ['lib']
 	solc-version = "0.8.18"
 	optimizer = true
+	link = true
 	bytecode_hash = "none"
 	verbosity = 3
 	gas_reports = ["*"]
+	libraries = [
+		'./contracts/utils/ZeroCheck.sol:ZeroCheck:0x1d40575A69AcAaAC33739b6DcfaE4D6F9A104BE1',
+		'./contracts/utils/AddressableTokenId.sol:AddressableTokenId:0xF0eC379F9f77F966E5793BA94a443b795e6eB8e5',
+	]
 	fs_permissions = [
-    { access = "read", path = "./dist"}
+    { access = "read", path = "./dist"},
+    { access = "write", path = "./out"}
   ]
+
+[profile.test]
+	# auto-link libraries during testing
+	libraries = []
 
 [profile.optimized]
 	via_ir = true

@@ -40,45 +40,36 @@ scripts :; chmod +x ./scripts/*
 deploy_private_doppler:; doppler run -- make deploy_private
 
 # deploy local
-deploy_local :; FOUNDRY_PROFILE=optimized forge script ./script/solidity/Deploy.s.sol:Deployer \
+deploy_local :; forge script ./script/solidity/Deploy.s.sol:Deployer \
 	--rpc-url "http://localhost:8546" \
 	-vvv \
-	--slow \
-	--skip-simulation \
 	--broadcast \
 	--chain-id 31337
 
-deploy_private :; FOUNDRY_PROFILE=optimized forge script script/solidity/Deploy.s.sol:Deployer \
-	--slow \
-	-vvvv \
-	--skip-simulation \
+deploy_libs_local :; forge script ./script/solidity/Deploy_libraries.s.sol:Deployer \
+	--rpc-url "http://localhost:8546" \
+	-vvv \
 	--broadcast \
-	--rpc-url ${RPC_URL}
+	--chain-id 31337
 
-deploy_goerli :; FOUNDRY_PROFILE=optimized forge script script/solidity/Deploy.s.sol:Deployer \
+deploy_goerli :; forge script script/solidity/Deploy.s.sol:Deployer \
 	--rpc-url ${RPC_URL_GOERLI} \
 	-vvv \
 	--slow \
 	--skip-simulation \
-	--broadcast \
 	--chain-id 5
 
-deploy_sepolia :; FOUNDRY_PROFILE=optimized forge script script/solidity/Deploy.s.sol:Deployer \
+deploy_sepolia :; forge script script/solidity/Deploy.s.sol:Deployer \
 	--rpc-url ${RPC_URL_SEPOLIA} \
 	-vvv \
 	--slow \
 	--skip-simulation \
-	--broadcast \
 	--chain-id 11155111
 
-deploy_mainnet :; forge script ./script/solidity/Deploy.s.sol \
-	--optimizer-runs 10000 \
+deploy_mainnet :; FOUNDRY_PROFILE=optimized forge script ./script/solidity/Deploy.s.sol \
 	--rpc-url ${RPC_URL} \
-	--private-key ${PRIVATE_KEY} \
 	-vvv \
-	--broadcast \
 	--chain-id 1 \
-	--etherscan-api-key ${ETHERSCAN_API_KEY} \
   --verify
 
 upgrade_auction_sepolia :; FOUNDRY_PROFILE=optimized forge script script/solidity/Upgrade.s.sol:UpgradeAuction \
@@ -124,7 +115,7 @@ upgrade_rewards_local :; FOUNDRY_PROFILE=optimized forge script script/solidity/
 	--chain-id 31337
 
 # Tests
-test : build_swap test_swap; doppler run -- forge test -vvv # --ffi # enable if you need the `ffi` cheat code on HEVM
+test : build_swap test_swap; FOUNDRY_PROFILE=test doppler run -- forge test -vvv # --ffi # enable if you need the `ffi` cheat code on HEVM
 
 # build SonaSwap
 build_swap :; FOUNDRY_PROFILE=swap forge build

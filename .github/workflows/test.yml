@@ -3,7 +3,7 @@ name: test
 on: push
 
 env:
-  FOUNDRY_PROFILE: optimized
+  FOUNDRY_PROFILE: test
 
 jobs:
   check:

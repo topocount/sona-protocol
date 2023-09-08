@@ -16,7 +16,6 @@ import { IERC721Upgradeable as IERC721 } from "openzeppelin-upgradeable/token/ER
 import { IERC20Upgradeable as IERC20 } from "openzeppelin-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import { ISonaRewardToken } from "./interfaces/ISonaRewardToken.sol";
 import { AddressableTokenId } from "./utils/AddressableTokenId.sol";
-import { ERC1967Proxy } from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 import { IWETH } from "./interfaces/IWETH.sol";
 import { ZeroCheck } from "./utils/ZeroCheck.sol";
 
@@ -102,7 +101,7 @@ contract SonaReserveAuction is
 		address treasuryFeeRecipient_,
 		address redistributionFeeRecipient_,
 		address authorizer_,
-		ISonaRewardToken _rewardTokenBase,
+		ISonaRewardToken _rewardToken,
 		ISplitMain _splitMain,
 		address _eoaAdmin,
 		IWETH weth_
@@ -128,21 +127,10 @@ contract SonaReserveAuction is
 
 		splitMain = _splitMain;
 
-		// Initialize the reward token. Admin is the auction
-		rewardToken = ISonaRewardToken(
-			address(
-				new ERC1967Proxy(
-					address(_rewardTokenBase),
-					abi.encodeWithSelector(
-						ISonaRewardToken.initialize.selector,
-						"Sona Rewards Token",
-						"RWRD",
-						_eoaAdmin,
-						address(this)
-					)
-				)
-			)
+		address(_rewardToken).revertIfZero(
+			SonaReserveAuction_InvalidAddress.selector
 		);
+		rewardToken = _rewardToken;
 
 		_DOMAIN_SEPARATOR = keccak256(
 			abi.encode(
