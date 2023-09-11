@@ -443,14 +443,55 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
 
 		hoax(bidder);
-		auction.createBid{ value: 1.1 ether }(tokenId, 0);
+		auction.createBid{ value: 1 ether }(tokenId, 0);
 
 		ISonaReserveAuction.Auction memory auctionData = auction.getAuction(
 			tokenId
 		);
 
-		assertEq(auctionData.currentBidAmount, 1.1 ether);
+		assertEq(auctionData.currentBidAmount, 1 ether);
 		assertEq(auctionData.currentBidder, bidder);
+	}
+
+	function test_CreateBidLateExtendsAuction() public {
+		ISonaRewardToken.TokenMetadata[] memory bundles = _createBundles();
+		Signature memory signatures = _signBundles(bundles);
+		vm.prank(trackMinter);
+		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+
+		hoax(bidder);
+		auction.createBid{ value: 1 ether }(tokenId, 0);
+
+		ISonaReserveAuction.Auction memory auctionData = auction.getAuction(
+			tokenId
+		);
+
+		uint256 originalEnd = auctionData.endingTime;
+
+		vm.warp(1430 minutes);
+		hoax(bidder);
+		auction.createBid{ value: 1.05 ether }(tokenId, 0);
+
+		uint256 newEnd = auction.getAuction(tokenId).endingTime;
+
+		assertEq(newEnd - originalEnd, 299 seconds);
+
+		vm.warp(block.timestamp + 15 minutes);
+
+		hoax(bidder);
+		auction.createBid{ value: (1.05 ether * 105) / 100 }(tokenId, 0);
+
+		newEnd = auction.getAuction(tokenId).endingTime;
+
+		assertEq(newEnd - originalEnd, 20 minutes - 1 seconds);
+
+		vm.warp(block.timestamp + 15 minutes + 1 seconds);
+
+		hoax(bidder);
+		vm.expectRevert(
+			ISonaReserveAuction.SonaReserveAuction_AuctionEnded.selector
+		);
+		auction.createBid{ value: (1.05 ether * 105) / 100 }(tokenId, 0);
 	}
 
 	function test_CreateBidWithInvalidAuctionReverts() public {
@@ -787,7 +828,7 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		hoax(bidder);
 		auction.createBid(tokenId, bidAmount);
 
-		vm.warp(2 days);
+		vm.warp(1441 minutes);
 
 		uint initialBalance0 = mockUSDC.balanceOf(accounts[0]);
 		uint initialBalance1 = mockUSDC.balanceOf(accounts[1]);

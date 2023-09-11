@@ -359,6 +359,14 @@ contract SonaReserveAuction is
 					auction.currentBidder = payable(msg.sender);
 					auction.currentBidAmount = attemptedBid;
 
+					// extend the auction 15 minutes from the current timestamp
+					// if fewer than 15 minutes remain before the endingTime
+					if (
+						(currentEndingTime - block.timestamp) < _AUCTION_EXTENSION_DURATION
+					) {
+						auction.endingTime = block.timestamp + _AUCTION_EXTENSION_DURATION;
+					}
+
 					// Refund previous bidder
 					_sendCurrencyToParticipant(
 						previousBidder,
