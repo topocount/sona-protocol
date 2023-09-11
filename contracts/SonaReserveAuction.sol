@@ -351,8 +351,8 @@ contract SonaReserveAuction is
 				revert SonaReserveAuction_AuctionEnded();
 				// if the ending time has not passed, continue with bid logic
 			} else {
-				// if the bid is higher than the current bid, refund the current bidder
-				if (attemptedBid > auction.currentBidAmount) {
+				// if the bid is 5% higher than the current bid, refund the current bidder
+				if (attemptedBid >= ((auction.currentBidAmount * 105) / 100)) {
 					address payable previousBidder = auction.currentBidder;
 					uint256 previousBidAmount = auction.currentBidAmount;
 

@@ -126,7 +126,7 @@ build_swap :; FOUNDRY_PROFILE=swap forge build
 # test SonaSwap
 test_swap :; FOUNDRY_PROFILE=swap doppler run -- forge test
 
-test_watch : build_swap test_swap; doppler run -- forge test -w -vvv # --ffi # enable if you need the `ffi` cheat code on HEVM
+test_watch : build_swap test_swap; FOUNDRY_PROFILE=test doppler run -- forge test -w -vvv # --ffi # enable if you need the `ffi` cheat code on HEVM
 
 # Docs buld
 docs_build :; rm -rf docs && forge doc --build

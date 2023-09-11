@@ -412,6 +412,30 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
 	}
 
+	function test_CreateLowSecondBidReverts() public {
+		ISonaRewardToken.TokenMetadata[] memory bundles = _createBundles();
+		Signature memory signatures = _signBundles(bundles);
+		vm.prank(trackMinter);
+		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+
+		hoax(bidder);
+		auction.createBid{ value: 1 ether }(tokenId, 0);
+
+		hoax(secondBidder);
+		vm.expectRevert(ISonaReserveAuction.SonaReserveAuction_BidTooLow.selector);
+		auction.createBid{ value: 1.049 ether }(tokenId, 0);
+
+		hoax(secondBidder);
+		auction.createBid{ value: 1.05 ether }(tokenId, 0);
+
+		ISonaReserveAuction.Auction memory auctionData = auction.getAuction(
+			tokenId
+		);
+
+		assertEq(auctionData.currentBidAmount, 1.05 ether);
+		assertEq(auctionData.currentBidder, secondBidder);
+	}
+
 	function test_CreateBid() public {
 		ISonaRewardToken.TokenMetadata[] memory bundles = _createBundles();
 		Signature memory signatures = _signBundles(bundles);
