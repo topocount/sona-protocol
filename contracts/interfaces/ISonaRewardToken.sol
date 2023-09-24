@@ -24,11 +24,6 @@ interface ISonaRewardToken {
 	/                              EVENTS
 	//////////////////////////////////////////////////////////////*/
 
-	/// @dev Emitted when a new RewardToken is minted.
-	/// @param tokenId The id of the token
-	/// @param cid The cid of the RewardToken
-	event RewardTokenMinted(uint256 indexed tokenId, string cid);
-
 	/// @dev Emitted when a RewardToken's metadata is changed.
 	/// @param tokenId The id of the token
 	/// @param txId The cid of the RewardToken
@@ -104,7 +99,8 @@ interface ISonaRewardToken {
 	function initialize(
 		string memory _name,
 		string memory _symbol,
-		address _eoaAdmin
+		address _eoaAdmin,
+		address _royaltyRecipient
 	) external;
 
 	function tokenIdExists(uint256 _tokenId) external view returns (bool exists);

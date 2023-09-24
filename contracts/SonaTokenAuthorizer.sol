@@ -10,6 +10,8 @@ pragma solidity ^0.8.16;
 import { ISonaTokenAuthorizer } from "./interfaces/ISonaTokenAuthorizer.sol";
 import { ISonaRewardToken } from "./interfaces/ISonaRewardToken.sol";
 
+/// @title SonaTokenAuthorizer
+/// @author @SonaEngineering
 contract SonaTokenAuthorizer is ISonaTokenAuthorizer {
 	/*//////////////////////////////////////////////////////////////
 	/                         CONSTANTS
@@ -68,15 +70,15 @@ contract SonaTokenAuthorizer is ISonaTokenAuthorizer {
 	}
 
 	function _hash(
-		ISonaRewardToken.TokenMetadata calldata _bundle
+		ISonaRewardToken.TokenMetadata calldata _metadata
 	) internal pure returns (bytes32) {
 		return
 			keccak256(
 				abi.encode(
 					_METADATABUNDLE_TYPEHASH,
-					_bundle.tokenId,
-					_bundle.payout,
-					keccak256(bytes(_bundle.arweaveTxId))
+					_metadata.tokenId,
+					_metadata.payout,
+					keccak256(bytes(_metadata.arweaveTxId))
 				)
 			);
 	}

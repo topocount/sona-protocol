@@ -11,6 +11,8 @@ import { ISonaRewardToken } from "./interfaces/ISonaRewardToken.sol";
 import { AddressableTokenId } from "./utils/AddressableTokenId.sol";
 import { SonaTokenAuthorizer } from "./SonaTokenAuthorizer.sol";
 
+/// @title SonaDirectMint
+/// @author @SonaEngineering
 contract SonaDirectMint is SonaTokenAuthorizer {
 	using AddressableTokenId for uint256;
 
@@ -25,6 +27,7 @@ contract SonaDirectMint is SonaTokenAuthorizer {
 	/                         MODIFIERS
 	//////////////////////////////////////////////////////////////*/
 
+	/// @dev ensure the provided signature is from the authorizer
 	modifier bundlesAuthorized(
 		ISonaRewardToken.TokenMetadata[] calldata _metadatas,
 		Signature calldata _signature
@@ -56,6 +59,9 @@ contract SonaDirectMint is SonaTokenAuthorizer {
 	/                         FUNCTIONS
 	//////////////////////////////////////////////////////////////*/
 
+	/// @notice mint multiple SonaRewardTokens
+	/// @param _metadatas array of tokens and info to be minted
+	/// @param _signature the signature of the array of TokenMetadata objects
 	function mint(
 		ISonaRewardToken.TokenMetadata[] calldata _metadatas,
 		Signature calldata _signature

@@ -19,6 +19,9 @@ import { AddressableTokenId } from "./utils/AddressableTokenId.sol";
 import { IWETH } from "./interfaces/IWETH.sol";
 import { ZeroCheck } from "./utils/ZeroCheck.sol";
 
+/// @title SonaReserveAuction
+/// @author @SonaEngineering
+/// @notice The primary auction logic for SonaRewardTokens
 contract SonaReserveAuction is
 	ISonaReserveAuction,
 	Initializable,
@@ -77,6 +80,7 @@ contract SonaReserveAuction is
 		_;
 	}
 
+	/// @dev recover signature and ensure it matches `_authorizer`
 	modifier bundlesAuthorized(
 		ISonaRewardToken.TokenMetadata[] calldata _metadatas,
 		Signature calldata _signature
@@ -97,6 +101,16 @@ contract SonaReserveAuction is
 	/                     PUBLIC FUNCTIONS
 	//////////////////////////////////////////////////////////////*/
 
+	/// @notice initialize state variables
+	/// @dev invoked in contructor for proxy contracts
+	/// @param treasuryFeeRecipient_ the location of protocol funds
+	/// @param redistributionFeeRecipient_ the location of the funds
+	/// 				distributed back to artists
+	/// @param authorizer_ the address that signs off that a tracks has met all licensing agreements
+	/// @param _rewardToken The NFTs minted by this contract
+	/// @param _splitMain The splits fork that shares auction proceeds with collaborators
+	/// @param _eoaAdmin The AccessControl admin
+	/// @param weth_ address of the WETH9 implementation
 	function initialize(
 		address treasuryFeeRecipient_,
 		address redistributionFeeRecipient_,
@@ -214,7 +228,8 @@ contract SonaReserveAuction is
 		}
 	}
 
-	/// @dev Public function to cancel the reserve auction
+	/// @notice Public function to cancel the reserve auction. It can only be
+	///					invoked before a bid is placed
 	/// @param _tokenId The ID of the token.
 	function cancelReserveAuction(
 		uint256 _tokenId
@@ -240,7 +255,8 @@ contract SonaReserveAuction is
 		emit ReserveAuctionCanceled({ tokenId: _tokenId });
 	}
 
-	/// @dev Public function to update the reserve price of the auction
+	/// @notice Public function to update the reserve price of the auction.
+	///					It can only be invoked before a bid is placed
 	/// @param _tokenId The ID of the token.
 	/// @param _reservePrice The reserve price to be updated to
 	function updateReserveAuctionPrice(

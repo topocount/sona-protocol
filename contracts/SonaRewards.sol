@@ -18,7 +18,9 @@ import { IWETH } from "./interfaces/IWETH.sol";
 import { Initializable } from "openzeppelin-upgradeable/proxy/utils/Initializable.sol";
 import { ZeroCheck } from "./utils/ZeroCheck.sol";
 
-/// @title The interface for Track Collectors and Artists to claim Rewards
+/// @title SonaRewards
+/// @author @SonaEngineering
+/// @notice The interface for Track Collectors and Artists to claim Rewards
 contract SonaRewards is Initializable, SonaAdmin {
 	using MerkleProofLib for bytes32[];
 	using ZeroCheck for address;

@@ -55,6 +55,11 @@ deploy_libs_local :; forge script ./script/solidity/Deploy_libraries.s.sol:Deplo
 	--broadcast \
 	--chain-id 31337
 
+deploy_libs_sepolia :; forge script ./script/solidity/Deploy_libraries.s.sol:Deployer \
+	--rpc-url ${RPC_URL_SEPOLIA} \
+	-vvv \
+	--chain-id 11155111
+
 deploy_goerli :; forge script script/solidity/Deploy.s.sol:Deployer \
 	--rpc-url ${RPC_URL_GOERLI} \
 	-vvv \
@@ -65,8 +70,6 @@ deploy_goerli :; forge script script/solidity/Deploy.s.sol:Deployer \
 deploy_sepolia :; forge script script/solidity/Deploy.s.sol:Deployer \
 	--rpc-url ${RPC_URL_SEPOLIA} \
 	-vvv \
-	--slow \
-	--skip-simulation \
 	--chain-id 11155111
 
 deploy_mainnet :; FOUNDRY_PROFILE=optimized forge script ./script/solidity/Deploy.s.sol \

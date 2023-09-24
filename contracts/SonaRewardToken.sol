@@ -40,12 +40,14 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken, IERC2981 {
 	//////////////////////////////////////////////////////////////*/
 
 	/// @dev Modifier that ensures the calling contract has the admin role
+	///				or is the artist of the SONA
 	modifier onlySonaAdminOrCreator(uint256 _tokenId) {
 		if (_tokenId.getAddress() != msg.sender && !isSonaAdmin(msg.sender))
 			revert SonaRewardToken_Unauthorized();
 		_;
 	}
 
+	/// @dev Modifier that only allows the current holder of a token
 	modifier onlyTokenHolder(uint256 _tokenId) {
 		if (_ownerOf[_tokenId] != msg.sender) revert SonaRewardToken_Unauthorized();
 		_;
@@ -92,7 +94,7 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken, IERC2981 {
 	}
 
 	/// @notice auth-guarded mint function
-	/// @dev This is meant to be pluggable and allow for the evolution of mint
+	/// @dev This is meant to be pluggable and allow for the updates to mint
 	///  			logic as the protocol evolves
 	/// @param _owner The address the token will me minted to
 	/// @param _tokenId The ID of the token that will be minted
@@ -124,7 +126,8 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken, IERC2981 {
 		}
 	}
 
-	/// @dev Updates the IPFS CID for the metadata for a given RewardToken
+	/// @notice Updates the arweave transaction ID for the metadata for a given RewardToken
+	/// @dev the arweave transaction id is returned by the tokenURI function
 	/// @param _tokenId The ID of the token that will be updated
 	/// @param _txId The metadata's IPFS CID
 	function updateArweaveTxId(
@@ -134,7 +137,8 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken, IERC2981 {
 		_updateArweaveTxId(_tokenId, _txId);
 	}
 
-	/// @dev Updates the Payout address for a token
+	/// @notice Updates the Payout address for a token `token` to `_payout`
+	/// @dev the payoutAddress is utlized as a delegated recipient of rewards
 	/// @param _tokenId The ID of the token that will be updated
 	/// @param _payout The new payout address to be used. Set to address(0) if funds should be sent directly to the claimant
 	function updatePayoutAddress(
@@ -146,7 +150,7 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken, IERC2981 {
 		emit PayoutAddressUpdated(_tokenId, _payout);
 	}
 
-	/// @dev Get a RewardToken's metadata from IPFS
+	/// @notice Get a RewardToken's metadata from arweave for token `_tokenId`
 	/// @param _tokenId The ID of the token to fetch
 	function tokenURI(
 		uint256 _tokenId
@@ -160,7 +164,7 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken, IERC2981 {
 		return string(abi.encodePacked("ar://", rewardTokens[_tokenId].arTxId));
 	}
 
-	/// @dev Returns the metadata of the RewardToken
+	/// @notice Returns the metadata of the token `_tokenId`
 	/// @param _tokenId The ID of the token to fetch
 	function getRewardTokenMetadata(
 		uint256 _tokenId
@@ -168,7 +172,7 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken, IERC2981 {
 		return rewardTokens[_tokenId];
 	}
 
-	/// @dev Returns the splits address of the RewardToken
+	/// @notice Returns the splits address of the RewardToken
 	/// @param _tokenId The ID of the token to fetch
 	function getRewardTokenPayoutAddr(
 		uint256 _tokenId

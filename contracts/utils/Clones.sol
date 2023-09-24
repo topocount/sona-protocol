@@ -8,6 +8,7 @@ error Create2Error();
 
 // solhint-disable no-inline-assembly
 
+/// @author 0xSplits <will@0xSplits.xyz>
 library Clones {
 	/**
 	 * @dev Deploys and returns the address of a clone that mimics the behaviour of `implementation`
