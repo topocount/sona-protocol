@@ -47,6 +47,8 @@ contract Deployer is Script {
 		bytes32 MINTER_ROLE = keccak256("MINTER_ROLE");
 		bytes32 ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
+		console.log("mock weth:", address(mockWeth));
+		console.log("mock USDC: ", address(mockToken));
 		console.log("reward token: ", rewardToken);
 		console.log("direct mint: ", directMint);
 		console.log("reserve auction: ", reserveAuction);
@@ -110,11 +112,13 @@ contract Deployer is Script {
 		if (tokenBase.code.length == 0) revert("token base Deployment failed");
 
 		address _TEMP_SONA_OWNER = vm.addr(vm.deriveKey(mnemonic, 0));
+		address _TREASURY_RECIPIENT = vm.addr(vm.deriveKey(mnemonic, 3));
 		bytes memory rewardTokenInitializerArgs = abi.encodeWithSelector(
 			SonaRewardToken.initialize.selector,
 			"Sona Rewards Token",
 			"SONA",
-			_TEMP_SONA_OWNER
+			_TEMP_SONA_OWNER,
+			_TREASURY_RECIPIENT
 		);
 
 		initCode = type(ERC1967Proxy).creationCode;

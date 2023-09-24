@@ -10,12 +10,24 @@ pragma solidity ^0.8.16;
 import { ISonaRewardToken } from "./interfaces/ISonaRewardToken.sol";
 import { SonaMinter } from "./access/SonaMinter.sol";
 import { ERC721 } from "solmate/tokens/ERC721.sol";
+import { IERC2981Upgradeable as IERC2981, IERC165Upgradeable as IERC165 } from "openzeppelin-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import { AddressableTokenId } from "./utils/AddressableTokenId.sol";
 import { ZeroCheck } from "./utils/ZeroCheck.sol";
 
-contract SonaRewardToken is SonaMinter, ISonaRewardToken {
+/// @title SonaRewardToken
+/// @author @SonaEngineering
+/// @notice The NFTs that represent rewards claims for a given track
+/// 				in the Sona protocol
+contract SonaRewardToken is SonaMinter, ISonaRewardToken, IERC2981 {
 	using AddressableTokenId for uint256;
 	using ZeroCheck for address;
+
+	/*//////////////////////////////////////////////////////////////
+	/                         STATE
+	//////////////////////////////////////////////////////////////*/
+
+	/// @dev the address specified by ERC 2981 that royalties should be sent to
+	address internal _royaltyRecipient;
 
 	/*//////////////////////////////////////////////////////////////
 	/                         MAPPINGS
@@ -59,11 +71,14 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 	/                         FUNCTIONS
 	//////////////////////////////////////////////////////////////*/
 
-	/// @dev Initializes the contract
+	/// @dev Initializes the contract during proxy construction
+	/// @param _eoaAdmin the AccessControl admin
+	/// @param royaltyRecipient_ the location to send NFT royalties as specified in ERC2981
 	function initialize(
 		string calldata _name,
 		string calldata _symbol,
-		address _eoaAdmin
+		address _eoaAdmin,
+		address royaltyRecipient_
 	) external override initializer {
 		// Setup role for contract creator, otherwise subsequent checks will not work
 		_setupRole(_ADMIN_ROLE, _eoaAdmin);
@@ -73,6 +88,7 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 		// Initialize ERC721
 		name = _name;
 		symbol = _symbol;
+		_royaltyRecipient = royaltyRecipient_;
 	}
 
 	/// @notice auth-guarded mint function
@@ -165,6 +181,26 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken {
 	/// @return exists a boolean
 	function tokenIdExists(uint256 _tokenId) public view returns (bool exists) {
 		return _ownerOf[_tokenId].isNotZero();
+	}
+
+	/// @notice returns ERC 2981 recipient address and amount owed for a
+	/// 				given sale price
+	/// @param _salePrice The amount a token was sold for
+	function royaltyInfo(
+		uint256 /*tokenId*/,
+		uint256 _salePrice
+	) external view returns (address receiver, uint256 royaltyAmount) {
+		receiver = _royaltyRecipient;
+		royaltyAmount = (_salePrice * 7) / 100;
+	}
+
+	/// @dev check if an interface specification is supported by this contract
+	function supportsInterface(
+		bytes4 _interfaceId
+	) public view override(SonaMinter, IERC165) returns (bool supported) {
+		return
+			SonaMinter.supportsInterface(_interfaceId) ||
+			_interfaceId == type(IERC2981).interfaceId;
 	}
 
 	/*//////////////////////////////////////////////////////////////
