@@ -124,27 +124,14 @@ contract SonaReserveAuction is
 		_setupRole(_ADMIN_ROLE, _eoaAdmin);
 		_setRoleAdmin(_ADMIN_ROLE, _ADMIN_ROLE);
 
-		treasuryFeeRecipient_.revertIfZero(
-			SonaReserveAuction_InvalidAddress.selector
+		_setConfig(
+			treasuryFeeRecipient_,
+			redistributionFeeRecipient_,
+			authorizer_,
+			_rewardToken,
+			_splitMain,
+			weth_
 		);
-		_treasuryFeeRecipient = treasuryFeeRecipient_;
-
-		redistributionFeeRecipient_.revertIfZero(
-			SonaReserveAuction_InvalidAddress.selector
-		);
-		_redistributionFeeRecipient = redistributionFeeRecipient_;
-
-		authorizer_.revertIfZero(SonaReserveAuction_InvalidAddress.selector);
-		_authorizer = authorizer_;
-
-		_weth = weth_;
-
-		splitMain = _splitMain;
-
-		address(_rewardToken).revertIfZero(
-			SonaReserveAuction_InvalidAddress.selector
-		);
-		rewardToken = _rewardToken;
 
 		_DOMAIN_SEPARATOR = keccak256(
 			abi.encode(
@@ -417,6 +404,24 @@ contract SonaReserveAuction is
 		return auctions[_tokenId];
 	}
 
+	function setConfig(
+		address treasuryFeeRecipient_,
+		address redistributionFeeRecipient_,
+		address authorizer_,
+		ISonaRewardToken _rewardToken,
+		ISplitMain _splitMain,
+		IWETH weth_
+	) public onlySonaAdmin {
+		_setConfig(
+			treasuryFeeRecipient_,
+			redistributionFeeRecipient_,
+			authorizer_,
+			_rewardToken,
+			_splitMain,
+			weth_
+		);
+	}
+
 	/*//////////////////////////////////////////////////////////////
 	/                    PRIVATE FUNCTIONS
 	//////////////////////////////////////////////////////////////*/
@@ -586,5 +591,36 @@ contract SonaReserveAuction is
 	) internal view returns (address payable payoutAddress) {
 		address payable payout = _bundle.payout;
 		return payout.isNotZero() ? payout : payable(_bundle.tokenId.getAddress());
+	}
+
+	function _setConfig(
+		address treasuryFeeRecipient_,
+		address redistributionFeeRecipient_,
+		address authorizer_,
+		ISonaRewardToken _rewardToken,
+		ISplitMain _splitMain,
+		IWETH weth_
+	) internal {
+		treasuryFeeRecipient_.revertIfZero(
+			SonaReserveAuction_InvalidAddress.selector
+		);
+		_treasuryFeeRecipient = treasuryFeeRecipient_;
+
+		redistributionFeeRecipient_.revertIfZero(
+			SonaReserveAuction_InvalidAddress.selector
+		);
+		_redistributionFeeRecipient = redistributionFeeRecipient_;
+
+		authorizer_.revertIfZero(SonaReserveAuction_InvalidAddress.selector);
+		_authorizer = authorizer_;
+
+		_weth = weth_;
+
+		splitMain = _splitMain;
+
+		address(_rewardToken).revertIfZero(
+			SonaReserveAuction_InvalidAddress.selector
+		);
+		rewardToken = _rewardToken;
 	}
 }
