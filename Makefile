@@ -49,6 +49,12 @@ deploy_local :; forge script ./script/solidity/Deploy.s.sol:Deployer \
 	--broadcast \
 	--chain-id 31337
 
+deploy_swap_local :;FOUNDRY_PROFILE=swap forge script ./script/solidity_v7/Deploy_Swap.s.sol:DeploySwap \
+	--rpc-url "http://localhost:8546" \
+	-vvv \
+	--broadcast \
+	--chain-id 31337
+
 deploy_libs_local :; forge script ./script/solidity/Deploy_libraries.s.sol:Deployer \
 	--rpc-url "http://localhost:8546" \
 	-vvv \

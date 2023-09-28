@@ -11,6 +11,7 @@
 	bytecode_hash = "none"
 	verbosity = 3
 	gas_reports = ["*"]
+	script = 'script/solidity'
 	libraries = [
 		'./contracts/utils/ZeroCheck.sol:ZeroCheck:0x1d40575A69AcAaAC33739b6DcfaE4D6F9A104BE1',
 		'./contracts/utils/AddressableTokenId.sol:AddressableTokenId:0xF0eC379F9f77F966E5793BA94a443b795e6eB8e5',
@@ -32,7 +33,7 @@
 	libs = ['lib','lib_v7']
 	src = 'contracts_swap'
 	test = 'contracts_swap/test'
-	script = 'script_v7'
+	script = 'script/solidity_v7'
 	solc_version = "0.7.6"
 
 [fuzz]
