@@ -24,13 +24,19 @@ contract Deployer is Script {
 		address rewardToken = deployRewardToken(mnemonic);
 
 		// Deploy Mocks for PoC Tests
-		// TODO: convert create non-mock address cases for mainnet
-		vm.startBroadcast(pk);
-		IERC20 mockToken = IERC20(address(new ERC20Mock()));
-		Weth9Mock mockWeth = new Weth9Mock();
-		vm.stopBroadcast();
+		IERC20 usdc;
+		IWETH weth;
+		if (block.chainid != 1) {
+			vm.startBroadcast(pk);
+			usdc = IERC20(address(new ERC20Mock()));
+			weth = new Weth9Mock();
+			vm.stopBroadcast();
+		} else {
+			weth = IWETH(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+			usdc = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
+		}
 
-		SplitMain splits = deploySplitMain(mnemonic, mockWeth, mockToken);
+		SplitMain splits = deploySplitMain(mnemonic, weth, usdc);
 
 		address directMint = deployDirectMint(mnemonic, rewardToken);
 
@@ -38,17 +44,17 @@ contract Deployer is Script {
 			mnemonic,
 			rewardToken,
 			splits,
-			address(mockWeth)
+			address(weth)
 		);
 
-		deployRewards(mnemonic, rewardToken, address(mockToken), "", splits);
+		deployRewards(mnemonic, rewardToken, address(usdc), "", splits);
 
 		address _SONA_OWNER = vm.addr(vm.deriveKey(mnemonic, 1));
 		bytes32 MINTER_ROLE = keccak256("MINTER_ROLE");
 		bytes32 ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-		console.log("mock weth:", address(mockWeth));
-		console.log("mock USDC: ", address(mockToken));
+		console.log("mock weth:", address(weth));
+		console.log("mock USDC: ", address(usdc));
 		console.log("reward token: ", rewardToken);
 		console.log("direct mint: ", directMint);
 		console.log("reserve auction: ", reserveAuction);
