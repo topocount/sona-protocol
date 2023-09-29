@@ -47,7 +47,13 @@ contract Deployer is Script {
 			address(weth)
 		);
 
-		deployRewards(mnemonic, rewardToken, address(usdc), "", splits);
+		address rewards = deployRewards(
+			mnemonic,
+			rewardToken,
+			address(usdc),
+			"",
+			splits
+		);
 
 		address _SONA_OWNER = vm.addr(vm.deriveKey(mnemonic, 1));
 		bytes32 MINTER_ROLE = keccak256("MINTER_ROLE");
@@ -58,6 +64,8 @@ contract Deployer is Script {
 		console.log("reward token: ", rewardToken);
 		console.log("direct mint: ", directMint);
 		console.log("reserve auction: ", reserveAuction);
+		console.log("rewards: ", rewards);
+		exportAddresses(reserveAuction, rewardToken, directMint, rewards);
 		vm.startBroadcast(pk);
 		SonaRewardToken(rewardToken).grantRole(MINTER_ROLE, directMint);
 		SonaRewardToken(rewardToken).grantRole(MINTER_ROLE, reserveAuction);
@@ -83,7 +91,7 @@ contract Deployer is Script {
 		address payoutToken,
 		string memory claimUrl,
 		SplitMain splitMain
-	) internal {
+	) internal returns (address rewards) {
 		uint256 pk = vm.deriveKey(mnemonic, 0);
 		vm.broadcast(pk);
 		SonaRewards rewardsBase = new SonaRewards();
@@ -92,7 +100,7 @@ contract Deployer is Script {
 		address _REDISTRIBUTION_RECIPIENT = vm.addr(vm.deriveKey(mnemonic, 3));
 
 		vm.broadcast(pk);
-		new ERC1967Proxy(
+		ERC1967Proxy rewardsProxy = new ERC1967Proxy(
 			address(rewardsBase),
 			abi.encodeWithSelector(
 				SonaRewards.initialize.selector,
@@ -105,6 +113,8 @@ contract Deployer is Script {
 				splitMain
 			)
 		);
+
+		return address(rewardsProxy);
 	}
 
 	function deployRewardToken(
@@ -211,6 +221,39 @@ contract Deployer is Script {
 		vm.broadcast(pk);
 		(bool success, ) = CREATE2_FACTORY.call(payload);
 		if (!success) revert("create2 failed");
+	}
+
+	function exportAddresses(
+		address reserveAuction,
+		address rewardToken,
+		address directMint,
+		address rewards
+	) internal {
+		string memory deployments = "deployments";
+		vm.serializeAddress(deployments, "SonaReserveAuction", reserveAuction);
+		vm.serializeAddress(deployments, "SonaRewardToken", rewardToken);
+		vm.serializeAddress(deployments, "SonaDirectMint", directMint);
+		string memory addresses = vm.serializeAddress(
+			deployments,
+			"SonaRewards",
+			rewards
+		);
+		string memory result = vm.serializeString(
+			"network",
+			vm.toString(block.chainid),
+			addresses
+		);
+		vm.writeJson(
+			result,
+			string(
+				abi.encodePacked(
+					vm.projectRoot(),
+					"/deploys/",
+					vm.toString(block.chainid),
+					".json"
+				)
+			)
+		);
 	}
 }
 

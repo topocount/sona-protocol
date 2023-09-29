@@ -18,7 +18,8 @@
 	]
 	fs_permissions = [
     { access = "read", path = "./dist"},
-    { access = "write", path = "./out"}
+    { access = "write", path = "./out"},
+    { access = "write", path = "./deploys"}
   ]
 
 [profile.test]
