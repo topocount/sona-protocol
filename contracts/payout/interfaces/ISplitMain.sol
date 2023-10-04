@@ -6,6 +6,12 @@ import { IERC20Upgradeable as IERC20 } from "openzeppelin-upgradeable/token/ERC2
 /// @title ISplitMain
 /// @author 0xSplits <will@0xSplits.xyz>
 interface ISplitMain {
+	/// Structs
+	struct SplitInput {
+		address[] accounts;
+		uint32[] percentAllocations;
+	}
+
 	/// FUNCTIONS
 
 	function walletImplementation() external returns (address);
@@ -52,6 +58,16 @@ interface ISplitMain {
 		uint256 withdrawETH,
 		IERC20[] calldata tokens
 	) external;
+
+	function createSplits(
+		SplitInput[] calldata splits
+	) external returns (address[] memory split);
+
+	function transferControl(address split, address newController) external;
+
+	function cancelControlTransfer(address split) external;
+
+	function acceptControl(address split) external;
 
 	/// EVENTS
 

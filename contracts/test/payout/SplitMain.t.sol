@@ -61,6 +61,59 @@ contract SonaTestSplits is SplitHelpers {
 		splitMainImpl.updateSplit(split, accounts, amounts);
 	}
 
+	function test_TransferControl() public {
+		(address[] memory accounts, ) = _createSimpleSplit();
+
+		vm.expectRevert(
+			abi.encodeWithSelector(
+				SplitMain.UnauthorizedController.selector,
+				accounts[1]
+			)
+		);
+		vm.prank(accounts[1]);
+		splitMainImpl.transferControl(split, accounts[0]);
+
+		vm.prank(accounts[0]);
+		splitMainImpl.transferControl(split, accounts[1]);
+
+		vm.expectRevert(
+			abi.encodeWithSelector(
+				SplitMain.UnauthorizedController.selector,
+				accounts[1]
+			)
+		);
+		vm.prank(accounts[1]);
+		splitMainImpl.cancelControlTransfer(split);
+
+		vm.prank(accounts[1]);
+		splitMainImpl.acceptControl(split);
+
+		assertEq(splitMainImpl.getController(split), accounts[1]);
+	}
+
+	function test_CreateSplits() public {
+		(address[] memory accounts, uint32[] memory amounts) = _createSimpleSplit();
+		ISplitMain.SplitInput memory input = ISplitMain.SplitInput({
+			accounts: accounts,
+			percentAllocations: amounts
+		});
+
+		ISplitMain.SplitInput[] memory inputs = new ISplitMain.SplitInput[](3);
+		inputs[0] = input;
+		inputs[1] = input;
+		inputs[2] = input;
+
+		address[] memory splits = splitMainImpl.createSplits(inputs);
+
+		for (uint i; i < splits.length; i++) {
+			assertEq(splitMainImpl.getController(splits[i]), address(this));
+			assertEq(
+				splitMainImpl.getHash(splits[i]),
+				keccak256(abi.encodePacked(accounts, amounts))
+			);
+		}
+	}
+
 	function test_distributeERC20ToEOA() public {
 		(address[] memory accounts, uint32[] memory amounts) = _createSimpleSplit();
 		hoax(address(0));

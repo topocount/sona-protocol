@@ -164,7 +164,7 @@ contract SplitMain is ISplitMain, Ownable {
 		address[] calldata accounts,
 		uint32[] calldata percentAllocations
 	)
-		external
+		public
 		override
 		validSplit(accounts, percentAllocations)
 		returns (address split)
@@ -176,6 +176,22 @@ contract SplitMain is ISplitMain, Ownable {
 		// store split's hash in storage for future verification
 		_splits[split].hash = splitHash;
 		emit CreateSplit(split);
+	}
+
+	/// @notice create multiple splits in a one call
+	/// @dev the same config can be created multiple times
+	/// @param splits the array structured objects representing the split configs
+	function createSplits(
+		SplitInput[] calldata splits
+	) external override returns (address[] memory splitAddresses) {
+		uint256 splitsLength = splits.length;
+		splitAddresses = new address[](splitsLength);
+		for (uint256 idx; idx < splitsLength; idx++) {
+			splitAddresses[idx] = createSplit(
+				splits[idx].accounts,
+				splits[idx].percentAllocations
+			);
+		}
 	}
 
 	/// @notice Updates an existing split with recipients `accounts` with ownerships `percentAllocations` and a keeper fee for splitting of `distributorFee`
@@ -193,6 +209,42 @@ contract SplitMain is ISplitMain, Ownable {
 		validSplit(accounts, percentAllocations)
 	{
 		_updateSplit(split, accounts, percentAllocations);
+	}
+
+	/// @notice Begins transfer of the controlling address of mutable split `split` to `newController`
+	///  @dev Two-step control transfer inspired by [dharma](https://github.com/dharma-eng/dharma-smart-wallet/blob/master/contracts/helpers/TwoStepOwnable.sol)
+	///  @param split Address of mutable split to transfer control for
+	///  @param newController Address to begin transferring control to
+	function transferControl(
+		address split,
+		address newController
+	)
+		external
+		override
+		onlySplitController(split)
+		validNewController(newController)
+	{
+		_splits[split].newPotentialController = newController;
+		emit InitiateControlTransfer(split, newController);
+	}
+
+	/// @notice Cancels transfer of the controlling address of mutable split `split`
+	/// @param split Address of mutable split to cancel control transfer for
+	function cancelControlTransfer(
+		address split
+	) external override onlySplitController(split) {
+		delete _splits[split].newPotentialController;
+		emit CancelControlTransfer(split);
+	}
+
+	/// @notice Accepts transfer of the controlling address of mutable split `split`
+	/// @param split Address of mutable split to accept control transfer for
+	function acceptControl(
+		address split
+	) external override onlySplitNewPotentialController(split) {
+		delete _splits[split].newPotentialController;
+		emit ControlTransfer(split, _splits[split].controller, msg.sender);
+		_splits[split].controller = msg.sender;
 	}
 
 	/// @notice Distributes the ETH balance for split `split`
