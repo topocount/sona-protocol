@@ -17,6 +17,38 @@ import { SplitMain } from "../../contracts/payout/SplitMain.sol";
 import { SonaDirectMint } from "../../contracts/SonaDirectMint.sol";
 
 contract Deployer is Script {
+	address internal _OWNER;
+	address internal _REDISTRIBUTION;
+	address internal _TREASURY;
+	address internal _AUTHORIZER;
+
+	function setUp() external {
+		string memory mnemonic = vm.envString("MNEMONIC");
+		if (block.chainid == 1) {
+			_OWNER = vm.envAddress("SONA_OWNER_ADDRESS");
+			_REDISTRIBUTION = vm.envAddress("SONA_REDISTRIBUTION_ADDRESS");
+			_TREASURY = vm.envAddress("SONA_TREASURY_ADDRESS");
+			_AUTHORIZER = vm.envAddress("SONA_AUTHORIZER_ADDRESS");
+		} else {
+			_OWNER = vm.envOr(
+				"SONA_OWNER_ADDRESS",
+				vm.addr(vm.deriveKey(mnemonic, 1))
+			);
+			_AUTHORIZER = vm.envOr(
+				"SONA_AUTHORIZER_ADDRESS",
+				vm.addr(vm.deriveKey(mnemonic, 2))
+			);
+			_REDISTRIBUTION = vm.envOr(
+				"SONA_REDISTRIBUTION_ADDRESS",
+				vm.addr(vm.deriveKey(mnemonic, 3))
+			);
+			_TREASURY = vm.envOr(
+				"SONA_TREASURY_ADDRESS",
+				vm.addr(vm.deriveKey(mnemonic, 3))
+			);
+		}
+	}
+
 	function run() external {
 		string memory mnemonic = vm.envString("MNEMONIC");
 		(address deployer, uint256 pk) = deriveRememberKey(mnemonic, 0);
@@ -55,7 +87,6 @@ contract Deployer is Script {
 			splits
 		);
 
-		address _SONA_OWNER = vm.addr(vm.deriveKey(mnemonic, 1));
 		bytes32 MINTER_ROLE = keccak256("MINTER_ROLE");
 		bytes32 ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
@@ -69,7 +100,7 @@ contract Deployer is Script {
 		vm.startBroadcast(pk);
 		SonaRewardToken(rewardToken).grantRole(MINTER_ROLE, directMint);
 		SonaRewardToken(rewardToken).grantRole(MINTER_ROLE, reserveAuction);
-		SonaRewardToken(rewardToken).grantRole(ADMIN_ROLE, _SONA_OWNER);
+		SonaRewardToken(rewardToken).grantRole(ADMIN_ROLE, _OWNER);
 		SonaRewardToken(rewardToken).renounceRole(ADMIN_ROLE, deployer);
 		vm.stopBroadcast();
 	}
@@ -96,19 +127,17 @@ contract Deployer is Script {
 		vm.broadcast(pk);
 		SonaRewards rewardsBase = new SonaRewards();
 
-		address _SONA_OWNER = vm.addr(vm.deriveKey(mnemonic, 1));
-		address _REDISTRIBUTION_RECIPIENT = vm.addr(vm.deriveKey(mnemonic, 3));
 
 		vm.broadcast(pk);
 		ERC1967Proxy rewardsProxy = new ERC1967Proxy(
 			address(rewardsBase),
 			abi.encodeWithSelector(
 				SonaRewards.initialize.selector,
-				_SONA_OWNER,
+				_OWNER,
 				address(rewardToken),
 				payoutToken,
 				address(0),
-				_REDISTRIBUTION_RECIPIENT, //todo: holder of protocol fees(?)
+				_REDISTRIBUTION,
 				claimUrl,
 				splitMain
 			)
@@ -128,13 +157,12 @@ contract Deployer is Script {
 		if (tokenBase.code.length == 0) revert("token base Deployment failed");
 
 		address _TEMP_SONA_OWNER = vm.addr(vm.deriveKey(mnemonic, 0));
-		address _TREASURY_RECIPIENT = vm.addr(vm.deriveKey(mnemonic, 3));
 		bytes memory rewardTokenInitializerArgs = abi.encodeWithSelector(
 			SonaRewardToken.initialize.selector,
 			"Sona Rewards Token",
 			"SONA",
 			_TEMP_SONA_OWNER,
-			_TREASURY_RECIPIENT
+			_TREASURY
 		);
 
 		initCode = type(ERC1967Proxy).creationCode;
@@ -156,7 +184,6 @@ contract Deployer is Script {
 		string memory mnemonic,
 		address rewardToken
 	) internal returns (address directMintAddress) {
-		address _AUTHORIZER = vm.addr(vm.deriveKey(mnemonic, 2));
 
 		uint256 pk = vm.deriveKey(mnemonic, 0);
 		vm.broadcast(pk);
@@ -174,24 +201,19 @@ contract Deployer is Script {
 		SplitMain splits,
 		address weth
 	) internal returns (address reserveAuctionAddress) {
-		address _AUTHORIZER = vm.addr(vm.deriveKey(mnemonic, 2));
-		address _TREASURY_RECIPIENT = vm.addr(vm.deriveKey(mnemonic, 3));
-		address _REDISTRIBUTION_RECIPIENT = vm.addr(vm.deriveKey(mnemonic, 3));
 
 		uint256 pk = vm.deriveKey(mnemonic, 0);
 		vm.broadcast(pk);
 		SonaReserveAuction auctionBase = new SonaReserveAuction();
 
-		address _SONA_OWNER = vm.addr(vm.deriveKey(mnemonic, 1));
-
 		bytes memory reserveAuctionInitializerArgs = abi.encodeWithSelector(
 			SonaReserveAuction.initialize.selector,
-			_TREASURY_RECIPIENT,
-			_REDISTRIBUTION_RECIPIENT,
+			_TREASURY,
+			_REDISTRIBUTION,
 			_AUTHORIZER,
 			SonaRewardToken(rewardToken),
 			splits,
-			_SONA_OWNER,
+			_OWNER,
 			weth
 		);
 
