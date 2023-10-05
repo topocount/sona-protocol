@@ -96,7 +96,16 @@ contract Deployer is Script {
 		console.log("direct mint: ", directMint);
 		console.log("reserve auction: ", reserveAuction);
 		console.log("rewards: ", rewards);
-		exportAddresses(reserveAuction, rewardToken, directMint, rewards);
+		console.log("splits: ", address(splits));
+		exportAddresses(
+			reserveAuction,
+			rewardToken,
+			directMint,
+			rewards,
+			address(splits),
+			usdc,
+			weth
+		);
 		vm.startBroadcast(pk);
 		SonaRewardToken(rewardToken).grantRole(MINTER_ROLE, directMint);
 		SonaRewardToken(rewardToken).grantRole(MINTER_ROLE, reserveAuction);
@@ -126,7 +135,6 @@ contract Deployer is Script {
 		uint256 pk = vm.deriveKey(mnemonic, 0);
 		vm.broadcast(pk);
 		SonaRewards rewardsBase = new SonaRewards();
-
 
 		vm.broadcast(pk);
 		ERC1967Proxy rewardsProxy = new ERC1967Proxy(
@@ -184,7 +192,6 @@ contract Deployer is Script {
 		string memory mnemonic,
 		address rewardToken
 	) internal returns (address directMintAddress) {
-
 		uint256 pk = vm.deriveKey(mnemonic, 0);
 		vm.broadcast(pk);
 		SonaDirectMint directMint = new SonaDirectMint(
@@ -201,7 +208,6 @@ contract Deployer is Script {
 		SplitMain splits,
 		address weth
 	) internal returns (address reserveAuctionAddress) {
-
 		uint256 pk = vm.deriveKey(mnemonic, 0);
 		vm.broadcast(pk);
 		SonaReserveAuction auctionBase = new SonaReserveAuction();
@@ -249,12 +255,18 @@ contract Deployer is Script {
 		address reserveAuction,
 		address rewardToken,
 		address directMint,
-		address rewards
+		address rewards,
+		address splits,
+		IERC20 usdc,
+		IWETH weth
 	) internal {
 		string memory deployments = "deployments";
 		vm.serializeAddress(deployments, "SonaReserveAuction", reserveAuction);
 		vm.serializeAddress(deployments, "SonaRewardToken", rewardToken);
 		vm.serializeAddress(deployments, "SonaDirectMint", directMint);
+		vm.serializeAddress(deployments, "SplitMain", splits);
+		vm.serializeAddress(deployments, "IWETH", address(weth));
+		vm.serializeAddress(deployments, "IERC20", address(usdc));
 		string memory addresses = vm.serializeAddress(
 			deployments,
 			"SonaRewards",

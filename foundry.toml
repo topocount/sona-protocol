@@ -13,8 +13,8 @@
 	gas_reports = ["*"]
 	script = 'script/solidity'
 	libraries = [
-		'./contracts/utils/ZeroCheck.sol:ZeroCheck:0x1a0a8Da8c2f132e40495e3C3Ce635c7d2b57F6eD',
-		'./contracts/utils/AddressableTokenId.sol:AddressableTokenId:0xE58ee9e63da7966e92477522aF170b56597Fe187',
+		'./contracts/utils/ZeroCheck.sol:ZeroCheck:0xdABAAD81d0453699A7d25D277Ea5edD7b89ceDD4',
+		'./contracts/utils/AddressableTokenId.sol:AddressableTokenId:0xe5e085EA620d100e951Fb6687d8064d2a2aAB48A',
 	]
 	fs_permissions = [
     { access = "read", path = "./dist"},

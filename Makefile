@@ -46,8 +46,7 @@ deploy_private_doppler:; doppler run -- make deploy_private
 deploy_local :; forge script ./script/solidity/Deploy.s.sol:Deployer \
 	--rpc-url "http://localhost:8546" \
 	-vvv \
-	--broadcast \
-	--chain-id 31337
+	--broadcast
 
 deploy_swap_local :;FOUNDRY_PROFILE=swap forge script ./script/solidity_v7/Deploy_Swap.s.sol:DeploySwap \
 	--rpc-url "http://localhost:8546" \
