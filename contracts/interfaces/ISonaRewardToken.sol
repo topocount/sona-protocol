@@ -68,7 +68,7 @@ interface ISonaRewardToken {
 	struct TokenMetadata {
 		uint256 tokenId;
 		address payable payout;
-		string arweaveTxId;
+		string metadataId;
 	}
 
 	/*//////////////////////////////////////////////////////////////
@@ -78,7 +78,7 @@ interface ISonaRewardToken {
 	function mint(
 		address _owner,
 		uint256 _tokenId,
-		string calldata _arweaveTxId,
+		string calldata _metadataId,
 		address payable _payout
 	) external;
 

@@ -42,7 +42,7 @@ abstract contract MinterSigner is SonaTokenAuthorizor {
 					_METADATABUNDLE_TYPEHASH,
 					bundle.tokenId,
 					bundle.payout,
-					keccak256(bytes(bundle.arweaveTxId))
+					keccak256(bytes(bundle.metadataId))
 				)
 			);
 	}

@@ -62,7 +62,7 @@ contract SonaRewardTokenTest is Util, ERC721Holder, SonaRewardToken {
 			.TokenMetadata({
 				tokenId: 12345,
 				payout: payable(address(0)),
-				arweaveTxId: "cool NFT"
+				metadataId: "cool NFT"
 			});
 		ISonaRewardToken.TokenMetadata[]
 			memory bundles = new ISonaRewardToken.TokenMetadata[](1);
@@ -117,13 +117,13 @@ contract SonaRewardTokenTest is Util, ERC721Holder, SonaRewardToken {
 			.TokenMetadata({
 				tokenId: (0x25 << 96) | 1,
 				payout: payable(address(0)),
-				arweaveTxId: "cool NFT"
+				metadataId: "cool NFT"
 			});
 		ISonaRewardToken.TokenMetadata memory bundle1 = ISonaRewardToken
 			.TokenMetadata({
 				tokenId: (0x25 << 96) | 2,
 				payout: payable(address(0)),
-				arweaveTxId: "cool NFTs"
+				metadataId: "cool NFTs"
 			});
 		ISonaRewardToken.TokenMetadata[]
 			memory bundles = new ISonaRewardToken.TokenMetadata[](2);
@@ -134,11 +134,11 @@ contract SonaRewardTokenTest is Util, ERC721Holder, SonaRewardToken {
 
 		ISonaRewardToken.RewardToken memory collectorData = rewardToken
 			.getRewardTokenMetadata((0x25 << 96) | 1);
-		assertEq(collectorData.arTxId, bundle0.arweaveTxId);
+		assertEq(collectorData.arTxId, bundle0.metadataId);
 		assertEq(collectorData.payout, bundle0.payout);
 
 		collectorData = rewardToken.getRewardTokenMetadata((0x25 << 96) | 2);
-		assertEq(collectorData.arTxId, bundle1.arweaveTxId);
+		assertEq(collectorData.arTxId, bundle1.metadataId);
 		assertEq(collectorData.payout, bundle1.payout);
 	}
 

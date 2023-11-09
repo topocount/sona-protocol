@@ -197,9 +197,9 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		)
 	{
 		signature = Signature(
-			28,
-			0xf1ab62a1ff2d49820dcd5f642952a6623b53532081e7d28aa5b17af423f5258a,
-			0x1d427339e2cf8924badc830a8d750313e1af3482dd0094c479fc69d7c835c89a
+			27,
+			0x2b602c1c1289846bacdcd4f780812b66d9faf0ce1263d3fb88126c350ef7b469,
+			0x1fe4d0f6fad326f4f26ddcc83257ebea1e633b416da4eb6536006b43a7587f53
 		);
 
 		bundles = _createBundles();
@@ -212,13 +212,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 	{
 		ISonaRewardToken.TokenMetadata memory artistBundle = ISonaRewardToken
 			.TokenMetadata({
-				arweaveTxId: "Hello World!",
+				metadataId: "Hello World!",
 				tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000044,
 				payout: artistPayout
 			});
 		ISonaRewardToken.TokenMetadata memory collectorBundle = ISonaRewardToken
 			.TokenMetadata({
-				arweaveTxId: "Hello World",
+				metadataId: "Hello World",
 				tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000045,
 				payout: payable(address(0))
 			});
@@ -246,7 +246,7 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		assertEq(auctionData.currentBidAmount, 0);
 		assertEq(auctionData.currentBidder, address(0));
 		assertEq(auctionData.currency, address(0));
-		assertEq(auctionData.tokenMetadata.arweaveTxId, bundles[1].arweaveTxId);
+		assertEq(auctionData.tokenMetadata.metadataId, bundles[1].metadataId);
 		assertEq(auctionData.tokenMetadata.tokenId, bundles[1].tokenId);
 	}
 
@@ -278,7 +278,7 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		auction.rewardToken().mint(
 			address(this),
 			bundles[0].tokenId,
-			bundles[0].arweaveTxId,
+			bundles[0].metadataId,
 			bundles[0].payout
 		);
 
@@ -295,7 +295,7 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		assertEq(auctionData.currentBidAmount, 0);
 		assertEq(auctionData.currentBidder, address(0));
 		assertEq(auctionData.currency, address(0));
-		assertEq(auctionData.tokenMetadata.arweaveTxId, bundles[1].arweaveTxId);
+		assertEq(auctionData.tokenMetadata.metadataId, bundles[1].metadataId);
 		assertEq(auctionData.tokenMetadata.tokenId, bundles[1].tokenId);
 	}
 
@@ -319,7 +319,7 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		assertEq(auctionData.currentBidAmount, 0);
 		assertEq(auctionData.currentBidder, address(0));
 		assertEq(auctionData.currency, address(0));
-		assertEq(auctionData.tokenMetadata.arweaveTxId, bundles[0].arweaveTxId);
+		assertEq(auctionData.tokenMetadata.metadataId, bundles[0].metadataId);
 		assertEq(auctionData.tokenMetadata.tokenId, bundles[0].tokenId);
 	}
 
@@ -718,7 +718,7 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		vm.expectEmit(true, false, false, true, address(auction.rewardToken()));
 		emit RewardTokenMetadataUpdated(
 			tokenId - 1,
-			bundles[0].arweaveTxId,
+			bundles[0].metadataId,
 			bundles[0].payout
 		);
 		vm.prank(trackMinter);
@@ -732,7 +732,7 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		vm.expectEmit(true, false, false, true, address(auction.rewardToken()));
 		emit RewardTokenMetadataUpdated(
 			tokenId,
-			bundles[1].arweaveTxId,
+			bundles[1].metadataId,
 			payable(address(0))
 		);
 		vm.expectEmit(true, false, false, false, address(auction));

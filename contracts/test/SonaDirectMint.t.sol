@@ -60,7 +60,7 @@ contract SonaDirectMintTest is
 
 		assertEq(
 			digest,
-			0xf15fbb19967880136d947923bfdbf5b9d629c662a171bb36d18d0a8b65949106,
+			0xbfb370aec6ce0f1cfc32cfab54535892d6a3cf8efd27f01005c07197a4d4640b,
 			"Digest Incorrect"
 		);
 	}
@@ -86,13 +86,13 @@ contract SonaDirectMintTest is
 	{
 		ISonaRewardToken.TokenMetadata memory bundle0 = ISonaRewardToken
 			.TokenMetadata({
-				arweaveTxId: "Hello World!",
+				metadataId: "Hello World!",
 				tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000044,
 				payout: artistPayout
 			});
 		ISonaRewardToken.TokenMetadata memory bundle1 = ISonaRewardToken
 			.TokenMetadata({
-				arweaveTxId: "Hello World",
+				metadataId: "Hello World",
 				tokenId: 0x5D2d2Ea1B0C7e2f086cC731A496A38Be1F19FD3f000000000000000000000045,
 				payout: payable(address(0))
 			});
@@ -103,22 +103,5 @@ contract SonaDirectMintTest is
 		bundleArray[1] = bundle1;
 
 		bundles = bundleArray;
-	}
-
-	function _createSignedBundles()
-		private
-		view
-		returns (
-			ISonaRewardToken.TokenMetadata[] memory metadatas,
-			Signature memory signature
-		)
-	{
-		signature = Signature(
-			27,
-			0x43ac7cd7fd5970c3926addaac069cc20764ec1461b786bdb87184109fc481ae4,
-			0x269e17a9d13bfd1a68af563aa3b732cd1776bcd0dbc2904d0f3a3829d24caf95
-		);
-
-		metadatas = _createBundles();
 	}
 }

@@ -49,7 +49,7 @@ const types = {
 	TokenMetadata: [
 		{ name: "tokenId", type: "uint256" },
 		{ name: "payout", type: "address" },
-		{ name: "arweaveTxId", type: "string" },
+		{ name: "metadataId", type: "string" },
 	],
 	TokenMetadatas: [{ name: "bundles", type: "TokenMetadata[]" }],
 }
@@ -60,7 +60,7 @@ const artistBundle = {
 		numberToHex(68, { size: 12 }),
 	]),
 	payout: numberToHex(25, { size: 20 }),
-	arweaveTxId: "Hello World!",
+	metadataId: "Hello World!",
 } as const
 
 const collectorBundle = {
@@ -69,7 +69,7 @@ const collectorBundle = {
 		numberToHex(69, { size: 12 }),
 	]),
 	payout: numberToHex(0, { size: 20 }),
-	arweaveTxId: "Hello World",
+	metadataId: "Hello World",
 } as const
 
 const arrayBundle = {
@@ -101,7 +101,7 @@ async function main() {
 	console.log("message hash: ", hash)
 
 	const arraySig = await signArrayMessage(arrayBundle)
-	console.log("array signature: ", split(arraySig))
+	console.log("direct mint signature: ", split(arraySig))
 }
 
 main()

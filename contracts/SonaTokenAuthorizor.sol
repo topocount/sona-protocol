@@ -25,12 +25,12 @@ contract SonaTokenAuthorizor is ISonaTokenAuthorizor {
 	/// @dev The signature of the type that is hashed and prefixed to the TypedData payload
 	bytes32 internal constant _METADATABUNDLE_TYPEHASH =
 		keccak256(
-			"TokenMetadata(uint256 tokenId,address payout,string arweaveTxId)"
+			"TokenMetadata(uint256 tokenId,address payout,string metadataId)"
 		);
 	/// @dev The signature of the type that is hashed and prefixed to the TypedData payload
 	bytes32 internal constant _METADATABUNDLES_TYPEHASH =
 		keccak256(
-			"TokenMetadatas(TokenMetadata[] bundles)TokenMetadata(uint256 tokenId,address payout,string arweaveTxId)"
+			"TokenMetadatas(TokenMetadata[] bundles)TokenMetadata(uint256 tokenId,address payout,string metadataId)"
 		);
 	/// @dev part of the EIP-712 standard for structured data hashes
 	bytes32 internal _DOMAIN_SEPARATOR;
@@ -78,7 +78,7 @@ contract SonaTokenAuthorizor is ISonaTokenAuthorizor {
 					_METADATABUNDLE_TYPEHASH,
 					_metadata.tokenId,
 					_metadata.payout,
-					keccak256(bytes(_metadata.arweaveTxId))
+					keccak256(bytes(_metadata.metadataId))
 				)
 			);
 	}

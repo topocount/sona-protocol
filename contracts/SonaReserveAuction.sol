@@ -171,7 +171,7 @@ contract SonaReserveAuction is
 				rewardToken.mint(
 					_metadatas[0].tokenId.getAddress(),
 					_metadatas[0].tokenId,
-					_metadatas[0].arweaveTxId,
+					_metadatas[0].metadataId,
 					_metadatas[0].payout
 				);
 		} else if (_metadatas.length == 1) {
@@ -469,7 +469,7 @@ contract SonaReserveAuction is
 		rewardToken.mint(
 			auction.currentBidder,
 			_tokenId,
-			auction.tokenMetadata.arweaveTxId,
+			auction.tokenMetadata.metadataId,
 			// the tokenMetadata payout address is set for auction proceeds, not for the collector.
 			// Therefore, this address is set as zero.
 			payable(address(0))
@@ -536,10 +536,10 @@ contract SonaReserveAuction is
 		ISonaRewardToken.TokenMetadata calldata _bundle
 	) internal {
 		if (
-			_uriExists[keccak256(bytes(_bundle.arweaveTxId))] ||
+			_uriExists[keccak256(bytes(_bundle.metadataId))] ||
 			rewardToken.tokenIdExists(_bundle.tokenId)
 		) revert SonaReserveAuction_Duplicate();
-		_uriExists[keccak256(bytes(_bundle.arweaveTxId))] = true;
+		_uriExists[keccak256(bytes(_bundle.metadataId))] = true;
 	}
 
 	function _handleTokenTransfer(

@@ -98,16 +98,16 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken, IERC2981 {
 	///  			logic as the protocol evolves
 	/// @param _owner The address the token will me minted to
 	/// @param _tokenId The ID of the token that will be minted
-	/// @param _arweaveTxId the arweave txId of the token metadata stored on arweave
+	/// @param _metadataId the arweave txId of the token metadata stored on arweave
 	/// @param _payout the address to distribute funds to, potentially to split them with collaborators
 	function mint(
 		address _owner,
 		uint256 _tokenId,
-		string calldata _arweaveTxId,
+		string calldata _metadataId,
 		address payable _payout
 	) external onlySonaMinter {
 		_mint(_owner, _tokenId);
-		_setTokenMetadata(_tokenId, _arweaveTxId, _payout);
+		_setTokenMetadata(_tokenId, _metadataId, _payout);
 	}
 
 	/// @notice auth-guarded mint function
@@ -120,7 +120,7 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken, IERC2981 {
 			_mint(_metadatas[i].tokenId.getAddress(), _metadatas[i].tokenId);
 			_setTokenMetadata(
 				_metadatas[i].tokenId,
-				_metadatas[i].arweaveTxId,
+				_metadatas[i].metadataId,
 				_metadatas[i].payout
 			);
 		}
