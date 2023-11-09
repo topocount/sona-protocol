@@ -3,13 +3,13 @@ pragma solidity ^0.8.16;
 
 import { SonaRewardToken, ISonaRewardToken } from "../../SonaRewardToken.sol";
 import { SonaDirectMint } from "../../SonaDirectMint.sol";
-import { SonaTokenAuthorizer } from "../../SonaTokenAuthorizer.sol";
+import { SonaTokenAuthorizor } from "../../SonaTokenAuthorizor.sol";
 import { ERC721 } from "solmate/tokens/ERC721.sol";
 import { ERC1967Proxy } from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 import { Util } from "../Util.sol";
 import { VmSafe } from "forge-std/Vm.sol";
 
-abstract contract MinterSigner is SonaTokenAuthorizer {
+abstract contract MinterSigner is SonaTokenAuthorizor {
 	address private constant _VMSAFE_ADDRESS =
 		address(uint160(uint256(keccak256("hevm cheat code"))));
 	VmSafe internal constant _vmLocal = VmSafe(_VMSAFE_ADDRESS);

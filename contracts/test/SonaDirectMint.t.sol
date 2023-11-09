@@ -3,7 +3,7 @@ pragma solidity ^0.8.16;
 
 import { SonaRewardToken, ISonaRewardToken } from "../SonaRewardToken.sol";
 import { SonaDirectMint } from "../SonaDirectMint.sol";
-import { SonaTokenAuthorizer } from "../SonaTokenAuthorizer.sol";
+import { SonaTokenAuthorizor } from "../SonaTokenAuthorizor.sol";
 import { MinterSigner } from "./util/MinterSigner.sol";
 import { ERC721 } from "solmate/tokens/ERC721.sol";
 import { ERC1967Proxy } from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
@@ -75,7 +75,7 @@ contract SonaDirectMintTest is
 		ISonaRewardToken.TokenMetadata[] memory bundles = _createBundles();
 		Signature memory signature = _signBundles(bundles);
 		signature.v = 99;
-		vm.expectRevert(SonaAuthorizer_InvalidSignature.selector);
+		vm.expectRevert(SonaAuthorizor_InvalidSignature.selector);
 		directMint.mint(bundles, signature);
 	}
 

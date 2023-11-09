@@ -4,7 +4,7 @@ pragma solidity ^0.8.16;
 import { SonaReserveAuction } from "../SonaReserveAuction.sol";
 import { SonaRewardToken, ISonaRewardToken } from "../SonaRewardToken.sol";
 import { ISonaReserveAuction } from "../interfaces/ISonaReserveAuction.sol";
-import { SonaTokenAuthorizer, ISonaTokenAuthorizer } from "../SonaTokenAuthorizer.sol";
+import { SonaTokenAuthorizor, ISonaTokenAuthorizor } from "../SonaTokenAuthorizor.sol";
 import { SonaMinter } from "../access/SonaMinter.sol";
 import { StdChains } from "forge-std/Test.sol";
 import { MinterSigner } from "./util/MinterSigner.sol";
@@ -359,7 +359,7 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 
 		vm.startPrank(trackMinter);
 		vm.expectRevert(
-			ISonaTokenAuthorizer.SonaAuthorizer_InvalidSignature.selector
+			ISonaTokenAuthorizor.SonaAuthorizor_InvalidSignature.selector
 		);
 		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
 	}
@@ -373,7 +373,7 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 
 		vm.startPrank(trackMinter);
 		vm.expectRevert(
-			ISonaTokenAuthorizer.SonaAuthorizer_InvalidSignature.selector
+			ISonaTokenAuthorizor.SonaAuthorizor_InvalidSignature.selector
 		);
 		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
 	}

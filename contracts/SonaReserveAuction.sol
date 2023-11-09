@@ -8,7 +8,7 @@ pragma solidity ^0.8.16;
 // (___/(_____)(_)\_)(__)(__)  (___/ (__) (_)\_)(____)(__)(__)(_/\/\_)
 
 import { ISonaReserveAuction } from "./interfaces/ISonaReserveAuction.sol";
-import { SonaTokenAuthorizer } from "./SonaTokenAuthorizer.sol";
+import { SonaTokenAuthorizor } from "./SonaTokenAuthorizor.sol";
 import { ISplitMain } from "./payout/interfaces/ISplitMain.sol";
 import { Initializable } from "openzeppelin-upgradeable/proxy/utils/Initializable.sol";
 import { SonaAdmin } from "./access/SonaAdmin.sol";
@@ -26,7 +26,7 @@ contract SonaReserveAuction is
 	ISonaReserveAuction,
 	Initializable,
 	SonaAdmin,
-	SonaTokenAuthorizer
+	SonaTokenAuthorizor
 {
 	using AddressableTokenId for uint256;
 	using ZeroCheck for address;
@@ -86,7 +86,7 @@ contract SonaReserveAuction is
 		Signature calldata _signature
 	) {
 		if (!_verify(_metadatas, _signature.v, _signature.r, _signature.s))
-			revert SonaAuthorizer_InvalidSignature();
+			revert SonaAuthorizor_InvalidSignature();
 		_;
 	}
 

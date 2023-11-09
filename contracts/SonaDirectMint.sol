@@ -9,11 +9,11 @@ pragma solidity ^0.8.16;
 
 import { ISonaRewardToken } from "./interfaces/ISonaRewardToken.sol";
 import { AddressableTokenId } from "./utils/AddressableTokenId.sol";
-import { SonaTokenAuthorizer } from "./SonaTokenAuthorizer.sol";
+import { SonaTokenAuthorizor } from "./SonaTokenAuthorizor.sol";
 
 /// @title SonaDirectMint
 /// @author @SonaEngineering
-contract SonaDirectMint is SonaTokenAuthorizer {
+contract SonaDirectMint is SonaTokenAuthorizor {
 	using AddressableTokenId for uint256;
 
 	/*//////////////////////////////////////////////////////////////
@@ -33,7 +33,7 @@ contract SonaDirectMint is SonaTokenAuthorizer {
 		Signature calldata _signature
 	) {
 		if (!_verify(_metadatas, _signature.v, _signature.r, _signature.s))
-			revert SonaAuthorizer_InvalidSignature();
+			revert SonaAuthorizor_InvalidSignature();
 		_;
 	}
 

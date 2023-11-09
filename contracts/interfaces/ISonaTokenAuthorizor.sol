@@ -7,13 +7,13 @@ pragma solidity ^0.8.16;
 // \__ \ )(_)(  )  (  /(__)\   \__ \  )(   )   / )__)  /(__)\  )    (
 // (___/(_____)(_)\_)(__)(__)  (___/ (__) (_)\_)(____)(__)(__)(_/\/\_)
 
-interface ISonaTokenAuthorizer {
+interface ISonaTokenAuthorizor {
 	/*//////////////////////////////////////////////////////////////
 	/                       ERRORS
 	//////////////////////////////////////////////////////////////*/
 
 	/// @notice emitted when a signature recovery does not succeed
-	error SonaAuthorizer_InvalidSignature();
+	error SonaAuthorizor_InvalidSignature();
 
 	/*//////////////////////////////////////////////////////////////
 	/                        STRUCTS
