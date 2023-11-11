@@ -14,6 +14,7 @@ import { IERC2981Upgradeable as IERC2981, IERC165Upgradeable as IERC165 } from "
 import { LibString } from "solady/utils/LibString.sol";
 import { AddressableTokenId } from "./utils/AddressableTokenId.sol";
 import { ZeroCheck } from "./utils/ZeroCheck.sol";
+import { IBlockListRegistry } from "./interfaces/IBlockListRegistry.sol";
 
 /// @title SonaRewardToken
 /// @author @SonaEngineering
@@ -29,6 +30,8 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken, IERC2981 {
 
 	/// @dev the address specified by ERC 2981 that royalties should be sent to
 	address internal _royaltyRecipient;
+	// for use with https://etherscan.io/address/0x4fC5Da4607934cC80A0C6257B1F36909C58dD622#code
+	address internal _blockListRegistry;
 	string internal _uriBase;
 
 	/*//////////////////////////////////////////////////////////////
@@ -130,6 +133,30 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken, IERC2981 {
 		}
 	}
 
+	/// @notice checks the msg.sender to see if it is on the operator blocklist
+	/// @param _from the owner of the the nft
+	/// @param _to the recipient of the nft
+	/// @param _id the tokenId of the nft to be transferred
+	function transferFrom(
+		address _from,
+		address _to,
+		uint256 _id
+	) public override {
+		_blockInvalidOperator(msg.sender);
+		super.transferFrom(_from, _to, _id);
+	}
+
+	/// @notice checks if the operator `_operator` is on the blocklist
+	/// @param _operator the entity granted permission to transfer tokens on behalf of the msg.sender
+	/// @param _approved set or unset approval for all tokens held
+	function setApprovalForAll(
+		address _operator,
+		bool _approved
+	) public override {
+		if (_approved) _blockInvalidOperator(_operator);
+		super.setApprovalForAll(_operator, _approved);
+	}
+
 	/// @notice Updates the arweave transaction ID for the metadata for a given RewardToken
 	/// @dev the arweave transaction id is returned by the tokenURI function
 	/// @param _tokenId The ID of the token that will be updated
@@ -152,6 +179,10 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken, IERC2981 {
 		rewardTokens[_tokenId].payout = _payout;
 
 		emit PayoutAddressUpdated(_tokenId, _payout);
+	}
+
+	function updateBlockListAddress(address _newList) external onlySonaAdmin {
+		_blockListRegistry = _newList;
 	}
 
 	/// @notice Get a RewardToken's metadata from arweave for token `_tokenId`
@@ -245,5 +276,17 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken, IERC2981 {
 			txId: _txId,
 			payout: _payout
 		});
+	}
+
+	function _isOperatorBlocked(address _operator) internal view returns (bool) {
+		return
+			_blockListRegistry != address(0) &&
+			IBlockListRegistry(_blockListRegistry).isBlocked(_operator);
+	}
+
+	function _blockInvalidOperator(address _operator) internal view {
+		if (_isOperatorBlocked(_operator)) {
+			revert SonaRewardToken_OperatorNotAllowed(_operator);
+		}
 	}
 }

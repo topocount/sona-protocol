@@ -33,6 +33,9 @@ contract SonaRewardTokenTest is Util, ERC721Holder, SonaRewardToken {
 
 	SonaRewardToken public rewardToken;
 
+	uint256 public mainnetFork;
+	string public MAINNET_RPC_URL = vm.envString("MAINNET_FORK_RPC_URL");
+
 	function setUp() public {
 		SonaRewardToken rewardTokenBase = new SonaRewardToken();
 		ERC1967Proxy proxy = new ERC1967Proxy(
@@ -167,5 +170,28 @@ contract SonaRewardTokenTest is Util, ERC721Holder, SonaRewardToken {
 
 		vm.expectRevert(ISonaRewardToken.SonaRewardToken_Unauthorized.selector);
 		rewardToken.updatePayoutAddress(_tokenId, payable(rewardTokenRecipient));
+	}
+
+	function test_updateBlockListAddress() public {
+		mainnetFork = vm.createSelectFork(MAINNET_RPC_URL, 18223529);
+		setUp();
+		vm.prank(tokenAdmin);
+		rewardToken.updateBlockListAddress(
+			0x4fC5Da4607934cC80A0C6257B1F36909C58dD622
+		);
+
+		// can set approval for reservoir
+		address reservoir = 0xC2c862322E9c97D6244a3506655DA95F05246Fd8;
+		rewardToken.setApprovalForAll(reservoir, true);
+
+		// cannot set approval for seaport v1.5
+		address seaport = 0x00000000000000ADc04C56Bf30aC9d3c0aAF14dC;
+		vm.expectRevert(
+			abi.encodeWithSelector(
+				SonaRewardToken_OperatorNotAllowed.selector,
+				seaport
+			)
+		);
+		rewardToken.setApprovalForAll(seaport, true);
 	}
 }

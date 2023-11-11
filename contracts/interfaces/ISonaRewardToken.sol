@@ -20,6 +20,8 @@ interface ISonaRewardToken {
 
 	error SonaRewardToken_NoArtistInTokenId();
 
+	error SonaRewardToken_OperatorNotAllowed(address operator);
+
 	/*//////////////////////////////////////////////////////////////
 	/                              EVENTS
 	//////////////////////////////////////////////////////////////*/
