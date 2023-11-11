@@ -21,6 +21,7 @@ contract Deployer is Script {
 	address internal _REDISTRIBUTION;
 	address internal _TREASURY;
 	address internal _AUTHORIZER;
+	string internal _URI_DOMAIN;
 
 	function setUp() external {
 		string memory mnemonic = vm.envString("MNEMONIC");
@@ -29,6 +30,7 @@ contract Deployer is Script {
 			_REDISTRIBUTION = vm.envAddress("SONA_REDISTRIBUTION_ADDRESS");
 			_TREASURY = vm.envAddress("SONA_TREASURY_ADDRESS");
 			_AUTHORIZER = vm.envAddress("SONA_AUTHORIZER_ADDRESS");
+			_URI_DOMAIN = vm.envString("SONA_TOKEN_URI_DOMAIN");
 		} else {
 			_OWNER = vm.envOr(
 				"SONA_OWNER_ADDRESS",
@@ -170,7 +172,8 @@ contract Deployer is Script {
 			"Sona Rewards Token",
 			"SONA",
 			_TEMP_SONA_OWNER,
-			_TREASURY
+			_TREASURY,
+			_URI_DOMAIN
 		);
 
 		initCode = type(ERC1967Proxy).creationCode;

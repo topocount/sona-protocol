@@ -90,7 +90,9 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 						SonaRewardToken.initialize.selector,
 						"Sona Rewards Token",
 						"SONA",
-						address(rootOwner)
+						address(rootOwner),
+						address(this),
+						"http://fakeSona.stream"
 					)
 				)
 			)
@@ -870,7 +872,9 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 						SonaRewardToken.initialize.selector,
 						"Sona Rewards Token",
 						"SONA",
-						address(this)
+						address(this),
+						address(this),
+						"http://fakeSona.stream"
 					)
 				)
 			)

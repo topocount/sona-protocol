@@ -11,6 +11,7 @@ import { ISonaRewardToken } from "./interfaces/ISonaRewardToken.sol";
 import { SonaMinter } from "./access/SonaMinter.sol";
 import { ERC721 } from "solmate/tokens/ERC721.sol";
 import { IERC2981Upgradeable as IERC2981, IERC165Upgradeable as IERC165 } from "openzeppelin-upgradeable/interfaces/IERC2981Upgradeable.sol";
+import { LibString } from "solady/utils/LibString.sol";
 import { AddressableTokenId } from "./utils/AddressableTokenId.sol";
 import { ZeroCheck } from "./utils/ZeroCheck.sol";
 
@@ -28,6 +29,7 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken, IERC2981 {
 
 	/// @dev the address specified by ERC 2981 that royalties should be sent to
 	address internal _royaltyRecipient;
+	string internal _uriBase;
 
 	/*//////////////////////////////////////////////////////////////
 	/                         MAPPINGS
@@ -80,7 +82,8 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken, IERC2981 {
 		string calldata _name,
 		string calldata _symbol,
 		address _eoaAdmin,
-		address royaltyRecipient_
+		address royaltyRecipient_,
+		string calldata uriBase_
 	) external override initializer {
 		// Setup role for contract creator, otherwise subsequent checks will not work
 		_setupRole(_ADMIN_ROLE, _eoaAdmin);
@@ -91,6 +94,7 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken, IERC2981 {
 		name = _name;
 		symbol = _symbol;
 		_royaltyRecipient = royaltyRecipient_;
+		_uriBase = uriBase_;
 	}
 
 	/// @notice auth-guarded mint function
@@ -161,7 +165,17 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken, IERC2981 {
 		checkExists(_tokenId)
 		returns (string memory)
 	{
-		return string(abi.encodePacked("ar://", rewardTokens[_tokenId].arTxId));
+		return
+			string(
+				abi.encodePacked(
+					_uriBase,
+					"/",
+					LibString.toString(block.chainid),
+					"/",
+					LibString.toHexString(_tokenId),
+					"/nft-metadata.json"
+				)
+			);
 	}
 
 	/// @notice Returns the metadata of the token `_tokenId`

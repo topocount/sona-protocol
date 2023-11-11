@@ -37,7 +37,8 @@ contract SonaDirectMintTest is
 				"SonaRewardToken",
 				"SRT",
 				address(1),
-				address(this)
+				address(this),
+				"http://fakeSona.stream"
 			)
 		);
 		rewardToken = SonaRewardToken(address(proxy));
