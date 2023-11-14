@@ -8,7 +8,7 @@ import { SonaDirectMint } from "../../contracts/SonaDirectMint.sol";
 import { SonaRewardToken } from "../../contracts/SonaRewardToken.sol";
 import { SonaReserveAuction } from "../../contracts/SonaReserveAuction.sol";
 import { ERC1967Proxy } from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
-import { ERC20 } from "openzeppelin/token/ERC20/ERC20.sol";
+import { ERC20Mock } from "../../contracts/test/mock/ERC20Mock.sol";
 import { IERC20Upgradeable as IERC20 } from "openzeppelin-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import { IWETH } from "../../contracts/interfaces/IWETH.sol";
 import { Weth9Mock } from "../../contracts/test/mock/Weth9Mock.sol";
@@ -291,17 +291,5 @@ contract Deployer is Script {
 				)
 			)
 		);
-	}
-}
-
-contract ERC20Mock is ERC20 {
-	constructor() ERC20("USD Coin", "USDC") {}
-
-	function mint(address account, uint256 amount) external {
-		_mint(account, amount);
-	}
-
-	function burn(address account, uint256 amount) external {
-		_burn(account, amount);
 	}
 }
