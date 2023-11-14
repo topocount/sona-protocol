@@ -40,8 +40,15 @@ gas_snapshot :; forge clean && forge snapshot
 # chmod scripts
 scripts :; chmod +x ./scripts/*
 
-# deploy with doppler env
-deploy_private_doppler:; doppler run -- make deploy_private
+deploy : deploy_libs; forge script ./script/solidity/Deploy.s.sol:Deployer \
+	--rpc-url ${RPC_URL} \
+	-vvv \
+	--broadcast
+
+deploy_libs :; forge script ./script/solidity/Deploy_libraries.s.sol:Deployer \
+	--rpc-url ${RPC_URL} \
+	-vvv \
+	--broadcast
 
 deploy_local :; forge script ./script/solidity/Deploy.s.sol:Deployer \
 	--rpc-url "http://localhost:8546" \
@@ -158,11 +165,12 @@ fmt :; pnpm fmt
 # Fmt check
 fmt_check :; pnpm fmt:check
 
-# Local node -- produces a block every 15 seconds
-node :; anvil --block-time 15 > /dev/null 2>&1 &
+# Local node -- produces a block every 14 seconds
+node :; anvil -p 8546 --block-time 14 --mnemonic "${MNEMONIC}"
 
 # Local node eth fork
-node_fork :; anvil --fork-url ${RPC_URL} > /dev/null 2>&1 &
+node_fork_mainnet :; anvil -p 8546 --fork-url ${MAINNET_FORK_RPC_URL}
+node_fork_sepolia :; anvil -p 8546 --fork-url ${RPC_URL_SEPOLIA}
 
 node_kill :; killall anvil
 
