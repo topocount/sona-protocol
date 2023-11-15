@@ -181,8 +181,16 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken, IERC2981 {
 		emit PayoutAddressUpdated(_tokenId, _payout);
 	}
 
+	/// @notice Updates the blocklist address to `_newList`
+	/// @param _newList the new blocklist address
 	function updateBlockListAddress(address _newList) external onlySonaAdmin {
 		_blockListRegistry = _newList;
+	}
+
+	/// @notice Updates the URI base string
+	/// @param uriBase_ the string,starting with "https://" and _not_ terminated with a trailing slash
+	function updateUriBase(string calldata uriBase_) external onlySonaAdmin {
+		_uriBase = uriBase_;
 	}
 
 	/// @notice Get a RewardToken's metadata from arweave for token `_tokenId`
