@@ -194,4 +194,9 @@ contract SonaRewardTokenTest is Util, ERC721Holder, SonaRewardToken {
 		);
 		rewardToken.setApprovalForAll(seaport, true);
 	}
+
+	function test_contractURI() public {
+		string memory result = rewardToken.contractURI();
+		assertEq(result, "http://fakeSona.stream/31337/contract-metadata.json");
+	}
 }

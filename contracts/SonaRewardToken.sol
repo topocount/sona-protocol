@@ -217,6 +217,18 @@ contract SonaRewardToken is SonaMinter, ISonaRewardToken, IERC2981 {
 			);
 	}
 
+	function contractURI() public view returns (string memory) {
+		return
+			string(
+				abi.encodePacked(
+					_uriBase,
+					"/",
+					LibString.toString(block.chainid),
+					"/contract-metadata.json"
+				)
+			);
+	}
+
 	/// @notice Returns the metadata of the token `_tokenId`
 	/// @param _tokenId The ID of the token to fetch
 	function getRewardTokenMetadata(
