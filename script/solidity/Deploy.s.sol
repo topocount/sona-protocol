@@ -17,7 +17,7 @@ import { SplitMain } from "../../contracts/payout/SplitMain.sol";
 import { SonaDirectMint } from "../../contracts/SonaDirectMint.sol";
 
 contract Deployer is Script {
-	address internal _OWNER;
+	address[] internal _OWNER;
 	address internal _REDISTRIBUTION;
 	address internal _TREASURY;
 	address internal _AUTHORIZER;
@@ -26,16 +26,15 @@ contract Deployer is Script {
 	function setUp() external {
 		string memory mnemonic = vm.envString("MNEMONIC");
 		if (block.chainid == 1) {
-			_OWNER = vm.envAddress("SONA_OWNER_ADDRESS");
+			_OWNER = vm.envAddress("SONA_OWNER_ADDRESS", ",");
 			_REDISTRIBUTION = vm.envAddress("SONA_REDISTRIBUTION_ADDRESS");
 			_TREASURY = vm.envAddress("SONA_TREASURY_ADDRESS");
 			_AUTHORIZER = vm.envAddress("SONA_AUTHORIZER_ADDRESS");
 			_URI_DOMAIN = vm.envString("SONA_TOKEN_URI_DOMAIN");
 		} else {
-			_OWNER = vm.envOr(
-				"SONA_OWNER_ADDRESS",
-				vm.addr(vm.deriveKey(mnemonic, 1))
-			);
+			address[] memory testOwner = new address[](1);
+			testOwner[0] = vm.addr(vm.deriveKey(mnemonic, 1));
+			_OWNER = vm.envOr("SONA_OWNER_ADDRESS", ",", testOwner);
 			_AUTHORIZER = vm.envOr(
 				"SONA_AUTHORIZER_ADDRESS",
 				vm.addr(vm.deriveKey(mnemonic, 2))
@@ -108,10 +107,26 @@ contract Deployer is Script {
 			usdc,
 			weth
 		);
+
+		for (uint i = 0; i < _OWNER.length; i++) {
+			vm.startBroadcast(pk);
+			SonaReserveAuction(reserveAuction).grantRole(ADMIN_ROLE, _OWNER[i]);
+			vm.stopBroadcast();
+		}
+		vm.startBroadcast(pk);
+		SonaReserveAuction(reserveAuction).renounceRole(ADMIN_ROLE, deployer);
+		vm.stopBroadcast();
+
 		vm.startBroadcast(pk);
 		SonaRewardToken(rewardToken).grantRole(MINTER_ROLE, directMint);
 		SonaRewardToken(rewardToken).grantRole(MINTER_ROLE, reserveAuction);
-		SonaRewardToken(rewardToken).grantRole(ADMIN_ROLE, _OWNER);
+		vm.stopBroadcast();
+		for (uint i = 0; i < _OWNER.length; i++) {
+			vm.startBroadcast(pk);
+			SonaRewardToken(rewardToken).grantRole(ADMIN_ROLE, _OWNER[i]);
+			vm.stopBroadcast();
+		}
+		vm.startBroadcast(pk);
 		SonaRewardToken(rewardToken).renounceRole(ADMIN_ROLE, deployer);
 		vm.stopBroadcast();
 	}
@@ -214,6 +229,7 @@ contract Deployer is Script {
 		uint256 pk = vm.deriveKey(mnemonic, 0);
 		vm.broadcast(pk);
 		SonaReserveAuction auctionBase = new SonaReserveAuction();
+		address _TEMP_SONA_OWNER = vm.addr(vm.deriveKey(mnemonic, 0));
 
 		bytes memory reserveAuctionInitializerArgs = abi.encodeWithSelector(
 			SonaReserveAuction.initialize.selector,
@@ -222,7 +238,7 @@ contract Deployer is Script {
 			_AUTHORIZER,
 			SonaRewardToken(rewardToken),
 			splits,
-			_OWNER,
+			_TEMP_SONA_OWNER,
 			weth
 		);
 
