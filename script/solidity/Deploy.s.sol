@@ -47,6 +47,7 @@ contract Deployer is Script {
 				"SONA_TREASURY_ADDRESS",
 				vm.addr(vm.deriveKey(mnemonic, 3))
 			);
+			_URI_DOMAIN = vm.envString("SONA_TOKEN_URI_DOMAIN");
 		}
 	}
 
