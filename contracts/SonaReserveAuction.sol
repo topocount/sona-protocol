@@ -404,6 +404,13 @@ contract SonaReserveAuction is
 		return auctions[_tokenId];
 	}
 
+	/// @dev set state used by the auction process
+	/// @param treasuryFeeRecipient_ the destination for Sona Treasury funds
+	/// @param redistributionFeeRecipient_  the destination for artist pool funds
+	/// @param authorizer_ the address of the auction validator
+	/// @param _rewardToken the SonaRewardToken instance
+	/// @param _splitMain the SonaSplits instance
+	/// @param weth_ the weth instance
 	function setConfig(
 		address treasuryFeeRecipient_,
 		address redistributionFeeRecipient_,
