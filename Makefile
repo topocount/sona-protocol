@@ -44,20 +44,22 @@ gas_diff :; FOUNDRY_PROFILE=tune doppler run -- forge snapshot --check
 # chmod scripts
 scripts :; chmod +x ./scripts/*
 
-deploy : deploy_libs; forge script ./script/solidity/Deploy.s.sol:Deployer \
+deploy :; FOUNDRY_PROFILE=optimized forge script ./script/solidity/Deploy.s.sol:Deployer \
 	--rpc-url ${RPC_URL} \
-	-vvv \
-	--broadcast
+	-g 110 \
+	--broadcast \
+	--verify \
+	-vvv 
 
-deploy_libs :; forge script ./script/solidity/Deploy_libraries.s.sol:Deployer \
+deploy_libs :;FOUNDRY_PROFILE=optimized forge script ./script/solidity/Deploy_libraries.s.sol:Deployer \
 	--rpc-url ${RPC_URL} \
-	-vvv \
-	--broadcast
+	--broadcast \
+	-vvv 
 
 deploy_swap :;FOUNDRY_PROFILE=swap forge script ./script/solidity_v7/Deploy_Swap.s.sol:DeploySwap \
 	--rpc-url ${RPC_URL} \
-	-vvv \
-	--broadcast
+	--broadcast \
+	-vvv
 
 deploy_local :; forge script ./script/solidity/Deploy.s.sol:Deployer \
 	--rpc-url "http://localhost:8546" \
