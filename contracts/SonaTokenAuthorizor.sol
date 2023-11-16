@@ -41,7 +41,7 @@ contract SonaTokenAuthorizor is ISonaTokenAuthorizor {
 
 	/// @dev the address of the authorizing signer;
 	/// initialized to 0xdead to prevent uninitialized authorization
-	address internal _authorizer = 0xdeaDDeADDEaDdeaDdEAddEADDEAdDeadDEADDEaD;
+	address internal _authorizor = 0xdeaDDeADDEaDdeaDdEAddEADDEAdDeadDEADDEaD;
 
 	/*//////////////////////////////////////////////////////////////
 	/                    PRIVATE FUNCTIONS
@@ -53,7 +53,7 @@ contract SonaTokenAuthorizor is ISonaTokenAuthorizor {
 		bytes32 r,
 		bytes32 s
 	) internal view returns (bool valid) {
-		return _recoverAddress(_metadatas, v, r, s) == _authorizer;
+		return _recoverAddress(_metadatas, v, r, s) == _authorizor;
 	}
 
 	function _recoverAddress(

@@ -80,7 +80,7 @@ contract SonaReserveAuction is
 		_;
 	}
 
-	/// @dev recover signature and ensure it matches `_authorizer`
+	/// @dev recover signature and ensure it matches `_authorizor`
 	modifier bundlesAuthorized(
 		ISonaRewardToken.TokenMetadata[] calldata _metadatas,
 		Signature calldata _signature
@@ -106,7 +106,7 @@ contract SonaReserveAuction is
 	/// @param treasuryFeeRecipient_ the location of protocol funds
 	/// @param redistributionFeeRecipient_ the location of the funds
 	/// 				distributed back to artists
-	/// @param authorizer_ the address that signs off that a tracks has met all licensing agreements
+	/// @param authorizor_ the address that signs off that a tracks has met all licensing agreements
 	/// @param _rewardToken The NFTs minted by this contract
 	/// @param _splitMain The splits fork that shares auction proceeds with collaborators
 	/// @param _eoaAdmin The AccessControl admin
@@ -114,7 +114,7 @@ contract SonaReserveAuction is
 	function initialize(
 		address treasuryFeeRecipient_,
 		address redistributionFeeRecipient_,
-		address authorizer_,
+		address authorizor_,
 		ISonaRewardToken _rewardToken,
 		ISplitMain _splitMain,
 		address _eoaAdmin,
@@ -127,7 +127,7 @@ contract SonaReserveAuction is
 		_setConfig(
 			treasuryFeeRecipient_,
 			redistributionFeeRecipient_,
-			authorizer_,
+			authorizor_,
 			_rewardToken,
 			_splitMain,
 			weth_
@@ -407,14 +407,14 @@ contract SonaReserveAuction is
 	/// @dev set state used by the auction process
 	/// @param treasuryFeeRecipient_ the destination for Sona Treasury funds
 	/// @param redistributionFeeRecipient_  the destination for artist pool funds
-	/// @param authorizer_ the address of the auction validator
+	/// @param authorizor_ the address of the auction validator
 	/// @param _rewardToken the SonaRewardToken instance
 	/// @param _splitMain the SonaSplits instance
 	/// @param weth_ the weth instance
 	function setConfig(
 		address treasuryFeeRecipient_,
 		address redistributionFeeRecipient_,
-		address authorizer_,
+		address authorizor_,
 		ISonaRewardToken _rewardToken,
 		ISplitMain _splitMain,
 		IWETH weth_
@@ -422,7 +422,7 @@ contract SonaReserveAuction is
 		_setConfig(
 			treasuryFeeRecipient_,
 			redistributionFeeRecipient_,
-			authorizer_,
+			authorizor_,
 			_rewardToken,
 			_splitMain,
 			weth_
@@ -603,7 +603,7 @@ contract SonaReserveAuction is
 	function _setConfig(
 		address treasuryFeeRecipient_,
 		address redistributionFeeRecipient_,
-		address authorizer_,
+		address authorizor_,
 		ISonaRewardToken _rewardToken,
 		ISplitMain _splitMain,
 		IWETH weth_
@@ -618,8 +618,8 @@ contract SonaReserveAuction is
 		);
 		_redistributionFeeRecipient = redistributionFeeRecipient_;
 
-		authorizer_.revertIfZero(SonaReserveAuction_InvalidAddress.selector);
-		_authorizer = authorizer_;
+		authorizor_.revertIfZero(SonaReserveAuction_InvalidAddress.selector);
+		_authorizor = authorizor_;
 
 		_weth = weth_;
 

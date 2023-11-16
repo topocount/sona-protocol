@@ -16,9 +16,9 @@ abstract contract MinterSigner is SonaTokenAuthorizor {
 
 	string public mnemonic =
 		"test test test test test test test test test test test junk";
-	uint256 public authorizerKey = _vmLocal.deriveKey(mnemonic, 0);
+	uint256 public authorizorKey = _vmLocal.deriveKey(mnemonic, 0);
 
-	address public authorizer = _vmLocal.addr(authorizerKey);
+	address public authorizor = _vmLocal.addr(authorizorKey);
 	bytes32 public domainSeparator;
 
 	function _makeDomainHash(string memory name, address _verifier) internal {
@@ -81,7 +81,7 @@ abstract contract MinterSigner is SonaTokenAuthorizor {
 		ISonaRewardToken.TokenMetadata[] memory _metadatas
 	) internal view returns (Signature memory signature) {
 		bytes32 bundleHash = _getBundlesHash(_metadatas);
-		(uint8 v, bytes32 r, bytes32 s) = _vmLocal.sign(authorizerKey, bundleHash);
+		(uint8 v, bytes32 r, bytes32 s) = _vmLocal.sign(authorizorKey, bundleHash);
 
 		return Signature({ v: v, r: r, s: s });
 	}

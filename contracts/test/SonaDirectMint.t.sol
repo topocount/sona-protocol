@@ -42,7 +42,7 @@ contract SonaDirectMintTest is
 			)
 		);
 		rewardToken = SonaRewardToken(address(proxy));
-		directMint = new SonaDirectMint(rewardToken, authorizer);
+		directMint = new SonaDirectMint(rewardToken, authorizor);
 
 		_makeDomainHash("SonaDirectMint", address(directMint));
 

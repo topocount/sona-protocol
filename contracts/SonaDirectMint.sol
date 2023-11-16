@@ -27,7 +27,7 @@ contract SonaDirectMint is SonaTokenAuthorizor {
 	/                         MODIFIERS
 	//////////////////////////////////////////////////////////////*/
 
-	/// @dev ensure the provided signature is from the authorizer
+	/// @dev ensure the provided signature is from the authorizor
 	modifier bundlesAuthorized(
 		ISonaRewardToken.TokenMetadata[] calldata _metadatas,
 		Signature calldata _signature
@@ -40,9 +40,9 @@ contract SonaDirectMint is SonaTokenAuthorizor {
 	/*//////////////////////////////////////////////////////////////
 								Constructor
 	//////////////////////////////////////////////////////////////*/
-	constructor(ISonaRewardToken _token, address authorizer_) {
+	constructor(ISonaRewardToken _token, address authorizor_) {
 		token = _token;
-		_authorizer = authorizer_;
+		_authorizor = authorizor_;
 
 		_DOMAIN_SEPARATOR = keccak256(
 			abi.encode(

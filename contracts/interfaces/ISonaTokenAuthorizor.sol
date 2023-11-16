@@ -19,7 +19,7 @@ interface ISonaTokenAuthorizor {
 	/                        STRUCTS
 	//////////////////////////////////////////////////////////////*/
 
-	/// @notice the an elliptic curve signature, provided by the authorizer
+	/// @notice the an elliptic curve signature, provided by the authorizor
 	struct Signature {
 		uint8 v;
 		bytes32 r;

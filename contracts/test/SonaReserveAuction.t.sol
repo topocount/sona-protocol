@@ -104,7 +104,7 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 				SonaReserveAuction.initialize.selector,
 				treasuryRecipient,
 				redistributionRecipient,
-				authorizer,
+				authorizor,
 				tokenProxy,
 				splitMainImpl,
 				rootOwner,
@@ -130,7 +130,7 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 				SonaReserveAuction.initialize.selector,
 				address(0),
 				redistributionRecipient,
-				authorizer,
+				authorizor,
 				rewardTokenBase,
 				address(0),
 				address(0),
@@ -147,24 +147,7 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 				SonaReserveAuction.initialize.selector,
 				treasuryRecipient,
 				address(0),
-				authorizer,
-				rewardTokenBase,
-				address(0),
-				address(0),
-				mockWeth
-			)
-		);
-
-		vm.expectRevert(
-			ISonaReserveAuction.SonaReserveAuction_InvalidAddress.selector
-		);
-		new ERC1967Proxy(
-			address(auctionBase),
-			abi.encodeWithSelector(
-				SonaReserveAuction.initialize.selector,
-				treasuryRecipient,
-				redistributionRecipient,
-				address(0),
+				authorizor,
 				rewardTokenBase,
 				address(0),
 				address(0),
@@ -181,7 +164,24 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 				SonaReserveAuction.initialize.selector,
 				treasuryRecipient,
 				redistributionRecipient,
-				authorizer,
+				address(0),
+				rewardTokenBase,
+				address(0),
+				address(0),
+				mockWeth
+			)
+		);
+
+		vm.expectRevert(
+			ISonaReserveAuction.SonaReserveAuction_InvalidAddress.selector
+		);
+		new ERC1967Proxy(
+			address(auctionBase),
+			abi.encodeWithSelector(
+				SonaReserveAuction.initialize.selector,
+				treasuryRecipient,
+				redistributionRecipient,
+				authorizor,
 				address(0),
 				address(0),
 				address(0),
@@ -886,7 +886,7 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 				SonaReserveAuction.initialize.selector,
 				treasuryRecipient,
 				redistributionRecipient,
-				authorizer,
+				authorizor,
 				tokenProxy,
 				splitMainImpl,
 				address(this),
