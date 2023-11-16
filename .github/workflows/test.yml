@@ -39,6 +39,8 @@ jobs:
           forge --version
           make build
         id: build
+        env:
+          FOUNDRY_PROFILE: optimized
 
       - name: Run Forge tests
         env:

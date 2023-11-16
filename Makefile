@@ -4,8 +4,10 @@
 
 all: clean install update build analyze
 
+clean_forge :; forge clean
+
 # Clean the repo
-clean  :; forge clean && rm -rf node_modules
+clean  : clean_forge; rm -rf node_modules
 
 # Install the Modules
 install :; forge install; git submodule update --init --recursive; yarn --cwd lib_v7/v3-periphery install; pnpm install;
@@ -35,7 +37,9 @@ lcov:; doppler run -- forge coverage --report lcov && genhtml lcov.info --output
 gas :; forge clean && forge test --gas-report
 
 # Gas Snapshot to .gas-snapshot
-gas_snapshot :; forge clean && forge snapshot
+gas_snapshot : build_swap; FOUNDRY_PROFILE=tune doppler run -- forge snapshot
+
+gas_diff :; FOUNDRY_PROFILE=tune doppler run -- forge snapshot --check
 
 # chmod scripts
 scripts :; chmod +x ./scripts/*
@@ -50,6 +54,11 @@ deploy_libs :; forge script ./script/solidity/Deploy_libraries.s.sol:Deployer \
 	-vvv \
 	--broadcast
 
+deploy_swap :;FOUNDRY_PROFILE=swap forge script ./script/solidity_v7/Deploy_Swap.s.sol:DeploySwap \
+	--rpc-url ${RPC_URL} \
+	-vvv \
+	--broadcast
+
 deploy_local :; forge script ./script/solidity/Deploy.s.sol:Deployer \
 	--rpc-url "http://localhost:8546" \
 	-vvv \
@@ -58,14 +67,12 @@ deploy_local :; forge script ./script/solidity/Deploy.s.sol:Deployer \
 deploy_swap_local :;FOUNDRY_PROFILE=swap forge script ./script/solidity_v7/Deploy_Swap.s.sol:DeploySwap \
 	--rpc-url "http://localhost:8546" \
 	-vvv \
-	--broadcast \
-	--chain-id 31337
+	--broadcast
 
 deploy_libs_local :; forge script ./script/solidity/Deploy_libraries.s.sol:Deployer \
 	--rpc-url "http://localhost:8546" \
 	-vvv \
-	--broadcast \
-	--chain-id 31337
+	--broadcast
 
 deploy_libs_sepolia :; forge script ./script/solidity/Deploy_libraries.s.sol:Deployer \
 	--rpc-url ${RPC_URL_SEPOLIA} \
@@ -169,8 +176,8 @@ fmt_check :; pnpm fmt:check
 node :; anvil -p 8546 --block-time 14 --mnemonic "${MNEMONIC}"
 
 # Local node eth fork
-node_fork_mainnet :; anvil -p 8546 --fork-url ${MAINNET_FORK_RPC_URL}
-node_fork_sepolia :; anvil -p 8546 --fork-url ${RPC_URL_SEPOLIA}
+node_fork_mainnet :; anvil -p 8546 --fork-url ${MAINNET_FORK_RPC_URL} --mnemonic "${MNEMONIC}"
+node_fork_sepolia :; anvil -p 8546 --fork-url ${RPC_URL_SEPOLIA} --mnemonic "${MNEMONIC}"
 
 node_kill :; killall anvil
 
