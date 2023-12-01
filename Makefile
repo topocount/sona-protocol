@@ -10,7 +10,7 @@ clean_forge :; forge clean
 clean  : clean_forge; rm -rf node_modules
 
 # Install the Modules
-install :; forge install; git submodule update --init --recursive; yarn --cwd lib_v7/v3-periphery install; pnpm install;
+install :; forge install; git submodule update --init --recursive; pnpm -C lib_v7/v3-periphery install --prod --no-lockfile; pnpm install;
 
 install_python :; pip3 install pipx; pipx install slither-analyzer --pip-args '-r requirements.txt'
 

@@ -39,5 +39,5 @@
   "publishConfig": {
     "access": "restricted"
   },
-  "packageManager": "pnpm@7.13.1"
+  "packageManager": "pnpm@8.10.5"
 }
