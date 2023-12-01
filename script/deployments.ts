@@ -1,5 +1,6 @@
 import type { Address } from "viem"
 import sepoliaDeployments from "../deploys/11155111.json"
+import mainnetDeployments from "../deploys/1.json"
 import testDeployments from "../deploys/31337.json"
 interface ContractDeployments {
 	[key: string]: `0x${string}`
@@ -38,6 +39,7 @@ function curryDeploymentsOutputFiles(
 
 const result = curryDeploymentsOutputFiles([
 	sepoliaDeployments as DeploymentsOutputFile,
+	mainnetDeployments as DeploymentsOutputFile,
 	// testDeployments,
 ])
 
