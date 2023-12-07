@@ -66,6 +66,22 @@ deploy_local :; forge script ./script/solidity/Deploy.s.sol:Deployer \
 	-vvv \
 	--broadcast
 
+migrate_token :; FOUNDRY_PROFILE=optimized forge script ./script/solidity/Upgrade.s.sol:MigrateRewardToken \
+	--rpc-url ${RPC_URL} \
+	-g 110 \
+	-vvv \
+	--broadcast \
+	--verify
+
+migrate_auction :; FOUNDRY_PROFILE=optimized forge script ./script/solidity/Upgrade.s.sol:MigrateRewardToken \
+	--sig "migrateAuction()" \
+	--rpc-url ${RPC_URL} \
+	-g 110 \
+	-vvv \
+	--ledger \
+	--sender "0xA0c9263E81b6798E0B18C8CFBe1eAC361b0846eA" \
+	--broadcast
+
 deploy_swap_local :;FOUNDRY_PROFILE=swap forge script ./script/solidity_v7/Deploy_Swap.s.sol:DeploySwap \
 	--rpc-url "http://localhost:8546" \
 	-vvv \
