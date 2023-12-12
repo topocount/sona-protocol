@@ -90,6 +90,8 @@ interface ISonaReserveAuction is ISonaTokenAuthorizor {
 		address payable currentBidder;
 		// @dev Currency for the auction
 		address currency;
+		// @dev the length the auction is set to run for
+		uint32 duration;
 		// @dev Arweave Bundle info containing collector token metadata and auction payout address
 		ISonaRewardToken.TokenMetadata tokenMetadata;
 	}
@@ -102,7 +104,8 @@ interface ISonaReserveAuction is ISonaTokenAuthorizor {
 		ISonaRewardToken.TokenMetadata[] calldata _metadatas,
 		Signature calldata _signature,
 		address _currencyAddress,
-		uint256 _reservePrice
+		uint256 _reservePrice,
+		uint32 _duration
 	) external;
 
 	function cancelReserveAuction(uint256 _tokenId) external;

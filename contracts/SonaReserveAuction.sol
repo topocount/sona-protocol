@@ -33,11 +33,16 @@ contract SonaReserveAuction is
 	using ZeroCheck for address payable;
 
 	/*//////////////////////////////////////////////////////////////
+	/                         IMMUTABLES
+	//////////////////////////////////////////////////////////////*/
+
+	// @dev The minimum duration an auction can run
+	uint256 public immutable AUCTION_DURATION_MINIMUM;
+
+	/*//////////////////////////////////////////////////////////////
 	/                         CONSTANTS
 	//////////////////////////////////////////////////////////////*/
 
-	// @dev The minimum duration of an auction. (24 hours)
-	uint256 private constant _AUCTION_DURATION = 24 hours;
 	// @dev The duration you may extend an auction by if you meet the price threshold. (15 minutes)
 	uint256 private constant _AUCTION_EXTENSION_DURATION = 15 minutes;
 	// @dev The minimum price threshold you must meet to extend an auction. (5%)
@@ -93,7 +98,8 @@ contract SonaReserveAuction is
 	/*//////////////////////////////////////////////////////////////
 								Constructor
 	//////////////////////////////////////////////////////////////*/
-	constructor() {
+	constructor(uint256 _min_duration) {
+		AUCTION_DURATION_MINIMUM = _min_duration;
 		_disableInitializers();
 	}
 
@@ -149,11 +155,13 @@ contract SonaReserveAuction is
 	/// Auctions are started once a bid of the reserve price or higher is placed.
 	/// @param _currencyAddress The address of the currency bids will be in.
 	/// @param _reservePrice The reserve price of the auction.
+	/// @param _duration The duration of the auction, in seconds in addition to the minmimum duration of 1 day
 	function createReserveAuction(
 		ISonaRewardToken.TokenMetadata[] calldata _metadatas,
 		Signature calldata _signature,
 		address _currencyAddress,
-		uint256 _reservePrice
+		uint256 _reservePrice,
+		uint32 _duration
 	) external bundlesAuthorized(_metadatas, _signature) {
 		// Check that the reserve price is not zero. No free auctions
 		if (_reservePrice == 0) {
@@ -165,7 +173,12 @@ contract SonaReserveAuction is
 				_metadatas[0].tokenId + 1 != _metadatas[1].tokenId
 			) revert SonaReserveAuction_InvalidTokenIds();
 
-			_createReserveAuction(_metadatas[1], _currencyAddress, _reservePrice);
+			_createReserveAuction(
+				_metadatas[1],
+				_currencyAddress,
+				_reservePrice,
+				_duration
+			);
 
 			if (!rewardToken.tokenIdExists(_metadatas[0].tokenId))
 				rewardToken.mint(
@@ -177,7 +190,12 @@ contract SonaReserveAuction is
 		} else if (_metadatas.length == 1) {
 			if (_metadatas[0].tokenId % 2 != 1)
 				revert SonaReserveAuction_InvalidTokenIds();
-			_createReserveAuction(_metadatas[0], _currencyAddress, _reservePrice);
+			_createReserveAuction(
+				_metadatas[0],
+				_currencyAddress,
+				_reservePrice,
+				_duration
+			);
 		} else {
 			revert SonaReserveAuction_NoMetadata();
 		}
@@ -330,7 +348,10 @@ contract SonaReserveAuction is
 		if (currentEndingTime == 0) {
 			// save ending time immediately to prevent unintended re-entrancy
 			unchecked {
-				currentEndingTime = block.timestamp + _AUCTION_DURATION;
+				currentEndingTime =
+					block.timestamp +
+					auction.duration +
+					AUCTION_DURATION_MINIMUM;
 			}
 			auction.endingTime = currentEndingTime;
 			auction.currentBidder = payable(msg.sender);
@@ -354,7 +375,8 @@ contract SonaReserveAuction is
 				revert SonaReserveAuction_AuctionEnded();
 				// if the ending time has not passed, continue with bid logic
 			} else {
-				// if the bid is 5% higher than the current bid, refund the current bidder
+				// if the bid is 5% higher than the current bid, extend the duration
+				// and refund the bidder; otherwise revert
 				if (attemptedBid >= ((auction.currentBidAmount * 105) / 100)) {
 					address payable previousBidder = auction.currentBidder;
 					uint256 previousBidAmount = auction.currentBidAmount;
@@ -436,7 +458,8 @@ contract SonaReserveAuction is
 	function _createReserveAuction(
 		ISonaRewardToken.TokenMetadata calldata _bundle,
 		address _currencyAddress,
-		uint256 _reservePrice
+		uint256 _reservePrice,
+		uint32 _duration
 	) internal {
 		if (auctions[_bundle.tokenId].reservePrice > 0)
 			revert SonaReserveAuction_AlreadyListed();
@@ -444,6 +467,7 @@ contract SonaReserveAuction is
 		_ensureBundleIsUnique(_bundle);
 
 		auctions[_bundle.tokenId].reservePrice = _reservePrice;
+		auctions[_bundle.tokenId].duration = _duration;
 		auctions[_bundle.tokenId].trackSeller = payable(
 			_bundle.tokenId.getAddress()
 		);

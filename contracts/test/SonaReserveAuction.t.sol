@@ -61,6 +61,8 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 
 	uint256 public tokenId = (uint256(uint160(trackMinter)) << 96) | 69;
 
+	uint32 public auctionMinDuration = 1 days;
+
 	// Weth
 	Weth9Mock public mockWeth = new Weth9Mock();
 	// mockUSDC
@@ -97,7 +99,7 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 				)
 			)
 		);
-		auctionBase = new SonaReserveAuction();
+		auctionBase = new SonaReserveAuction(auctionMinDuration);
 		ERC1967Proxy proxy = new ERC1967Proxy(
 			address(auctionBase),
 			abi.encodeWithSelector(
@@ -120,7 +122,7 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 
 	function test_RevertsWithInvalidAddress() public {
 		rewardTokenBase = new SonaRewardToken();
-		auctionBase = new SonaReserveAuction();
+		auctionBase = new SonaReserveAuction(auctionMinDuration);
 		vm.expectRevert(
 			ISonaReserveAuction.SonaReserveAuction_InvalidAddress.selector
 		);
@@ -236,7 +238,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.startPrank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 		vm.stopPrank();
 
 		ISonaReserveAuction.Auction memory auctionData = auction.getAuction(
@@ -260,7 +268,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 
 		vm.expectRevert(ISonaReserveAuction.SonaReserveAuction_NoMetadata.selector);
 		vm.startPrank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 		vm.stopPrank();
 	}
 
@@ -285,7 +299,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		);
 
 		vm.startPrank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 		vm.stopPrank();
 
 		ISonaReserveAuction.Auction memory auctionData = auction.getAuction(
@@ -309,7 +329,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		bundles[0] = bundle;
 		Signature memory signatures = _signBundles(bundles);
 		vm.startPrank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 		vm.stopPrank();
 
 		ISonaReserveAuction.Auction memory auctionData = auction.getAuction(
@@ -331,11 +357,23 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.startPrank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 		vm.expectRevert(
 			ISonaReserveAuction.SonaReserveAuction_AlreadyListed.selector
 		);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 		vm.stopPrank();
 	}
 
@@ -348,7 +386,7 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		vm.expectRevert(
 			ISonaReserveAuction.SonaReserveAuction_ReservePriceCannotBeZero.selector
 		);
-		auction.createReserveAuction(bundles, signatures, address(0), 0);
+		auction.createReserveAuction(bundles, signatures, address(0), 0, 3600);
 		vm.stopPrank();
 	}
 
@@ -363,7 +401,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		vm.expectRevert(
 			ISonaTokenAuthorizor.SonaAuthorizor_InvalidSignature.selector
 		);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 	}
 
 	function test_CreateReserveAuctionWithInvalidCollectorBundleReverts() public {
@@ -377,7 +421,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		vm.expectRevert(
 			ISonaTokenAuthorizor.SonaAuthorizor_InvalidSignature.selector
 		);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 	}
 
 	function test_CreateReserveAuctionWithInvalidArtistTokenIdReverts() public {
@@ -393,7 +443,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		vm.expectRevert(
 			ISonaReserveAuction.SonaReserveAuction_InvalidTokenIds.selector
 		);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 	}
 
 	function test_CreateReserveAuctionWithInvalidCollectorTokenIdReverts()
@@ -411,14 +467,26 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		vm.expectRevert(
 			ISonaReserveAuction.SonaReserveAuction_InvalidTokenIds.selector
 		);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 	}
 
 	function test_CreateLowSecondBidReverts() public {
 		ISonaRewardToken.TokenMetadata[] memory bundles = _createBundles();
 		Signature memory signatures = _signBundles(bundles);
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 
 		hoax(bidder);
 		auction.createBid{ value: 1 ether }(tokenId, 0);
@@ -442,7 +510,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		ISonaRewardToken.TokenMetadata[] memory bundles = _createBundles();
 		Signature memory signatures = _signBundles(bundles);
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			2678400
+		);
 
 		hoax(bidder);
 		auction.createBid{ value: 1 ether }(tokenId, 0);
@@ -459,7 +533,7 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		ISonaRewardToken.TokenMetadata[] memory bundles = _createBundles();
 		Signature memory signatures = _signBundles(bundles);
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(bundles, signatures, address(0), 1 ether, 0);
 
 		hoax(bidder);
 		auction.createBid{ value: 1 ether }(tokenId, 0);
@@ -487,7 +561,7 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 
 		assertEq(newEnd - originalEnd, 20 minutes - 1 seconds);
 
-		vm.warp(block.timestamp + 15 minutes + 1 seconds);
+		vm.warp(auctionMinDuration + block.timestamp + 15 minutes + 1 seconds);
 
 		hoax(bidder);
 		vm.expectRevert(
@@ -510,7 +584,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 
 		vm.expectRevert(ISonaReserveAuction.SonaReserveAuction_BidTooLow.selector);
 		auction.createBid{ value: 0.0 ether }(tokenId, 0);
@@ -522,7 +602,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 
 		vm.expectRevert(ISonaReserveAuction.SonaReserveAuction_BidTooLow.selector);
 		auction.createBid{ value: 0.9 ether }(tokenId, 0);
@@ -534,7 +620,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 
 		hoax(bidder);
 		auction.createBid{ value: 1.1 ether }(tokenId, 0);
@@ -547,7 +639,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 
 		hoax(bidder);
 		auction.createBid{ value: 1.1 ether }(tokenId, 0);
@@ -562,7 +660,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(mockERC20), 10);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(mockERC20),
+			10,
+			3600
+		);
 
 		deal(address(mockERC20), bidder, 100);
 		vm.prank(bidder);
@@ -582,7 +686,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 
 		hoax(bidder, 1.1 ether);
 		auction.createBid{ value: 1.1 ether }(tokenId, 0);
@@ -599,7 +709,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 
 		auction.createBid{ value: 1.1 ether }(tokenId, 0);
 		vm.warp(2 days);
@@ -617,7 +733,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			ISonaRewardToken.TokenMetadata[] memory bundles,
 			Signature memory signatures
 		) = _createSignedBundles();
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 		auction.cancelReserveAuction(tokenId);
 
 		ISonaReserveAuction.Auction memory auctionData = auction.getAuction(0);
@@ -632,7 +754,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.startPrank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 
 		vm.expectRevert(
 			ISonaReserveAuction.SonaReserveAuction_ReservePriceCannotBeZero.selector
@@ -646,7 +774,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.startPrank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 
 		auction.updateReserveAuctionPrice(tokenId, 2 ether);
 
@@ -663,7 +797,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 
 		hoax(bidder);
 		auction.createBid{ value: 1.1 ether }(tokenId, 0);
@@ -682,7 +822,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 
 		vm.startPrank(makeAddr("unauthorizedUser"));
 
@@ -698,7 +844,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 
 		hoax(bidder);
 		auction.createBid{ value: 1.1 ether }(tokenId, 0);
@@ -710,7 +862,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 
 		vm.prank(trackMinter);
 		vm.expectRevert(ISonaReserveAuction.SonaReserveAuction_Duplicate.selector);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 	}
 
 	function test_SettleReserveAuctionWithNoRewardsPayoutSet() public {
@@ -724,7 +882,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			bundles[0].payout
 		);
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 
 		hoax(bidder);
 		auction.createBid{ value: 1.1 ether }(tokenId, 0);
@@ -773,7 +937,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 
 		hoax(bidder);
 		auction.createBid{ value: 1.1 ether }(tokenId, 0);
@@ -819,7 +989,8 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			bundles,
 			signatures,
 			address(mockUSDC),
-			1 ether
+			1 ether,
+			3600
 		);
 
 		uint256 bidAmount = 1.1 ether;
@@ -830,7 +1001,7 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		hoax(bidder);
 		auction.createBid(tokenId, bidAmount);
 
-		vm.warp(1441 minutes);
+		vm.warp(auctionMinDuration + 1441 minutes);
 
 		uint initialBalance0 = mockUSDC.balanceOf(accounts[0]);
 		uint initialBalance1 = mockUSDC.balanceOf(accounts[1]);
@@ -879,7 +1050,7 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 				)
 			)
 		);
-		auctionBase = new SonaReserveAuction();
+		auctionBase = new SonaReserveAuction(auctionMinDuration);
 		ERC1967Proxy proxy = new ERC1967Proxy(
 			address(auctionBase),
 			abi.encodeWithSelector(
@@ -902,7 +1073,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		Signature memory signatures = _signBundles(bundles);
 
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 
 		hoax(bidder);
 		auction.createBid{ value: 1.1 ether }(tokenId, 0);
@@ -949,7 +1126,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 
 		hoax(bidder);
 		auction.createBid{ value: 1.1 ether }(tokenId, 0);
@@ -976,7 +1159,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 
 		vm.startPrank(makeAddr("unauthorizedUser"));
 
@@ -992,7 +1181,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 
 		hoax(bidder);
 		auction.createBid{ value: 1.1 ether }(tokenId, 0);
@@ -1010,7 +1205,7 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.startPrank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, nonEthToken, 10000);
+		auction.createReserveAuction(bundles, signatures, nonEthToken, 10000, 3600);
 
 		ISonaReserveAuction.Auction memory auctionData = auction.getAuction(
 			tokenId
@@ -1034,7 +1229,8 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			bundles,
 			signatures,
 			address(mockRewardToken),
-			10000
+			10000,
+			3600
 		);
 
 		hoax(bidder);
@@ -1067,7 +1263,8 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			bundles,
 			signatures,
 			address(brokenMockRewardToken),
-			10000
+			10000,
+			3600
 		);
 
 		hoax(bidder);
@@ -1093,7 +1290,8 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			bundles,
 			signatures,
 			address(mockRewardToken),
-			10000
+			10000,
+			3600
 		);
 
 		hoax(bidder);
@@ -1116,7 +1314,7 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, nonEthToken, 10000);
+		auction.createReserveAuction(bundles, signatures, nonEthToken, 10000, 3600);
 
 		hoax(bidder);
 		vm.expectRevert(
@@ -1138,7 +1336,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 0.05 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			0.05 ether,
+			3600
+		);
 
 		hoax(bidder);
 		vm.expectRevert(
@@ -1160,7 +1364,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 
 		ISonaReserveAuction.Auction memory auctionData = auction.getAuction(
 			tokenId
@@ -1208,7 +1418,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), 1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			1 ether,
+			3600
+		);
 
 		ISonaReserveAuction.Auction memory auctionData = auction.getAuction(
 			tokenId
@@ -1255,7 +1471,8 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			bundles,
 			signatures,
 			address(0),
-			_reservePrice
+			_reservePrice,
+			3600
 		);
 
 		hoax(bidder);
@@ -1307,7 +1524,8 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			bundles,
 			signatures,
 			address(mockERC20),
-			_reservePrice
+			_reservePrice,
+			3600
 		);
 
 		hoax(bidder);
@@ -1360,12 +1578,78 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 		Signature memory sigs = _signBundles(bundles);
 
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, sigs, address(0), _reservePrice);
+		auction.createReserveAuction(
+			bundles,
+			sigs,
+			address(0),
+			_reservePrice,
+			3600
+		);
 
 		hoax(bidder);
 		auction.createBid{ value: _bidAmount }(tokenId, 0);
 
 		vm.warp(2 days);
+
+		vm.prank(trackMinter);
+		auction.settleReserveAuction(tokenId);
+
+		uint256 treasuryFee = (_bidAmount * 200) / 10000;
+		uint256 redistributionFee = (_bidAmount * 500) / 10000;
+		uint256 sellerProceeds = _bidAmount - treasuryFee - redistributionFee;
+
+		assertEq(
+			IERC20(address(mockWeth)).balanceOf(treasuryRecipient),
+			treasuryFee
+		);
+		assertEq(
+			IERC20(address(mockWeth)).balanceOf(redistributionRecipient),
+			redistributionFee
+		);
+		assertEq(trackMinter.balance, sellerProceeds);
+		assertEq(ERC721(address(auction.rewardToken())).balanceOf(bidder), 1);
+		assertEq(ERC721(address(auction.rewardToken())).balanceOf(trackMinter), 1);
+		assertEq(
+			ERC721(address(auction.rewardToken())).ownerOf(bundles[0].tokenId),
+			trackMinter
+		);
+		assertEq(
+			ERC721(address(auction.rewardToken())).ownerOf(bundles[1].tokenId),
+			bidder
+		);
+	}
+
+	function testFuzz_AuctionSettlesAfterDurationEnds(uint32 _duration) public {
+		vm.assume(_duration < type(uint32).max - auctionMinDuration);
+		uint256 _reservePrice = 1 ether;
+		uint256 _bidAmount = 2 ether;
+		vm.deal(bidder, _bidAmount);
+
+		ISonaRewardToken.TokenMetadata[] memory bundles = _createBundles();
+		bundles[0].payout = payable(address(0));
+		Signature memory sigs = _signBundles(bundles);
+
+		vm.prank(trackMinter);
+		auction.createReserveAuction(
+			bundles,
+			sigs,
+			address(0),
+			_reservePrice,
+			_duration
+		);
+
+		hoax(bidder);
+		auction.createBid{ value: _bidAmount }(tokenId, 0);
+
+		vm.warp(auctionMinDuration + _duration - 1);
+
+		vm.expectRevert(
+			ISonaReserveAuction.SonaReserveAuction_AuctionIsLive.selector
+		);
+		vm.prank(trackMinter);
+		auction.settleReserveAuction(tokenId);
+
+		vm.warp(auctionMinDuration + _duration + 1);
 
 		vm.prank(trackMinter);
 		auction.settleReserveAuction(tokenId);
@@ -1414,7 +1698,8 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			bundles,
 			sigs,
 			address(mockERC20),
-			_reservePrice
+			_reservePrice,
+			3600
 		);
 
 		hoax(bidder);
@@ -1455,7 +1740,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), .1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			.1 ether,
+			3600
+		);
 
 		// Contract is original bidder
 		hoax(address(contractBidder));
@@ -1481,7 +1772,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), .1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			.1 ether,
+			3600
+		);
 
 		// Contract is original bidder
 		hoax(address(contractBidder));
@@ -1510,7 +1807,13 @@ contract SonaReserveAuctionTest is SplitHelpers, MinterSigner {
 			Signature memory signatures
 		) = _createSignedBundles();
 		vm.prank(trackMinter);
-		auction.createReserveAuction(bundles, signatures, address(0), .1 ether);
+		auction.createReserveAuction(
+			bundles,
+			signatures,
+			address(0),
+			.1 ether,
+			3600
+		);
 
 		// Bidder bids
 		hoax(bidder);

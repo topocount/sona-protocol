@@ -229,7 +229,7 @@ contract Deployer is Script {
 	) internal returns (address reserveAuctionAddress) {
 		uint256 pk = vm.deriveKey(mnemonic, 0);
 		vm.broadcast(pk);
-		SonaReserveAuction auctionBase = new SonaReserveAuction();
+		SonaReserveAuction auctionBase = new SonaReserveAuction(1 days);
 		address _TEMP_SONA_OWNER = vm.addr(vm.deriveKey(mnemonic, 0));
 
 		bytes memory reserveAuctionInitializerArgs = abi.encodeWithSelector(

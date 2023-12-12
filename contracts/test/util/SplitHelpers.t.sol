@@ -16,6 +16,8 @@ contract SplitHelpers is Util, SonaReserveAuction {
 	address public account1 = makeAddr("account1");
 	address public account2 = makeAddr("account2");
 
+	constructor() SonaReserveAuction(1 days) {}
+
 	function _createSimpleSplit()
 		internal
 		returns (address[] memory accounts, uint32[] memory amounts)

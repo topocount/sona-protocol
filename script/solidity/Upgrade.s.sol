@@ -29,7 +29,7 @@ contract UpgradeAuction is Script {
 		vm.startBroadcast(key);
 
 		// Deploy TrackAuction
-		SonaReserveAuction auctionBase = new SonaReserveAuction();
+		SonaReserveAuction auctionBase = new SonaReserveAuction(1 days);
 
 		auctionProxy.upgradeTo(address(auctionBase));
 	}
