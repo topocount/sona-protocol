@@ -119,11 +119,22 @@ deploy_mainnet :; FOUNDRY_PROFILE=optimized forge script ./script/solidity/Deplo
 	--chain-id 1 \
   --verify
 
+upgrade_auction_mainnet :; FOUNDRY_PROFILE=optimized forge script script/solidity/Upgrade.s.sol:UpgradeAuction \
+	--rpc-url ${RPC_URL} \
+	-g 110 \
+	-vvv \
+	--ledger \
+	--sender "0xA0c9263E81b6798E0B18C8CFBe1eAC361b0846eA" \
+	--slow \
+	--broadcast \
+	--verify
+
 upgrade_auction_sepolia :; FOUNDRY_PROFILE=optimized forge script script/solidity/Upgrade.s.sol:UpgradeAuction \
 	--rpc-url ${RPC_URL_SEPOLIA} \
 	-vvv \
 	--slow \
 	--broadcast \
+	--verify \
 	--chain-id 11155111
 
 upgrade_reward_token_sepolia :; FOUNDRY_PROFILE=optimized forge script script/solidity/Upgrade.s.sol:UpgradeRewardToken \

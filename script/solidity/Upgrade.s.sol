@@ -22,7 +22,7 @@ contract UpgradeAuction is Script {
 		SonaReserveAuction auctionProxy = SonaReserveAuction(
 			vm.envAddress("AUCTION_ADDR")
 		);
-		uint256 key = vm.deriveKey(mnemonic, 1);
+		uint256 key = vm.deriveKey(mnemonic, 0);
 
 		console.log("deployer: ", vm.addr(key));
 
@@ -30,7 +30,9 @@ contract UpgradeAuction is Script {
 
 		// Deploy TrackAuction
 		SonaReserveAuction auctionBase = new SonaReserveAuction(1 days);
+		vm.stopBroadcast();
 
+		vm.startBroadcast();
 		auctionProxy.upgradeTo(address(auctionBase));
 	}
 }
@@ -43,7 +45,7 @@ contract UpgradeRewardToken is Script {
 		SonaRewardToken tokenProxy = SonaRewardToken(
 			vm.envAddress("REWARD_TOKEN_ADDR")
 		);
-		uint256 key = vm.deriveKey(mnemonic, 1);
+		uint256 key = vm.deriveKey(mnemonic, 0);
 
 		console.log("deployer: ", vm.addr(key));
 
@@ -51,7 +53,9 @@ contract UpgradeRewardToken is Script {
 
 		// Deploy Reward Token
 		SonaRewardToken tokenBase = new SonaRewardToken();
+		vm.stopBroadcast();
 
+		vm.startBroadcast();
 		tokenProxy.upgradeTo(address(tokenBase));
 	}
 }
@@ -64,7 +68,7 @@ contract UpgradeRewards is Script {
 		SonaRewards rewardsProxy = SonaRewards(
 			payable(vm.envAddress("REWARDS_ADDR"))
 		);
-		uint256 key = vm.deriveKey(mnemonic, 1);
+		uint256 key = vm.deriveKey(mnemonic, 0);
 
 		console.log("deployer: ", vm.addr(key));
 
@@ -72,7 +76,9 @@ contract UpgradeRewards is Script {
 
 		// Deploy Reward Token
 		SonaRewards rewardsBase = new SonaRewards();
+		vm.stopBroadcast();
 
+		vm.startBroadcast();
 		rewardsProxy.upgradeTo(address(rewardsBase));
 	}
 }
