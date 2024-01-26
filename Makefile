@@ -172,6 +172,13 @@ upgrade_rewards_local :; FOUNDRY_PROFILE=optimized forge script script/solidity/
 	--broadcast \
 	--chain-id 31337
 
+update_auction_payout:; cast send --ledger 0xF8F61D6aF83098A490F503AaD96F0095f816DEd8 \
+	"updateArtistPayoutAddress(uint256,address)" \
+	0xcf6146563027ba1298ab85e19bb30e60ea83e0ed00000000000000000000000b \
+	0xa214efeebc896e0bbef3e2be35dcca1fbb835db7 \
+	--rpc-url ${RPC_URL}
+
+
 # Tests
 test : build_swap test_swap; FOUNDRY_PROFILE=test doppler run -- forge test -vvv # --ffi # enable if you need the `ffi` cheat code on HEVM
 
