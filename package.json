@@ -28,8 +28,7 @@
     "solhint-plugin-prettier": "^0.0.5",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.4",
-    "viem": "1.19.1",
-    "wagmi": "1"
+    "viem": "1.19.1"
   },
   "files": [
     "abi/"
