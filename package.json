@@ -1,7 +1,8 @@
 {
   "name": "@sonastream/core",
   "author": "@sonastream/engineering",
-  "version": "0.0.21",
+  "private": false,
+  "version": "0.0.22",
   "description": "A set of contracts for the sona protocol",
   "repository": {
     "type": "git",
