@@ -99,6 +99,8 @@ contract Deployer is Script {
 		console.log("reserve auction: ", reserveAuction);
 		console.log("rewards: ", rewards);
 		console.log("splits: ", address(splits));
+		console.log("deployer: ", deployer);
+
 		exportAddresses(
 			reserveAuction,
 			rewardToken,
@@ -130,6 +132,15 @@ contract Deployer is Script {
 		vm.startBroadcast(pk);
 		SonaRewardToken(rewardToken).renounceRole(ADMIN_ROLE, deployer);
 		vm.stopBroadcast();
+
+		for (uint i = 1; i < _OWNER.length; i++) {
+			vm.startBroadcast(pk);
+			SonaRewards(payable(rewards)).grantRole(ADMIN_ROLE, _OWNER[i]);
+			vm.stopBroadcast();
+		}
+			vm.startBroadcast(pk);
+			SonaRewards(payable(rewards)).renounceRole(ADMIN_ROLE, deployer);
+			vm.stopBroadcast();
 	}
 
 	function deploySplitMain(
@@ -151,6 +162,8 @@ contract Deployer is Script {
 		SplitMain splitMain
 	) internal returns (address rewards) {
 		uint256 pk = vm.deriveKey(mnemonic, 0);
+		address _TEMP_SONA_OWNER = vm.addr(vm.deriveKey(mnemonic, 0));
+
 		vm.broadcast(pk);
 		SonaRewards rewardsBase = new SonaRewards();
 
@@ -159,7 +172,7 @@ contract Deployer is Script {
 			address(rewardsBase),
 			abi.encodeWithSelector(
 				SonaRewards.initialize.selector,
-				_OWNER,
+				_TEMP_SONA_OWNER,
 				address(rewardToken),
 				payoutToken,
 				address(0),

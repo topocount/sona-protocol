@@ -47,30 +47,25 @@ scripts :; chmod +x ./scripts/*
 deploy :; FOUNDRY_PROFILE=optimized forge script ./script/solidity/Deploy.s.sol:Deployer \
 	--rpc-url ${RPC_URL} \
 	-g 110 \
-	--broadcast \
-	--verify \
-	-vvv 
+	--slow \
+	-vvv
 
 deploy_libs :;FOUNDRY_PROFILE=optimized forge script ./script/solidity/Deploy_libraries.s.sol:Deployer \
 	--rpc-url ${RPC_URL} \
-	--broadcast \
-	-vvv 
+	-vvv
 
 deploy_swap :;FOUNDRY_PROFILE=swap forge script ./script/solidity_v7/Deploy_Swap.s.sol:DeploySwap \
 	--rpc-url ${RPC_URL} \
-	--broadcast \
 	-vvv
 
 deploy_local :; forge script ./script/solidity/Deploy.s.sol:Deployer \
 	--rpc-url "http://localhost:8546" \
-	-vvv \
-	--broadcast
+	-vvv
 
 migrate_token :; FOUNDRY_PROFILE=optimized forge script ./script/solidity/Upgrade.s.sol:MigrateRewardToken \
 	--rpc-url ${RPC_URL} \
 	-g 110 \
 	-vvv \
-	--broadcast \
 	--verify
 
 migrate_auction :; FOUNDRY_PROFILE=optimized forge script ./script/solidity/Upgrade.s.sol:MigrateRewardToken \
@@ -79,8 +74,7 @@ migrate_auction :; FOUNDRY_PROFILE=optimized forge script ./script/solidity/Upgr
 	-g 110 \
 	-vvv \
 	--ledger \
-	--sender "0xA0c9263E81b6798E0B18C8CFBe1eAC361b0846eA" \
-	--broadcast
+	--sender "0xA0c9263E81b6798E0B18C8CFBe1eAC361b0846eA"
 
 deploy_swap_local :;FOUNDRY_PROFILE=swap forge script ./script/solidity_v7/Deploy_Swap.s.sol:DeploySwap \
 	--rpc-url "http://localhost:8546" \
@@ -177,6 +171,11 @@ update_auction_payout:; cast send --ledger 0xF8F61D6aF83098A490F503AaD96F0095f81
 	0xcf6146563027ba1298ab85e19bb30e60ea83e0ed00000000000000000000000b \
 	0xa214efeebc896e0bbef3e2be35dcca1fbb835db7 \
 	--rpc-url ${RPC_URL}
+
+create_split:; cast send --ledger 0x6A6553e4d4732Cbb10e33069480A8f24Ad678CCE \
+	"createSplit(address[],uint32[])" \
+	"[0x0c9E9686C0641E226157e249eabA76594Ec04Cf9,0xB46d81A42d16Ba87A44Cc97947655061952AE7fC]" \
+	"[500000,500000]" --rpc-url ${RPC_URL}
 
 
 # Tests
