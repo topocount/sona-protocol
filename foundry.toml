@@ -21,6 +21,9 @@
 		{ access = "write", path = "./out"},
 		{ access = "write", path = "./deploys"}
 	]
+	remappings = [
+		"@openzeppelin/contracts/=lib/optimism/packages/contracts-bedrock/lib/openzeppelin-contracts/contracts/",
+	]
 
 [profile.test]
 	optimizer = false
@@ -41,6 +44,9 @@
 	test = 'contracts_swap/test'
 	script = 'script/solidity_v7'
 	solc_version = "0.7.6"
+	remappings = [
+		"@openzeppelin/=lib_v7/v3-periphery/node_modules/@openzeppelin",
+	]
 
 [fuzz]
 	runs = 1024

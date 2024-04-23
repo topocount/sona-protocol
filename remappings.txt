@@ -1,10 +1,10 @@
 ds-test/=lib/forge-std/lib/ds-test/src/
 forge-std/=lib/forge-std/src/
 openzeppelin/=lib/openzeppelin-contracts/contracts/
-@openzeppelin/=lib_v7/v3-periphery/node_modules/@openzeppelin
 erc721a-upgradeable/=lib/ERC721A-Upgradeable/contracts/
 openzeppelin-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
 solady/=lib/solady/src/
 closedsea/=lib/closedsea/src/
 solmate/=lib/solmate/src/
 murky/=lib/murky/src/
+optimism/=lib/optimism/packages/contracts-bedrock/src/
