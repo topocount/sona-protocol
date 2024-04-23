@@ -37,3 +37,6 @@
 [submodule "lib/v3-periphery"]
 	path = lib_v7/v3-periphery
 	url = https://github.com/uniswap/v3-periphery
+[submodule "lib/optimism"]
+	path = lib/optimism
+	url = https://github.com/ethereum-optimism/optimism
